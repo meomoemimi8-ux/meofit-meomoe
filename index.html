@@ -171,6 +171,13 @@
   .metric{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow);text-align:center}
   .metric .big{font-size:2rem;font-weight:800;color:var(--green-d);line-height:1.1}
   .bmi-badge{display:inline-block;padding:3px 12px;border-radius:20px;color:#fff;font-weight:800;font-size:.8rem;margin-top:5px}
+  .food-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .food-chip{border:2px solid var(--border);background:var(--card);border-radius:14px;padding:7px 10px;font-size:.76rem;font-weight:700;font-family:inherit;color:var(--green-d);cursor:pointer}
+  .food-chip:active{transform:scale(.95)}
+  .food-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:.86rem}
+  .food-row span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .food-row b{color:var(--green-d)}
+  .food-row button{border:none;background:none;color:var(--muted);cursor:pointer;font-size:.95rem;flex:none}
   .player .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .player .phase-lbl{font-size:1rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .player .ex-name{font-size:1.55rem;font-weight:800;line-height:1.2;margin-bottom:6px;padding:0 6px}
@@ -437,7 +444,7 @@ function saveHist(h){ localStorage.setItem(LS, JSON.stringify(h)); }
 function getLevel(){ return parseInt(localStorage.getItem(LS_LV))||1; }
 function setLevel(l){ localStorage.setItem(LS_LV, l); }
 function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function logDone(sid,lv){ const h=loadHist(); h.unshift({date:todayStr(),ts:Date.now(),sid,lv}); saveHist(h); }
+function logDone(sid,lv,kcal){ const h=loadHist(); h.unshift({date:todayStr(),ts:Date.now(),sid,lv,kcal:kcal||0}); saveHist(h); }
 function doneToday(){ return loadHist().some(e=>e.date===todayStr()); }
 function calcStreak(){
   const h=loadHist(); if(!h.length) return 0;
@@ -587,7 +594,7 @@ function renderProgress(){
       const ds=DOW_FULL[d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
       const tm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
       return `<div class="hist-item"><div class="e">${s?s.icon:'🏋️'}</div>
-        <div class="d"><div class="n">${s?s.name:'Buổi tập'}${e.lv?' · '+LEVELS[e.lv].name:''}</div><div class="t">${ds} • ${tm}</div></div>
+        <div class="d"><div class="n">${s?s.name:'Buổi tập'}${e.lv?' · '+LEVELS[e.lv].name:''}</div><div class="t">${ds} • ${tm}${e.kcal?' • 🔥'+e.kcal+' kcal':''}</div></div>
         <div style="font-size:1.2rem">✅</div></div>`;
     }).join('');
   }
@@ -597,6 +604,7 @@ function renderProgress(){
       <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">Chuỗi ngày</div></div>
       <div class="stat"><div class="num">📆 ${wkCount}</div><div class="lbl">Tuần này</div></div>
       <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng cộng</div></div></div>
+    ${caloCardHTML()}
     <h2 class="sec-title">🗓️ Lịch sử tập</h2>
     ${list}
     ${h.length?`<button class="btn sec" style="margin-top:6px" onclick="clearHist()">🗑️ Xoá lịch sử</button>`:''}`;
@@ -665,8 +673,100 @@ function renderProfile(){
         <div class="frow"><div class="field"><label>Đùi (cm)</label><input id="pf-thigh" type="number" value="${p.thigh||''}" oninput="calcProfile()"></div><div class="field"><label>Bắp tay (cm)</label><input id="pf-arm" type="number" value="${p.arm||''}" oninput="calcProfile()"></div></div>
       </details>
     </div>
-    <div id="pf-results"></div>`;
+    <div id="pf-results"></div>
+    <div id="pf-track"></div>`;
   calcProfile();
+  renderTrack();
+}
+
+/* ============ THEO DÕI CÂN NẶNG & SỐ ĐO (Phase 2) ============ */
+function loadWeightLog(){ try{ return JSON.parse(localStorage.getItem('meofit_weightlog'))||[] }catch(e){ return [] } }
+function saveWeightLog(a){ try{ localStorage.setItem('meofit_weightlog', JSON.stringify(a)); }catch(e){} }
+function sparkline(pts){
+  if(!pts.length) return '';
+  const ws=pts.map(p=>p.weight), min=Math.min(...ws), max=Math.max(...ws), range=(max-min)||1;
+  const W=300,H=92,pad=14,n=pts.length;
+  const x=i=> n===1?W/2 : pad+i*(W-2*pad)/(n-1);
+  const y=v=> H-pad-(v-min)/range*(H-2*pad);
+  const line = n>1?`<polyline points="${pts.map((p,i)=>x(i).toFixed(1)+','+y(p.weight).toFixed(1)).join(' ')}" fill="none" stroke="#3fa34d" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`:'';
+  const dots = pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.weight).toFixed(1)}" r="3.2" fill="#2f7d3a"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="overflow:visible">${line}${dots}</svg>`;
+}
+function logWeightToday(){
+  const w=+pv('pf-weight'); if(!w){ alert('Nhập cân nặng trước đã nhé 🐾'); return; }
+  const e={date:todayStr(),ts:Date.now(),weight:w,waist:+pv('pf-waist')||'',hip:+pv('pf-hip')||'',thigh:+pv('pf-thigh')||'',arm:+pv('pf-arm')||''};
+  let log=loadWeightLog().filter(x=>x.date!==e.date); log.push(e); log.sort((a,b)=>a.ts-b.ts); saveWeightLog(log);
+  renderTrack();
+}
+function renderTrack(){
+  const el=document.getElementById('pf-track'); if(!el) return;
+  const log=loadWeightLog();
+  let body;
+  if(!log.length){ body='<div class="empty" style="padding:14px">Chưa có dữ liệu. Bấm “Ghi nhận hôm nay” để bắt đầu vẽ biểu đồ 🐾</div>'; }
+  else{
+    const diff=log[log.length-1].weight-log[0].weight;
+    const dtxt = log.length>1 ? `${diff>0?'+':''}${diff.toFixed(1)} kg so với lần đầu` : 'Lần ghi đầu tiên';
+    const rows=log.slice(-8).reverse().map(x=>{ const d=new Date(x.ts);
+      const extra=[x.waist?`eo ${x.waist}`:'',x.hip?`mông ${x.hip}`:'',x.thigh?`đùi ${x.thigh}`:'',x.arm?`tay ${x.arm}`:''].filter(Boolean).join(' · ');
+      return `<div class="hist-item"><div class="e">⚖️</div><div class="d"><div class="n">${x.weight} kg</div><div class="t">${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}${extra?' · '+extra:''}</div></div></div>`; }).join('');
+    body=`<div class="metric" style="margin-bottom:10px">${sparkline(log)}<div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px">${dtxt}</div></div>${rows}`;
+  }
+  el.innerHTML=`<h2 class="sec-title" style="margin-top:8px">📈 Theo dõi cân nặng & số đo</h2>
+    <button class="btn sec" onclick="logWeightToday()" style="margin-bottom:12px">➕ Ghi nhận hôm nay</button>
+    ${body}`;
+}
+
+/* ============ CALO IN / OUT (Phase 2) ============ */
+function loadFood(){ try{ return JSON.parse(localStorage.getItem('meofit_food'))||[] }catch(e){ return [] } }
+function saveFood(a){ try{ localStorage.setItem('meofit_food', JSON.stringify(a)); }catch(e){} }
+function exMET(e){
+  if(e.m==='Khởi động'||e.m==='Dãn cơ') return 2.5;
+  if(e.m==='Cardio'||/Jump|Burpee|Climber|Jack/i.test(e.en)) return 8;
+  if(e.type==='time'||/giữ/i.test(e.reps)) return 3.3;
+  return 3.8;
+}
+function estKcal(sess,kg){
+  let k=0; sess.ex.forEach(e=>{ const hrs=e.sets*((e.work||0)+(e.rest||0))/3600; k+=exMET(e)*kg*hrs; });
+  return Math.round(k);
+}
+function getTargetKcal(){
+  const p=loadProfile(); if(!p.height||!p.weight||!p.age) return null;
+  const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='nu'?-161:5);
+  const tdee=bmr*(p.act||1.375);
+  const gf=p.goal==='giam'?0.8:(p.goal==='tang'?1.1:1.0);
+  return Math.round(tdee*gf);
+}
+function todayKcalOut(){ const t=todayStr(); return loadHist().filter(e=>e.date===t).reduce((s,e)=>s+(e.kcal||0),0); }
+function todayKcalIn(){ const t=todayStr(); return loadFood().filter(e=>e.date===t).reduce((s,e)=>s+(e.kcal||0),0); }
+function addFood(name,kcal){ kcal=+kcal; if(!kcal) return; const f=loadFood(); f.push({date:todayStr(),ts:Date.now(),name:name||'Bữa ăn',kcal}); saveFood(f); renderProgress(); }
+function addFoodManual(){ addFood(pv('food-name'), pv('food-kcal')); }
+function delFood(ts){ saveFood(loadFood().filter(e=>e.ts!==ts)); renderProgress(); }
+function caloCardHTML(){
+  const inn=todayKcalIn(), out=todayKcalOut(), target=getTargetKcal();
+  const presets=[['Cơm 1 chén',200],['Phở/Bún',400],['Bánh mì',300],['Trứng',80],['Ức gà 100g',165],['Chuối',90],['Sữa chua',120],['Trà sữa',350]];
+  const chips=presets.map(p=>`<button class="food-chip" onclick="addFood('${p[0]}',${p[1]})">${p[0]} +${p[1]}</button>`).join('');
+  const food=loadFood().filter(e=>e.date===todayStr()).sort((a,b)=>b.ts-a.ts);
+  const foodList=food.length?food.map(e=>`<div class="food-row"><span>${e.name}</span><b>${e.kcal} kcal</b><button onclick="delFood(${e.ts})">✕</button></div>`).join(''):'<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:6px">Chưa nạp gì hôm nay</div>';
+  const remain = target!=null ? (target-inn+out) : null;
+  return `<div class="card">
+    <h2 class="sec-title" style="margin:0 0 10px">🔥 Calo hôm nay</h2>
+    <div class="stats" style="margin-bottom:10px">
+      <div class="stat"><div class="num" style="font-size:1.2rem;color:#ffa94d">🍽️ ${inn}</div><div class="lbl">Nạp vào</div></div>
+      <div class="stat"><div class="num" style="font-size:1.2rem;color:#ff6b6b">🔥 ${out}</div><div class="lbl">Đốt (tập)</div></div>
+      <div class="stat"><div class="num" style="font-size:1.2rem">${inn-out>=0?'+':''}${inn-out}</div><div class="lbl">Ròng</div></div>
+    </div>
+    ${target!=null
+      ? `<div class="metric" style="background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;padding:13px"><div style="font-size:.82rem;opacity:.95">Mục tiêu ${target} kcal/ngày · ${remain>=0?'còn có thể nạp':'đã vượt'}</div><div class="big" style="color:#fff;font-size:1.7rem">${Math.abs(remain)} kcal</div></div>`
+      : `<div class="note-box">Vào tab 👤 <b>Cá nhân</b> nhập hồ sơ để có <b>mục tiêu calo</b> nhé!</div>`}
+    <div style="font-weight:700;font-size:.82rem;color:var(--muted);margin:12px 2px 6px">⚡ Thêm nhanh bữa ăn:</div>
+    <div class="food-chips">${chips}</div>
+    <div class="frow" style="margin-top:10px;align-items:flex-end">
+      <div class="field" style="margin:0;flex:2"><input id="food-name" placeholder="Tên món (tuỳ chọn)"></div>
+      <div class="field" style="margin:0;flex:1"><input id="food-kcal" type="number" inputmode="numeric" placeholder="kcal"></div>
+      <button class="btn" style="width:auto;padding:13px 16px;flex:none;font-size:.95rem" onclick="addFoodManual()">Thêm</button>
+    </div>
+    <div style="margin-top:8px">${foodList}</div>
+  </div>`;
 }
 
 /* ============ NAV ============ */
@@ -906,7 +1006,7 @@ function nextExercise(){ if(P.exIdx<P.sess.ex.length-1){ P.exIdx++; enterExercis
 
 function finishWorkout(){
   clearInterval(P.timer); P.timer=null; P.paused=false;
-  logDone(P.sess.id, getLevel());
+  logDone(P.sess.id, getLevel(), estKcal(P.sess, (loadProfile().weight)||60));
   document.getElementById('pbar-fill').style.width='100%';
   beepDoneSet(); say(ph('done'));
   const streak=calcStreak();
