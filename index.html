@@ -145,9 +145,19 @@
   .player .pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--green-l),var(--green));transition:width .3s}
   .player .phead{display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--green-d);margin-bottom:10px}
   .player .phead .x{background:var(--card);border:none;width:38px;height:38px;border-radius:50%;font-size:1.1rem;box-shadow:var(--shadow);cursor:pointer;color:var(--ink)}
-  .player .phead-btns{display:flex;gap:8px;align-items:center}
-  .player .picon{background:var(--card);border:none;width:38px;height:38px;border-radius:50%;font-size:1rem;box-shadow:var(--shadow);cursor:pointer}
+  .player .phead{gap:8px}
+  .player #p-session{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .player .phead-btns{display:flex;gap:6px;align-items:center;flex:none}
+  .player .picon{background:var(--card);border:none;width:36px;height:36px;border-radius:50%;font-size:1rem;box-shadow:var(--shadow);cursor:pointer}
   .player .picon.off{opacity:.4}
+  /* thẻ hướng dẫn trong player (không mất tiến trình) */
+  .guide-sheet{position:absolute;inset:0;z-index:10;background:rgba(0,0,0,.4);display:none;align-items:flex-end}
+  .guide-sheet.show{display:flex;animation:fade .2s}
+  .guide-card{background:var(--bg);width:100%;max-height:90%;overflow-y:auto;border-radius:24px 24px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.25);animation:sheetUp .25s}
+  @keyframes sheetUp{from{transform:translateY(50px);opacity:.5}to{transform:translateY(0);opacity:1}}
+  .guide-card .guide-h{font-weight:800;font-size:1.2rem;line-height:1.25;margin-bottom:8px}
+  .guide-card .g-meta{font-size:.85rem;color:var(--green-d);font-weight:700;margin:9px 0 4px}
+  .guide-card .btn{margin-top:14px}
   .player .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .player .phase-lbl{font-size:1rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .player .ex-name{font-size:1.55rem;font-weight:800;line-height:1.2;margin-bottom:6px;padding:0 6px}
@@ -256,11 +266,13 @@
 <div class="player" id="player">
   <div class="pbar"><i id="pbar-fill" style="width:0%"></i></div>
   <div class="phead"><span id="p-session">Buổi tập</span><div class="phead-btns">
+    <button class="picon" id="guideBtn" title="Hướng dẫn bài này" onclick="openGuide()">📖</button>
     <button class="picon" id="sndBtn" title="Bật/tắt âm thanh" onclick="toggleSnd()">🔊</button>
     <button class="picon" id="voiceBtn" title="Bật/tắt đếm bằng giọng" onclick="toggleVoice()">🗣️</button>
     <button class="x" id="p-close">✕</button>
   </div></div>
   <div class="center" id="p-center"></div>
+  <div class="guide-sheet" id="guideSheet" onclick="if(event.target===this)closeGuide()"></div>
 </div>
 
 <script>
@@ -681,6 +693,34 @@ function togglePause(){
   P.paused=!P.paused;
   if(P.paused) shutUp();
   if(P.redraw) P.redraw();
+}
+
+// Thẻ hướng dẫn ngay trong buổi tập — tự tạm dừng, link mở tab mới (không mất tiến trình)
+let _guidePaused=false;
+function openGuide(){
+  if(!P.sess) return;
+  const e=P.sess.ex[P.exIdx];
+  if(P.timer && !P.paused){ _guidePaused=true; P.paused=true; shutUp(); if(P.redraw) P.redraw(); } else _guidePaused=false;
+  const links=`<div class="links">
+    <a class="vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener">▶️ Cách tập đúng</a>
+    ${e.gymName?`<a href="${yt(e.gymName.split('/')[0]+' machine how to')}" target="_blank" rel="noopener">🔍 Xem máy tập</a>`:''}</div>`;
+  document.getElementById('guideSheet').innerHTML=`
+    <div class="guide-card">
+      <div class="guide-h">${e.mi} ${e.n}</div>
+      <span class="tag" style="background:${tagColor(e.m)}">${e.m}</span>
+      <div class="g-meta">${e.sets} hiệp × ${e.reps}${e.perSide?' (cả 2 bên)':''} • 💡 ${e.tempo}</div>
+      <div class="ex" style="box-shadow:none;background:transparent;border-left:none;padding:0;margin:0">
+        <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
+        ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
+      </div>
+      <button class="btn" onclick="closeGuide()">${_guidePaused?'▶️ Đóng & tập tiếp':'✓ Đóng'}</button>
+      <div style="font-size:.74rem;color:var(--muted);text-align:center;margin-top:8px">Video mở ở tab mới — không mất tiến trình tập 🐾</div>
+    </div>`;
+  document.getElementById('guideSheet').classList.add('show');
+}
+function closeGuide(){
+  document.getElementById('guideSheet').classList.remove('show');
+  if(_guidePaused){ _guidePaused=false; P.paused=false; if(P.redraw) P.redraw(); }
 }
 
 function enterExercise(){ P.setIdx=0; updateBar(); enterSet(); }
