@@ -218,6 +218,8 @@
   .if-pill span{display:block;font-size:.66rem;color:var(--muted);font-weight:700;margin-bottom:2px}
   .if-pill b{font-size:1.35rem;color:var(--green-d)}
   .if-pill--eat b{color:#e0559b}
+  .if-tin{border:none;background:transparent;font-size:1.15rem;font-weight:800;color:var(--green-d);font-family:inherit;text-align:center;width:100%;padding:2px 0;cursor:var(--paw),pointer}
+  .if-pill--eat .if-tin{color:#e0559b}
   .if-ticks{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   .if-phases{display:flex;gap:4px;margin-top:12px}
   .if-ph{flex:1;min-width:0;text-align:center;background:var(--surface-2);border-radius:10px;padding:6px 2px;font-size:1rem;opacity:.5}
@@ -248,6 +250,7 @@
   .hist-item .d{flex:1}
   .hist-item .d .n{font-weight:700;font-size:.92rem}
   .hist-item .d .t{font-size:.74rem;color:var(--muted)}
+  .hist-del{border:none;background:none;color:var(--muted);font-size:.95rem;cursor:var(--paw),pointer;flex:none;padding:4px 6px;margin-left:4px}
 
   .note-box{background:#fff8e6;border-radius:16px;padding:14px;font-size:.84rem;line-height:1.5;color:#7a6a2e;border-left:5px solid var(--yellow);margin-bottom:14px}
   .note-box.rope{background:#eef4ff;color:#3a4a6a;border-left-color:var(--blue)}
@@ -734,7 +737,7 @@ function renderProgress(){
       const tm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
       return `<div class="hist-item"><div class="e">${s?s.icon:'🏋️'}</div>
         <div class="d"><div class="n">${s?s.name:'Buổi tập'}${e.lv?' · '+LEVELS[e.lv].name:''}</div><div class="t">${ds} • ${tm}${e.kcal?' • 🔥'+e.kcal+' kcal':''}</div></div>
-        <div style="font-size:1.2rem">✅</div></div>`;
+        <span style="font-size:1.05rem">✅</span><button class="hist-del" onclick="delHist(${e.ts})" title="Xoá">✕</button></div>`;
     }).join('');
   }
   document.getElementById('v-prog').innerHTML=`
@@ -750,6 +753,7 @@ function renderProgress(){
     ${h.length?`<button class="btn sec" style="margin-top:6px" onclick="clearHist()">🗑️ Xoá lịch sử</button>`:''}`;
 }
 function clearHist(){ if(confirm('Xoá toàn bộ lịch sử tập?')){ saveHist([]); renderProgress(); } }
+function delHist(ts){ if(confirm('Xoá buổi tập này?')){ saveHist(loadHist().filter(e=>e.ts!==ts)); renderProgress(); } }
 
 /* ============ HỒ SƠ & CHỈ SỐ (Phase 1) ============ */
 function loadProfile(){ try{ return JSON.parse(localStorage.getItem('meofit_profile'))||{} }catch(e){ return {} } }
@@ -1065,6 +1069,8 @@ function loadIF(){ try{ return JSON.parse(localStorage.getItem('meofit_if'))||{p
 function saveIF(o){ try{ localStorage.setItem('meofit_if', JSON.stringify(o)); }catch(e){} }
 function setIFProto(h){ const o=loadIF(); o.proto=h; saveIF(o); renderHome(); }
 function startFast(){ const o=loadIF(); o.start=Date.now(); saveIF(o); renderHome(); }
+function editFastStart(v){ if(!v) return; const o=loadIF(); if(!o.start) return; const [h,m]=v.split(':').map(Number); const d=new Date(); d.setHours(h,m,0,0); if(d.getTime()>Date.now()) d.setDate(d.getDate()-1); o.start=d.getTime(); saveIF(o); renderHome(); }
+function editFastEnd(v){ if(!v) return; const o=loadIF(); if(!o.start) return; const [h,m]=v.split(':').map(Number); const d=new Date(); d.setHours(h,m,0,0); let st=d.getTime()-o.proto*3600000; if(st>Date.now()) st-=86400000; o.start=st; saveIF(o); renderHome(); }
 function loadFastLog(){ try{ return JSON.parse(localStorage.getItem('meofit_fastlog'))||[] }catch(e){ return [] } }
 function saveFastLog(a){ try{ localStorage.setItem('meofit_fastlog', JSON.stringify(a)); }catch(e){} }
 function stopFast(){
@@ -1073,6 +1079,7 @@ function stopFast(){
   if(o.start){ const hrs=(Date.now()-o.start)/3600000; const lg=loadFastLog(); lg.unshift({date:todayStr(),ts:Date.now(),hours:Math.round(hrs*10)/10,proto:o.proto,reached:hrs>=o.proto}); saveFastLog(lg.slice(0,120)); }
   o.start=null; saveIF(o); renderHome();
 }
+function delFastLog(ts){ saveFastLog(loadFastLog().filter(e=>e.ts!==ts)); renderProgress(); }
 function fastReportHTML(){
   const lg=loadFastLog(), o=loadIF();
   const longest=lg.reduce((m,x)=>Math.max(m,x.hours||0),0);
@@ -1080,7 +1087,7 @@ function fastReportHTML(){
   const days=new Set(lg.filter(x=>x.reached).map(x=>x.date));
   let st=0,d=new Date(); if(!days.has(todayStr())) d.setDate(d.getDate()-1);
   for(;;){ const s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); if(days.has(s)){st++;d.setDate(d.getDate()-1);} else break; }
-  const rows=lg.slice(0,8).map(x=>{const dt=new Date(x.ts);return `<div class="hist-item"><div class="e">${x.reached?'✅':'⏳'}</div><div class="d"><div class="n">Nhịn ${x.hours}h${x.reached?` · đạt ${x.proto}h 🎉`:` / ${x.proto}h`}</div><div class="t">${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()}</div></div></div>`;}).join('');
+  const rows=lg.slice(0,8).map(x=>{const dt=new Date(x.ts);return `<div class="hist-item"><div class="e">${x.reached?'✅':'⏳'}</div><div class="d"><div class="n">Nhịn ${x.hours}h${x.reached?` · đạt ${x.proto}h 🎉`:` / ${x.proto}h`}</div><div class="t">${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()}</div></div><button class="hist-del" onclick="delFastLog(${x.ts})" title="Xoá">✕</button></div>`;}).join('');
   return `<div class="card">
     <h2 class="sec-title" style="margin:0 0 10px">⏳ Nhịn ăn gián đoạn</h2>
     ${o.start?`<div class="note-box rope" style="margin:0 0 10px">⏱️ Đang nhịn ăn — xem đồng hồ ở tab 🏠 Hôm nay</div>`:''}
@@ -1111,10 +1118,11 @@ function ifRingHTML(){
     </div>
     <div style="text-align:center;font-weight:800;margin-top:10px;color:${done?'var(--green-d)':'var(--ink)'}">${done?'🎉 Đủ giờ nhịn — tới giờ ăn!':`⏳ Còn ${fmtMs(remMs)} đến giờ ăn`}</div>`;
   const pills=`<div class="if-times">
-      <div class="if-pill"><span>🌙 Bắt đầu</span><b>${hhmm(o.start)}</b></div>
-      <div class="if-pill if-pill--eat"><span>🍽️ Được ăn</span><b>${hhmm(o.start+Fms)}</b></div>
+      <div class="if-pill"><span>🌙 Bắt đầu</span><input type="time" class="if-tin" value="${hhmm(o.start)}" onchange="editFastStart(this.value)"></div>
+      <div class="if-pill if-pill--eat"><span>🍽️ Được ăn</span><input type="time" class="if-tin" value="${hhmm(o.start+Fms)}" onchange="editFastEnd(this.value)"></div>
       <div class="if-pill"><span>⏳ Còn lại</span><b>${done?'0h 00m':fmtMs(remMs)}</b></div>
-    </div>`;
+    </div>
+    <div style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:6px">Bấm vào giờ để chỉnh lại nếu quên bấm 🐾</div>`;
   const strip=`<div class="if-phases">${IF_PHASES.map((p,i)=>`<div class="if-ph ${i===phIdx?'on':''}">${p.e}<small>${p.n}</small></div>`).join('')}</div>`;
   return ring+pills+strip;
 }
