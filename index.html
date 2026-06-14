@@ -185,7 +185,10 @@
   .food-pick b{color:var(--green-d);flex:none}
   .food-pick:active{background:var(--surface-2)}
   .fp-cat{font-weight:800;color:var(--green-d);font-size:.82rem;margin:12px 2px 4px}
-  #fp-list{max-height:42vh;overflow-y:auto}
+  #fp-list{max-height:40vh;overflow-y:auto}
+  #fp-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px}
+  .fp-tab{flex:none;border:2px solid var(--border);background:var(--card);border-radius:12px;padding:7px 12px;font-size:1.15rem;line-height:1;cursor:pointer}
+  .fp-tab.on{border-color:var(--green);background:var(--surface-2)}
   .fp-del{flex:none;color:var(--muted);padding:0 4px;font-size:.85rem}
   .macro-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:.78rem}
   .macro-row .ml{width:42px;font-weight:800;color:var(--ink);flex:none}
@@ -627,6 +630,7 @@ function renderProgress(){
       <div class="stat"><div class="num">📆 ${wkCount}</div><div class="lbl">Tuần này</div></div>
       <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng cộng</div></div></div>
     ${caloCardHTML()}
+    ${fastReportHTML()}
     <h2 class="sec-title">🗓️ Lịch sử tập</h2>
     ${list}
     ${h.length?`<button class="btn sec" style="margin-top:6px" onclick="clearHist()">🗑️ Xoá lịch sử</button>`:''}`;
@@ -774,18 +778,18 @@ function profileMacroRatio(){ const p=loadProfile(); return (MACRO_PRESETS[p.mac
 
 // Danh sách món ăn Việt (calo/khẩu phần; món "(100g)" tính theo 100g — ước tính). mac = tỉ lệ đạm/carb/béo (%kcal) của nhóm.
 const FOODS=[
-  {cat:'🍚 Cơm & tinh bột', mac:[10,78,12], items:[['Cơm trắng (1 chén)',180],['Cơm tấm sườn',600],['Cơm chiên',560],['Xôi (1 chén)',300],['Bánh mì thịt',400],['Bánh mì trứng',330],['Bánh cuốn (1 phần)',300],['Bánh chưng (1 miếng)',250],['Khoai lang luộc (1 củ)',120],['Bắp/ngô luộc (1 trái)',100]]},
-  {cat:'🍜 Bún · Phở · Mì', mac:[20,55,25], items:[['Phở bò (1 tô)',430],['Phở gà (1 tô)',380],['Bún bò Huế',480],['Bún chả',500],['Bún riêu',400],['Bún thịt nướng',450],['Hủ tiếu',400],['Bánh canh',400],['Miến gà',350],['Mì gói',350]]},
-  {cat:'🍗 Món mặn (đạm)', mac:[45,8,47], items:[['Ức gà (100g)',165],['Đùi gà (1 cái)',180],['Thịt heo nạc (100g)',145],['Thịt ba chỉ (100g)',290],['Thịt bò (100g)',180],['Cá (100g)',110],['Tôm (100g)',99],['Trứng luộc (1 quả)',78],['Trứng chiên (1 quả)',110],['Đậu hũ (100g)',76],['Chả lụa (100g)',230],['Nem rán (1 cái)',100]]},
-  {cat:'🥬 Rau & canh', mac:[20,60,20], items:[['Rau luộc (1 chén)',35],['Salad (1 phần)',80],['Canh rau',60],['Canh chua',120],['Gỏi cuốn (1 cuốn)',60]]},
-  {cat:'🍌 Trái cây', mac:[5,92,3], items:[['Chuối (1 quả)',90],['Táo (1 quả)',80],['Cam (1 quả)',60],['Xoài (1/2 quả)',100],['Dưa hấu (1 lát)',45],['Bơ (1/2 quả)',160],['Nho (1 chùm nhỏ)',90],['Ổi (1 quả)',70]]},
-  {cat:'🥤 Đồ uống', mac:[8,84,8], items:[['Cà phê đen',5],['Cà phê sữa',120],['Trà sữa (1 ly)',350],['Nước ngọt (1 lon)',140],['Nước cam (1 ly)',110],['Sữa tươi (1 hộp)',130],['Sữa chua (1 hũ)',105],['Bia (1 lon)',150],['Sinh tố',200]]},
-  {cat:'🍰 Ăn vặt · tráng miệng', mac:[8,55,37], items:[['Chè (1 ly)',250],['Bánh ngọt (1 cái)',250],['Kem (1 cây)',200],['Snack (1 gói)',280],['Sô-cô-la (thanh nhỏ)',230],['Khoai tây chiên',320]]}
+  {cat:'🍚 Cơm & tinh bột', mac:[10,78,12], items:[['Cơm trắng (1 chén)',180],['Cơm gạo lứt (1 chén)',170],['Cơm tấm sườn',600],['Cơm gà',550],['Cơm chiên',560],['Cơm sườn nướng',650],['Xôi (1 chén)',300],['Xôi mặn',500],['Bánh mì thịt',450],['Bánh mì trứng',330],['Bánh mì chảo',550],['Bánh cuốn (1 phần)',350],['Bánh chưng (1 miếng)',250],['Bánh giò (1 cái)',350],['Bánh bao (1 cái)',250],['Khoai lang luộc (100g)',86],['Khoai tây luộc (100g)',87],['Bắp/ngô luộc (1 trái)',100],['Yến mạch (100g khô)',380]]},
+  {cat:'🍜 Bún · Phở · Mì', mac:[20,55,25], items:[['Phở bò (1 tô)',480],['Phở gà (1 tô)',400],['Bún bò Huế',480],['Bún chả',500],['Bún riêu',400],['Bún thịt nướng',450],['Bún đậu mắm tôm',600],['Bún mọc',400],['Hủ tiếu',400],['Mì Quảng',500],['Bánh canh',400],['Miến gà',350],['Mì gói',350],['Mì xào',450],['Phở xào',500],['Nui xào',420],['Cháo (1 tô)',250],['Cháo lòng',400]]},
+  {cat:'🍗 Món mặn (đạm)', mac:[45,8,47], items:[['Ức gà (100g)',165],['Đùi gà (100g)',209],['Cánh gà chiên (100g)',290],['Gà rán (1 miếng)',280],['Thịt heo nạc (100g)',145],['Thịt ba chỉ (100g)',290],['Thịt kho tàu (100g)',280],['Sườn xào chua ngọt (100g)',250],['Thịt bò (100g)',180],['Bò bít tết (100g)',270],['Cá hồi (100g)',208],['Cá thu (100g)',190],['Cá nạc (100g)',110],['Cá kho (100g)',150],['Tôm (100g)',99],['Mực (100g)',92],['Trứng luộc (1 quả)',78],['Trứng chiên (1 quả)',110],['Đậu hũ (100g)',76],['Chả lụa (100g)',230],['Nem rán (1 cái)',100],['Xúc xích (1 cái)',150]]},
+  {cat:'🥬 Rau & canh', mac:[20,60,20], items:[['Rau luộc (1 chén)',35],['Rau xào (1 đĩa)',120],['Salad (1 phần)',80],['Canh rau',60],['Canh chua',120],['Canh bí',70],['Súp (1 chén)',100],['Gỏi cuốn (1 cuốn)',60],['Dưa leo (100g)',16],['Cà chua (100g)',18],['Bông cải (100g)',34],['Rong biển (100g)',45]]},
+  {cat:'🍌 Trái cây', mac:[5,92,3], items:[['Chuối (1 quả)',90],['Táo (1 quả)',80],['Cam (1 quả)',60],['Xoài (1/2 quả)',100],['Dưa hấu (1 lát)',45],['Bơ (1/2 quả)',160],['Nho (100g)',69],['Ổi (1 quả)',70],['Đu đủ (100g)',43],['Thanh long (100g)',60],['Dứa/thơm (100g)',50],['Nhãn (100g)',60],['Vải (100g)',66],['Sầu riêng (100g)',147],['Mít (100g)',95],['Dâu tây (100g)',32]]},
+  {cat:'🥤 Đồ uống', mac:[8,84,8], items:[['Nước lọc',0],['Cà phê đen',5],['Cà phê sữa',120],['Bạc xỉu',150],['Trà sữa (1 ly)',350],['Trà đào',180],['Nước ngọt (1 lon)',140],['Nước cam (1 ly)',110],['Nước mía (1 ly)',240],['Nước dừa (1 quả)',120],['Sinh tố',200],['Sữa tươi (1 hộp)',130],['Sữa đặc (1 thìa)',60],['Sữa chua uống',90],['Sữa chua (1 hũ)',105],['Bia (1 lon)',150],['Rượu vang (1 ly)',125]]},
+  {cat:'🍰 Ăn vặt · tráng miệng', mac:[8,55,37], items:[['Chè (1 ly)',250],['Bánh ngọt (1 cái)',250],['Bánh flan (1 cái)',150],['Kem (1 cây)',200],['Snack (1 gói)',280],['Bánh quy (3 cái)',150],['Sô-cô-la (thanh nhỏ)',230],['Khoai tây chiên (1 phần)',320],['Bỏng ngô (1 phần)',150],['Hạt điều (30g)',170],['Hạnh nhân (30g)',174],['Bánh tráng trộn (1 phần)',330],['Trứng vịt lộn (1 quả)',130]]}
 ];
 // "Món của tôi" — user tự nhập, lưu lại tái dùng. {name, base(kcal/đơn vị), gram(bool: base theo 100g), p,c,f (g/đơn vị)}
 function loadMyFoods(){ try{ return JSON.parse(localStorage.getItem('meofit_myfoods'))||[] }catch(e){ return [] } }
 function saveMyFoods(a){ try{ localStorage.setItem('meofit_myfoods', JSON.stringify(a)); }catch(e){} }
-let _pendingPhoto='', _sel=null;
+let _pendingPhoto='', _sel=null, _fpTab=0;
 function addFood(name,kcal,p,c,f,photo){ kcal=+kcal; if(!kcal&&!(+p||+c||+f)) return;
   const fd=loadFood(); fd.push({date:todayStr(),ts:Date.now(),name:name||'Bữa ăn',kcal:Math.round(kcal),p:Math.round(+p||0),c:Math.round(+c||0),f:Math.round(+f||0),photo:photo||''});
   saveFood(fd); _pendingPhoto=''; renderProgress(); }
@@ -845,30 +849,37 @@ function openFoodPicker(){
   const sh=document.getElementById('foodSheet');
   sh.innerHTML=`<div class="guide-card">
     <div class="guide-h">🍱 Chọn món ăn <span style="float:right;font-size:.8rem;color:var(--green-d)">Hôm nay <span id="fp-total">${todayKcalIn()}</span> kcal</span></div>
-    <input id="fp-search" placeholder="🔍 Tìm món…" oninput="renderFoodList(this.value)" style="width:100%;box-sizing:border-box;border:2px solid var(--border);border-radius:14px;padding:10px 13px;font-size:1rem;font-family:inherit;margin:8px 0 10px;background:var(--card);color:var(--ink)">
+    <input id="fp-search" placeholder="🔍 Tìm món…" oninput="renderFoodList(this.value)" style="width:100%;box-sizing:border-box;border:2px solid var(--border);border-radius:14px;padding:10px 13px;font-size:1rem;font-family:inherit;margin:8px 0 8px;background:var(--card);color:var(--ink)">
+    <div id="fp-tabs"></div>
     <div id="fp-list"></div>
     <div id="fp-amount" style="display:none;border-top:2px solid var(--border);margin-top:10px;padding-top:10px"></div>
     <button class="btn" onclick="closeFoodPicker()" style="margin-top:12px">✓ Xong</button>
     <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:8px">Chọn món → nhập gram/số phần. Calo là ước tính 🐾</div>
   </div>`;
-  sh.classList.add('show'); renderFoodList('');
+  _fpTab=0; sh.classList.add('show'); renderFoodList('');
 }
 function closeFoodPicker(){ _sel=null; document.getElementById('foodSheet').classList.remove('show'); }
+function fpTab(t){ _fpTab=t; const s=document.getElementById('fp-search'); if(s) s.value=''; renderFoodList(''); }
 function renderFoodList(q){
-  const el=document.getElementById('fp-list'); if(!el) return;
+  const el=document.getElementById('fp-list'), tb=document.getElementById('fp-tabs'); if(!el) return;
   q=(q||'').trim().toLowerCase();
   const my=loadMyFoods();
   const bi=(n,k,ci)=>`<button class="food-pick" onclick="selectFood('${n.replace(/'/g,"\\'")}',${k},${ci})"><span>${n}</span><b>${k} kcal${/100g/i.test(n)?'/100g':''}</b></button>`;
   const myItem=(m,i)=>`<button class="food-pick" onclick="selectMyFood(${i})"><span>⭐ ${m.name}</span><b>${m.base} kcal${m.gram?'/100g':''}</b><span class="fp-del" onclick="event.stopPropagation();delMyFood(${i})">✕</span></button>`;
   if(q){
+    if(tb) tb.innerHTML='';
     let html=my.map((m,i)=>[m,i]).filter(a=>a[0].name.toLowerCase().includes(q)).map(a=>myItem(a[0],a[1])).join('');
     FOODS.forEach((c,ci)=>c.items.forEach(x=>{ if(x[0].toLowerCase().includes(q)) html+=bi(x[0],x[1],ci); }));
     el.innerHTML=html||'<div class="empty" style="padding:12px">Không thấy — dùng “Tự nhập” bên dưới nhé 🐾</div>';
-  } else {
-    let html = my.length?`<div class="fp-cat">⭐ Món của tôi</div>${my.map((m,i)=>myItem(m,i)).join('')}`:'';
-    html += FOODS.map((c,ci)=>`<div class="fp-cat">${c.cat}</div>${c.items.map(x=>bi(x[0],x[1],ci)).join('')}`).join('');
-    el.innerHTML=html;
+    return;
   }
+  // tab bar
+  const tabs=[]; if(my.length) tabs.push(['my','⭐']);
+  FOODS.forEach((c,ci)=>tabs.push([''+ci, c.cat.split(' ')[0]]));
+  if(tb) tb.innerHTML=tabs.map(t=>`<button class="fp-tab ${(''+_fpTab)===t[0]?'on':''}" onclick="fpTab('${t[0]}')">${t[1]}</button>`).join('');
+  // items of active tab
+  if(_fpTab==='my'){ el.innerHTML=my.length?my.map((m,i)=>myItem(m,i)).join(''):'<div class="empty" style="padding:12px">Chưa có món của bạn</div>'; }
+  else { const ci=+_fpTab||0; const c=FOODS[ci]||FOODS[0]; el.innerHTML=`<div class="fp-cat">${c.cat}</div>`+c.items.map(x=>bi(x[0],x[1],ci)).join(''); }
 }
 function manualPrev(){ const el=document.getElementById('food-prev'); if(!el) return; const k=+pv('food-kcal')||0,g=+pv('food-gram')||0; el.textContent=(k&&g)?`≈ ${Math.round(k*g/100)} kcal tổng (cho ${g}g)`:''; }
 function caloCardHTML(){
@@ -924,7 +935,32 @@ function loadIF(){ try{ return JSON.parse(localStorage.getItem('meofit_if'))||{p
 function saveIF(o){ try{ localStorage.setItem('meofit_if', JSON.stringify(o)); }catch(e){} }
 function setIFProto(h){ const o=loadIF(); o.proto=h; saveIF(o); renderHome(); }
 function startFast(){ const o=loadIF(); o.start=Date.now(); saveIF(o); renderHome(); }
-function stopFast(){ if(!confirm('Kết thúc nhịn ăn?')) return; const o=loadIF(); o.start=null; saveIF(o); renderHome(); }
+function loadFastLog(){ try{ return JSON.parse(localStorage.getItem('meofit_fastlog'))||[] }catch(e){ return [] } }
+function saveFastLog(a){ try{ localStorage.setItem('meofit_fastlog', JSON.stringify(a)); }catch(e){} }
+function stopFast(){
+  if(!confirm('Kết thúc nhịn ăn?')) return;
+  const o=loadIF();
+  if(o.start){ const hrs=(Date.now()-o.start)/3600000; const lg=loadFastLog(); lg.unshift({date:todayStr(),ts:Date.now(),hours:Math.round(hrs*10)/10,proto:o.proto,reached:hrs>=o.proto}); saveFastLog(lg.slice(0,120)); }
+  o.start=null; saveIF(o); renderHome();
+}
+function fastReportHTML(){
+  const lg=loadFastLog(), o=loadIF();
+  const longest=lg.reduce((m,x)=>Math.max(m,x.hours||0),0);
+  const wk=lg.filter(x=>x.ts>=Date.now()-7*864e5).length;
+  const days=new Set(lg.filter(x=>x.reached).map(x=>x.date));
+  let st=0,d=new Date(); if(!days.has(todayStr())) d.setDate(d.getDate()-1);
+  for(;;){ const s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); if(days.has(s)){st++;d.setDate(d.getDate()-1);} else break; }
+  const rows=lg.slice(0,8).map(x=>{const dt=new Date(x.ts);return `<div class="hist-item"><div class="e">${x.reached?'✅':'⏳'}</div><div class="d"><div class="n">Nhịn ${x.hours}h${x.reached?` · đạt ${x.proto}h 🎉`:` / ${x.proto}h`}</div><div class="t">${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()}</div></div></div>`;}).join('');
+  return `<div class="card">
+    <h2 class="sec-title" style="margin:0 0 10px">⏳ Nhịn ăn gián đoạn</h2>
+    ${o.start?`<div class="note-box rope" style="margin:0 0 10px">⏱️ Đang nhịn ăn — xem đồng hồ ở tab 🏠 Hôm nay</div>`:''}
+    <div class="stats">
+      <div class="stat"><div class="num" style="font-size:1.25rem">🔥 ${st}</div><div class="lbl">Chuỗi ngày</div></div>
+      <div class="stat"><div class="num" style="font-size:1.25rem">📆 ${wk}</div><div class="lbl">Tuần này</div></div>
+      <div class="stat"><div class="num" style="font-size:1.25rem">🏆 ${longest?longest.toFixed(1):0}h</div><div class="lbl">Dài nhất</div></div></div>
+    ${lg.length?`<div style="margin-top:10px">${rows}</div>`:'<div class="empty" style="padding:10px">Chưa có buổi nhịn nào — bắt đầu ở tab Hôm nay 🐾</div>'}
+  </div>`;
+}
 function ifCardHTML(){
   const o=loadIF();
   const segs=[14,16,18,20].map(h=>`<button class="seg-if ${o.proto===h?'on':''}" onclick="setIFProto(${h})">${h}:${24-h}</button>`).join('');
