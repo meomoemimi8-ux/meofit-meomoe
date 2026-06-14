@@ -23,7 +23,7 @@
     --ink:#2b3a2e; --muted:#789078;
     --shadow:0 8px 22px rgba(63,163,77,.14);
     --r:22px; font-size:16px;
-    --paw:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%2032%2032'%3E%3Cg%20fill='%23ff8fb1'%20stroke='%23d65b86'%20stroke-width='1.6'%3E%3Crect%20x='8'%20y='13'%20width='16'%20height='6'%20rx='3'/%3E%3Crect%20x='1'%20y='6.5'%20width='7'%20height='19'%20rx='3'%20fill='%23ffa6c2'/%3E%3Crect%20x='24'%20y='6.5'%20width='7'%20height='19'%20rx='3'%20fill='%23ffa6c2'/%3E%3C/g%3E%3Ccircle%20cx='4.5'%20cy='11'%20r='1.5'%20fill='%23fff'/%3E%3C/svg%3E") 16 16;
+    --paw:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='34'%20height='34'%20viewBox='0%200%2034%2034'%3E%3Cg%20transform='rotate(-25%2017%2017)'%20stroke='%23d65b86'%20stroke-width='1.5'%20stroke-linejoin='round'%3E%3Crect%20x='11'%20y='14.5'%20width='12'%20height='5'%20rx='2.5'%20fill='%23ff8fb1'/%3E%3Crect%20x='6'%20y='11'%20width='5'%20height='12'%20rx='2.5'%20fill='%23ffb3c9'/%3E%3Crect%20x='23'%20y='11'%20width='5'%20height='12'%20rx='2.5'%20fill='%23ffb3c9'/%3E%3Crect%20x='2.5'%20y='9'%20width='4.5'%20height='16'%20rx='2'%20fill='%23ff8fb1'/%3E%3Crect%20x='27'%20y='9'%20width='4.5'%20height='16'%20rx='2'%20fill='%23ff8fb1'/%3E%3C/g%3E%3C/svg%3E") 17 17;
   }
   [data-theme='dark']{
     --bg:#16201a; --bg-1:#1d2a22; --bg-2:#241d2f;
@@ -158,6 +158,19 @@
   .guide-card .guide-h{font-weight:800;font-size:1.2rem;line-height:1.25;margin-bottom:8px}
   .guide-card .g-meta{font-size:.85rem;color:var(--green-d);font-weight:700;margin:9px 0 4px}
   .guide-card .btn{margin-top:14px}
+  .guide-card .demo-img{width:100%;height:190px;object-fit:cover;border-radius:14px;background:#2a2a2a;display:block}
+  .guide-card .demo-cap{font-size:.72rem;color:var(--muted);font-weight:700;text-align:center;margin:5px 0 10px}
+
+  /* form hồ sơ */
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin:0 2px 5px}
+  .field input,.field select{width:100%;border:2px solid var(--border);border-radius:14px;padding:11px 13px;font-size:1rem;font-family:inherit;background:var(--card);color:var(--ink)}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--green-l)}
+  .frow{display:flex;gap:10px}.frow .field{flex:1;min-width:0}
+  .field input,.field select{box-sizing:border-box}
+  .metric{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow);text-align:center}
+  .metric .big{font-size:2rem;font-weight:800;color:var(--green-d);line-height:1.1}
+  .bmi-badge{display:inline-block;padding:3px 12px;border-radius:20px;color:#fff;font-weight:800;font-size:.8rem;margin-top:5px}
   .player .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .player .phase-lbl{font-size:1rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .player .ex-name{font-size:1.55rem;font-weight:800;line-height:1.2;margin-bottom:6px;padding:0 6px}
@@ -249,6 +262,7 @@
   <section class="view" id="v-week"></section>
   <section class="view" id="v-sess"></section>
   <section class="view" id="v-prog"></section>
+  <section class="view" id="v-prof"></section>
   <footer class="footer">
     <div class="footer__cat">🐱🏋️</div>
     <p>Made with 🎀 &amp; 🐾 — một vũ trụ của <a href="https://multiverse.meomoe.com">Meomoe Multiverse</a></p>
@@ -261,6 +275,7 @@
   <button data-tab="week"><span class="i">📅</span>Lịch tuần</button>
   <button data-tab="sess"><span class="i">🏋️</span>Buổi tập</button>
   <button data-tab="prog"><span class="i">📊</span>Tiến độ</button>
+  <button data-tab="prof"><span class="i">👤</span>Cá nhân</button>
 </nav>
 
 <div class="player" id="player">
@@ -299,6 +314,22 @@ const MUSCLE_IMG = {
   'Core / Bụng': [FP+'Rectus_abdominis.png?width=400',  'Cơ bụng (rectus abdominis)',    false],
 };
 const MUSCLE_IMG_FULL = [FP+'Bougle_whole2_retouched.png?width=400', 'Hệ cơ toàn thân', false];
+
+// GIF demo động tác (free-exercise-db, ảnh 2 khung đầu→cuối, hotlink jsDelivr). Bài không có → dùng video.
+const DEMO_BASE='https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/';
+const DEMO={
+  'Squat':'Bodyweight_Squat',
+  'Lunges':'Bodyweight_Walking_Lunge',
+  'Band Pull Through':'Band_Good_Morning_Pull_Through',
+  'Glute Bridge':'Butt_Lift_Bridge',
+  'Glute Bridge with Powerband':'Butt_Lift_Bridge',
+  'Jumping Squat':'Freehand_Jump_Squat',
+  'Incline Push Up':'Incline_Push-Up',
+  'Kick Back':'Glute_Kickback',
+  'Flutter Kick':'Flutter_Kicks',
+  'Mountain Climber':'Mountain_Climbers',
+  'Leg Raise':'Flat_Bench_Lying_Leg_Raise'
+};
 function muscleArt(m){
   const img = MUSCLE_IMG[m] || MUSCLE_IMG_FULL; // Khởi động/Toàn thân/Cardio/Dãn cơ → toàn thân
   return '<div class="bodymap"><img class="m-img'+(img[2]?' gif':'')+'" src="'+img[0]+'" alt="'+img[1]+
@@ -572,6 +603,72 @@ function renderProgress(){
 }
 function clearHist(){ if(confirm('Xoá toàn bộ lịch sử tập?')){ saveHist([]); renderProgress(); } }
 
+/* ============ HỒ SƠ & CHỈ SỐ (Phase 1) ============ */
+function loadProfile(){ try{ return JSON.parse(localStorage.getItem('meofit_profile'))||{} }catch(e){ return {} } }
+function saveProfile(p){ try{ localStorage.setItem('meofit_profile', JSON.stringify(p)); }catch(e){} }
+function bmiClass(b){
+  if(b<18.5) return ['Thiếu cân','#4dabf7'];
+  if(b<23)   return ['Bình thường','#3fa34d'];
+  if(b<25)   return ['Thừa cân','#ffa94d'];
+  if(b<30)   return ['Béo phì độ I','#ff8c42'];
+  return ['Béo phì độ II','#ff6b6b'];
+}
+const GOAL_LBL={giam:'giảm mỡ',giu:'giữ dáng',tang:'tăng cơ'};
+function pv(id){ const el=document.getElementById(id); return el?el.value:''; }
+function calcProfile(){
+  const p={ sex:pv('pf-sex'), age:+pv('pf-age')||'', height:+pv('pf-height')||'', weight:+pv('pf-weight')||'',
+    act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu',
+    waist:+pv('pf-waist')||'', hip:+pv('pf-hip')||'', thigh:+pv('pf-thigh')||'', arm:+pv('pf-arm')||'' };
+  saveProfile(p);
+  const r=document.getElementById('pf-results'); if(!r) return;
+  if(!p.height||!p.weight||!p.age){ r.innerHTML='<div class="note-box">📏 Nhập đủ <b>tuổi, chiều cao, cân nặng</b> để Mèo Lực Sĩ tính chỉ số cho cậu nhé!</div>'; return; }
+  const hm=p.height/100, bmi=p.weight/(hm*hm), [bcat,bcol]=bmiClass(bmi);
+  const bmr=10*p.weight + 6.25*p.height - 5*p.age + (p.sex==='nu'?-161:5);
+  const tdee=bmr*p.act;
+  const gf=p.goal==='giam'?0.8:(p.goal==='tang'?1.1:1.0);
+  const target=tdee*gf, protein=Math.round(p.weight*1.8);
+  r.innerHTML=`
+    <div class="metric" style="margin-bottom:12px">
+      <div style="color:var(--muted);font-weight:700;font-size:.8rem">Chỉ số khối cơ thể (BMI)</div>
+      <div class="big">${bmi.toFixed(1)}</div><span class="bmi-badge" style="background:${bcol}">${bcat}</span></div>
+    <div class="stats">
+      <div class="stat"><div class="num" style="font-size:1.2rem">${Math.round(bmr)}</div><div class="lbl">BMR (kcal)</div></div>
+      <div class="stat"><div class="num" style="font-size:1.2rem">${Math.round(tdee)}</div><div class="lbl">TDEE (kcal)</div></div></div>
+    <div class="metric" style="margin:12px 0;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff">
+      <div style="font-weight:700;font-size:.85rem;opacity:.95">🎯 Calo mục tiêu/ngày (${GOAL_LBL[p.goal]})</div>
+      <div class="big" style="color:#fff">${Math.round(target)} <span style="font-size:1rem;font-weight:700">kcal</span></div>
+      <div style="font-size:.82rem;opacity:.95;margin-top:2px">🥚 Đạm gợi ý ~${protein}g/ngày</div></div>
+    <div class="note-box">⚖️ Số liệu ước tính (công thức Mifflin-St Jeor). Theo dõi 2-3 tuần rồi tinh chỉnh theo thực tế nhé.</div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:1.7rem">🎯🐱</div>
+      <b>Gợi ý lộ trình theo mục tiêu</b>
+      <p style="color:var(--muted);font-size:.85rem;margin:6px 0 0">Sắp tới: Mèo Lực Sĩ sẽ dựa trên hồ sơ này để gợi ý bộ plan phù hợp hơn (giảm mỡ / tăng cơ / tập gym có máy). Plan hiện tại là lộ trình cơ bản cho người mới 🚧</p></div>`;
+}
+function renderProfile(){
+  const p=loadProfile();
+  const sel=(id,opts,cur)=>`<select id="${id}" oninput="calcProfile()">${opts.map(o=>`<option value="${o[0]}" ${o[0]==cur?'selected':''}>${o[1]}</option>`).join('')}</select>`;
+  document.getElementById('v-prof').innerHTML=`
+    <h2 class="sec-title">👤 Hồ sơ của tớ</h2>
+    <div class="card">
+      <div class="frow">
+        <div class="field"><label>Giới tính</label>${sel('pf-sex',[['nam','Nam'],['nu','Nữ']],p.sex||'nu')}</div>
+        <div class="field"><label>Tuổi</label><input id="pf-age" type="number" inputmode="numeric" value="${p.age||''}" oninput="calcProfile()"></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Chiều cao (cm)</label><input id="pf-height" type="number" inputmode="decimal" value="${p.height||''}" oninput="calcProfile()"></div>
+        <div class="field"><label>Cân nặng (kg)</label><input id="pf-weight" type="number" inputmode="decimal" value="${p.weight||''}" oninput="calcProfile()"></div>
+      </div>
+      <div class="field"><label>Mức vận động</label>${sel('pf-act',[[1.2,'Ít vận động (ngồi nhiều)'],[1.375,'Nhẹ (1-3 buổi/tuần)'],[1.55,'Vừa (3-5 buổi/tuần)'],[1.725,'Nhiều (6-7 buổi/tuần)'],[1.9,'Rất nhiều (lao động nặng)']],p.act||1.375)}</div>
+      <div class="field"><label>Mục tiêu</label>${sel('pf-goal',[['giam','Giảm mỡ'],['giu','Giữ dáng'],['tang','Tăng cơ']],p.goal||'giu')}</div>
+      <details><summary style="cursor:pointer;font-weight:700;color:var(--green-d);font-size:.85rem;margin:4px 2px 10px">📐 Số đo cơ thể (tuỳ chọn)</summary>
+        <div class="frow"><div class="field"><label>Eo (cm)</label><input id="pf-waist" type="number" value="${p.waist||''}" oninput="calcProfile()"></div><div class="field"><label>Mông (cm)</label><input id="pf-hip" type="number" value="${p.hip||''}" oninput="calcProfile()"></div></div>
+        <div class="frow"><div class="field"><label>Đùi (cm)</label><input id="pf-thigh" type="number" value="${p.thigh||''}" oninput="calcProfile()"></div><div class="field"><label>Bắp tay (cm)</label><input id="pf-arm" type="number" value="${p.arm||''}" oninput="calcProfile()"></div></div>
+      </details>
+    </div>
+    <div id="pf-results"></div>`;
+  calcProfile();
+}
+
 /* ============ NAV ============ */
 function go(tab, keepSess){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
@@ -581,6 +678,7 @@ function go(tab, keepSess){
   if(tab==='week') renderWeek();
   if(tab==='sess' && !keepSess) renderSessList();
   if(tab==='prog') renderProgress();
+  if(tab==='prof') renderProfile();
   window.scrollTo(0,0);
 }
 document.querySelectorAll('nav.tabbar button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
@@ -696,16 +794,25 @@ function togglePause(){
 }
 
 // Thẻ hướng dẫn ngay trong buổi tập — tự tạm dừng, link mở tab mới (không mất tiến trình)
-let _guidePaused=false;
+let _guidePaused=false, _demoTimer=null;
+function startDemo(folder){
+  clearInterval(_demoTimer); _demoTimer=null;
+  const img=document.getElementById('demoImg'); if(!img) return;
+  const base=DEMO_BASE+folder+'/'; let f=0;
+  img.src=base+'0.jpg';
+  _demoTimer=setInterval(()=>{ f^=1; img.src=base+f+'.jpg'; }, 900);
+}
 function openGuide(){
   if(!P.sess) return;
   const e=P.sess.ex[P.exIdx];
   if(P.timer && !P.paused){ _guidePaused=true; P.paused=true; shutUp(); if(P.redraw) P.redraw(); } else _guidePaused=false;
+  const demo=DEMO[e.n];
   const links=`<div class="links">
     <a class="vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener">▶️ Cách tập đúng</a>
     ${e.gymName?`<a href="${yt(e.gymName.split('/')[0]+' machine how to')}" target="_blank" rel="noopener">🔍 Xem máy tập</a>`:''}</div>`;
   document.getElementById('guideSheet').innerHTML=`
     <div class="guide-card">
+      ${demo?`<img id="demoImg" class="demo-img" alt="Minh hoạ động tác" referrerpolicy="no-referrer" onerror="this.style.display='none'"><div class="demo-cap">🎬 Minh hoạ động tác (đầu → cuối)</div>`:''}
       <div class="guide-h">${e.mi} ${e.n}</div>
       <span class="tag" style="background:${tagColor(e.m)}">${e.m}</span>
       <div class="g-meta">${e.sets} hiệp × ${e.reps}${e.perSide?' (cả 2 bên)':''} • 💡 ${e.tempo}</div>
@@ -717,8 +824,10 @@ function openGuide(){
       <div style="font-size:.74rem;color:var(--muted);text-align:center;margin-top:8px">Video mở ở tab mới — không mất tiến trình tập 🐾</div>
     </div>`;
   document.getElementById('guideSheet').classList.add('show');
+  if(demo) startDemo(demo);
 }
 function closeGuide(){
+  clearInterval(_demoTimer); _demoTimer=null;
   document.getElementById('guideSheet').classList.remove('show');
   if(_guidePaused){ _guidePaused=false; P.paused=false; if(P.redraw) P.redraw(); }
 }
@@ -919,6 +1028,7 @@ function cycleTheme(){ let t='light'; try{ t=localStorage.getItem('meo:theme')||
   }, {passive:true});
 })();
 renderHome();
+try{ const _t=location.hash.slice(1); if(_t && document.getElementById('v-'+_t)) go(_t); }catch(e){}
 
 /* PWA — chạy offline (đăng ký service worker theo đường dẫn tương đối) */
 if('serviceWorker' in navigator){
