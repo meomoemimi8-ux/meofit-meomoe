@@ -133,6 +133,8 @@
   .bodymap .bm-lbl{font-size:.57rem;color:var(--muted);font-weight:700;margin-top:3px;line-height:1.2}
   .ex .gym{font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.45;background:var(--surface-2);padding:9px 11px;border-radius:12px;border-left:4px solid var(--yellow)}
   .ex .gym b{color:var(--ink)}
+  .altbox{font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.45;background:var(--surface-2);padding:9px 11px;border-radius:12px;border-left:4px solid var(--blue)}
+  .altbox b{color:var(--ink)}
   .ex .links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
@@ -380,6 +382,27 @@ const DEMO={
   'Flutter Kick':'Flutter_Kicks',
   'Mountain Climber':'Mountain_Climbers',
   'Leg Raise':'Flat_Bench_Lying_Leg_Raise'
+};
+// Bài thay thế đa dạng (tham khảo nguyên tắc full-body uy tín) — cùng nhóm cơ, đổi cho đỡ chán/thiếu máy
+const ALT={
+  'Leg Press':'Hack Squat · Goblet Squat · Bulgarian Split Squat',
+  'Lat Pulldown':'Pull-up (có hỗ trợ) · Chèo cáp · Chèo tạ đơn',
+  'Chest Press (máy)':'Đẩy ngực tạ đòn/đơn · Chống đẩy · Pec Deck',
+  'Seated Cable Row':'Chèo tạ đơn 1 tay · T-Bar Row · Chèo máy',
+  'Leg Curl (máy)':'Romanian Deadlift · Nordic Curl · Cầu mông',
+  'Cable Crunch':'Gập bụng máy · Plank · Hanging Leg Raise',
+  'Hack Squat':'Leg Press · Squat tạ đòn · Goblet Squat',
+  'Incline Chest Press':'Đẩy ngực dốc tạ đơn · Chống đẩy dốc',
+  'Seated Row (máy)':'Chèo cáp · Chèo tạ đơn · Lat Pulldown',
+  'Leg Extension':'Squat · Lunges · Sissy Squat',
+  'Lateral Raise':'Nâng tạ sang ngang · Cáp lateral · Upright Row',
+  'Hip Thrust (máy)':'Cầu mông tạ đòn · Glute Bridge · Cable Kickback',
+  'Pec Deck Fly':'Đẩy ngực máy · Cable Fly · Chống đẩy',
+  'Assisted Pull-up':'Lat Pulldown · Pull-up dây kháng lực · Chèo ngược',
+  'Romanian Deadlift (tạ)':'Leg Curl · Good Morning · Cầu mông 1 chân',
+  'Shoulder Press (máy)':'Đẩy vai tạ đơn · Arnold Press · Overhead Press',
+  'Hanging Leg Raise':'Captain Chair Raise · Reverse Crunch · Leg Raise',
+  'Plank':'Ab Wheel · Dead Bug · Side Plank'
 };
 function muscleArt(m){
   const img = MUSCLE_IMG[m] || MUSCLE_IMG_FULL; // Khởi động/Toàn thân/Cardio/Dãn cơ → toàn thân
@@ -679,6 +702,7 @@ function openSession(id){
         <span class="tag" style="background:${tagColor(e.m)}">${e.m}</span></div></div>
       <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
       ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
+      ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
     </div>`;
   }).join('');
   document.getElementById('v-sess').innerHTML=`
@@ -739,12 +763,16 @@ function bmiClass(b){
 }
 const GOAL_LBL={giam:'giảm mỡ',giu:'giữ dáng',tang:'tăng cơ'};
 function pv(id){ const el=document.getElementById(id); return el?el.value:''; }
-function calcProfile(){
+let _pfEdit=false;
+function readProfileForm(){
   const p={ sex:pv('pf-sex'), age:+pv('pf-age')||'', height:+pv('pf-height')||'', weight:+pv('pf-weight')||'',
     act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu', macro:pv('pf-macro')||goalMacro(pv('pf-goal')||'giu'), equip:pv('pf-equip')||'home',
     waist:+pv('pf-waist')||'', hip:+pv('pf-hip')||'', thigh:+pv('pf-thigh')||'', arm:+pv('pf-arm')||'' };
   saveProfile(p);
-  { const pp=document.getElementById('pf-plans'); if(pp) pp.innerHTML=planPickerHTML(); }
+  const pp=document.getElementById('pf-plans'); if(pp) pp.innerHTML=planPickerHTML();
+  return p;
+}
+function renderResults(p){
   const r=document.getElementById('pf-results'); if(!r) return;
   if(!p.height||!p.weight||!p.age){ r.innerHTML='<div class="note-box">📏 Nhập đủ <b>tuổi, chiều cao, cân nặng</b> để Mèo Lực Sĩ tính chỉ số cho cậu nhé!</div>'; return; }
   const hm=p.height/100, bmi=p.weight/(hm*hm), [bcat,bcol]=bmiClass(bmi);
@@ -765,12 +793,21 @@ function calcProfile(){
       <div style="font-size:.82rem;opacity:.95;margin-top:3px">🍗 Đạm ${mg.p}g · 🍚 Carb ${mg.c}g · 🥑 Béo ${mg.f}g</div></div>
     <div class="note-box">⚖️ Số liệu ước tính (công thức Mifflin-St Jeor). Theo dõi 2-3 tuần rồi tinh chỉnh theo thực tế nhé.</div>`;
 }
+function calcProfile(){ renderResults(readProfileForm()); }
+function profileSummaryHTML(p){
+  const sexT=p.sex==='nu'?'Nữ':'Nam', goalT=GOAL_LBL[p.goal]||'', eqT={home:'tại nhà',gym:'phòng gym',both:'cả hai'}[p.equip]||'tại nhà';
+  const meas=[p.waist&&'eo '+p.waist,p.hip&&'mông '+p.hip,p.thigh&&'đùi '+p.thigh,p.arm&&'tay '+p.arm].filter(Boolean).join(' · ');
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div style="font-weight:800;font-size:1.05rem">${sexT} · ${p.age} tuổi</div>
+      <button class="btn sec" style="width:auto;padding:8px 14px;flex:none" onclick="_pfEdit=true;renderProfile()">✏️ Cập nhật</button></div>
+    <div style="font-size:.86rem;color:var(--muted);font-weight:600;margin-top:8px;line-height:1.7">📏 ${p.height} cm · ⚖️ ${p.weight} kg · 🎯 ${goalT} · 🏠 ${eqT}${meas?`<br>📐 ${meas}`:''}</div>
+  </div>`;
+}
 function renderProfile(){
-  const p=loadProfile();
+  const p=loadProfile(), complete=p.height&&p.weight&&p.age, showForm=_pfEdit||!complete;
   const sel=(id,opts,cur)=>`<select id="${id}" oninput="calcProfile()">${opts.map(o=>`<option value="${o[0]}" ${o[0]==cur?'selected':''}>${o[1]}</option>`).join('')}</select>`;
-  document.getElementById('v-prof').innerHTML=`
-    <h2 class="sec-title">👤 Hồ sơ của tớ</h2>
-    <div class="card">
+  const form=`<div class="card">
       <div class="frow">
         <div class="field"><label>Giới tính</label>${sel('pf-sex',[['nam','Nam'],['nu','Nữ']],p.sex||'nu')}</div>
         <div class="field"><label>Tuổi</label><input id="pf-age" type="number" inputmode="numeric" value="${p.age||''}" oninput="calcProfile()"></div>
@@ -787,11 +824,15 @@ function renderProfile(){
         <div class="frow"><div class="field"><label>Eo (cm)</label><input id="pf-waist" type="number" value="${p.waist||''}" oninput="calcProfile()"></div><div class="field"><label>Mông (cm)</label><input id="pf-hip" type="number" value="${p.hip||''}" oninput="calcProfile()"></div></div>
         <div class="frow"><div class="field"><label>Đùi (cm)</label><input id="pf-thigh" type="number" value="${p.thigh||''}" oninput="calcProfile()"></div><div class="field"><label>Bắp tay (cm)</label><input id="pf-arm" type="number" value="${p.arm||''}" oninput="calcProfile()"></div></div>
       </details>
-    </div>
+      ${complete?`<button class="btn" style="margin-top:8px" onclick="_pfEdit=false;renderProfile()">✓ Xong</button>`:''}
+    </div>`;
+  document.getElementById('v-prof').innerHTML=`
+    <h2 class="sec-title">👤 Hồ sơ của tớ</h2>
+    ${showForm?form:profileSummaryHTML(p)}
     <div id="pf-results"></div>
     <div id="pf-plans">${planPickerHTML()}</div>
     <div id="pf-track"></div>`;
-  calcProfile();
+  if(showForm) calcProfile(); else renderResults(p);
   renderTrack();
 }
 
@@ -1053,30 +1094,27 @@ function fastReportHTML(){
 function fmtRem(hf){ const h=Math.floor(hf), m=Math.floor((hf-h)*60); return `${h}h${m>0?' '+m+'m':''}`; }
 function hhmm(ts){ const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 const IF_PHASES=[{to:4,n:'Tiêu hoá',e:'🍽️'},{to:8,n:'Hạ đường huyết',e:'📉'},{to:12,n:'Cạn glycogen',e:'⚡'},{to:16,n:'Đốt mỡ',e:'🔥'},{to:99,n:'Tự thực bào',e:'✨'}];
-function ptOC(r,deg){ const a=(deg-90)*Math.PI/180; return [(50+r*Math.cos(a)).toFixed(1),(50+r*Math.sin(a)).toFixed(1)]; }
+function fmtMs(ms){ ms=Math.max(0,ms); const h=Math.floor(ms/3600000), m=Math.floor(ms%3600000/60000); return `${h}h ${String(m).padStart(2,'0')}m`; }
 function ifRingHTML(){
-  const o=loadIF(), proto=o.proto, fastPct=(proto/24*100).toFixed(1);
-  const elapsed = o.start? (Date.now()-o.start)/3600000 : null;
-  const angle = elapsed!=null? Math.min(360, elapsed/24*360) : 0;
-  const phIdx = elapsed!=null? IF_PHASES.findIndex(p=>elapsed<p.to) : -1;
-  let center, sub, face;
-  if(elapsed==null){ face='😺'; center='Sẵn sàng'; sub=`vòng 24h · nhịn ${proto}h + ăn ${24-proto}h`; }
-  else if(elapsed<proto){ const ph=IF_PHASES[phIdx]; face=ph.e; center=ph.n; sub=`${fmtRem(elapsed)} · còn ${fmtRem(proto-elapsed)} đến giờ ăn`; }
-  else if(elapsed<24){ face='😋'; center='Tới giờ ăn!'; sub=`còn ${fmtRem(24-elapsed)} hết chu kỳ`; }
-  else { face='😻'; center='Xong chu kỳ'; sub='bắt đầu vòng mới nhé'; }
-  // vạch giờ + mốc giai đoạn (SVG overlay)
-  let ticks=''; for(let i=0;i<24;i++){ const big=i%6===0; const a=ptOC(big?43:45.5,i*15), b=ptOC(49.5,i*15); ticks+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="rgba(255,255,255,.75)" stroke-width="${big?1.6:.8}"/>`; }
-  let bdots=[4,8,12,16].filter(x=>x<proto).map(x=>{ const p=ptOC(50,x/24*360); return `<circle cx="${p[0]}" cy="${p[1]}" r="2" fill="#fff" stroke="#2f7d3a" stroke-width=".7"/>`; }).join('');
-  const eatPt=ptOC(50,proto/24*360);
-  const eatMark=`<circle cx="${eatPt[0]}" cy="${eatPt[1]}" r="2.6" fill="#e0559b" stroke="#fff" stroke-width="1"/>`;
-  const ring=`<div class="if-ring" style="background:conic-gradient(#7bd389 0 ${fastPct}%, #ffb3d9 ${fastPct}% 100%)">
-      <svg class="if-ticks" viewBox="0 0 100 100">${ticks}${bdots}${eatMark}</svg>
-      ${elapsed!=null?`<div class="if-needle" style="transform:rotate(${angle.toFixed(2)}deg)"><span class="if-dot">🐾</span></div>`:''}
-      <div class="if-ring-in"><div style="font-size:1.7rem;line-height:1">${face}</div><div style="font-size:.92rem;font-weight:800;color:var(--green-d);margin-top:1px">${center}</div><div style="font-size:.62rem;color:var(--muted);font-weight:700;margin-top:2px;padding:0 12px;line-height:1.3">${sub}</div></div>
+  const o=loadIF(), proto=o.proto;
+  if(!o.start){
+    return `<div class="if-ring" style="background:conic-gradient(var(--surface-2) 0 100%)">
+        <div class="if-ring-in"><div style="font-size:1.9rem;line-height:1">😺</div><div style="font-size:.95rem;font-weight:800;color:var(--green-d);margin-top:1px">Sẵn sàng</div><div style="font-size:.62rem;color:var(--muted);font-weight:700;margin-top:2px">nhịn ${proto}h · ăn ${24-proto}h</div></div>
+      </div>
+      <div style="text-align:center;font-size:.76rem;color:var(--muted);font-weight:700;margin-top:12px">Bấm “Bắt đầu nhịn ăn” để Mèo đếm giờ & tính sẵn giờ được ăn 🐾</div>`;
+  }
+  const Fms=proto*3600000, eMs=Date.now()-o.start, prog=Math.min(100,eMs/Fms*100), done=eMs>=Fms, remMs=Fms-eMs;
+  const elapsedH=eMs/3600000, phIdx=Math.min(IF_PHASES.length-1, Math.max(0, IF_PHASES.findIndex(p=>elapsedH<p.to)));
+  const ph=IF_PHASES[phIdx];
+  const ring=`<div class="if-ring" style="background:conic-gradient(${done?'#3fa34d':'#7bd389'} ${prog.toFixed(1)}%, var(--surface-2) 0)">
+      <div class="if-ring-in"><div style="font-size:1.5rem;line-height:1">${done?'🎉':ph.e}</div><div style="font-size:1.35rem;font-weight:800;color:var(--green-d);line-height:1.1">${fmtMs(eMs)}</div><div style="font-size:.6rem;color:var(--muted);font-weight:800;margin-top:1px">/ ${proto}h · ${done?'đủ giờ!':ph.n}</div></div>
+    </div>
+    <div style="text-align:center;font-weight:800;margin-top:10px;color:${done?'var(--green-d)':'var(--ink)'}">${done?'🎉 Đủ giờ nhịn — tới giờ ăn!':`⏳ Còn ${fmtMs(remMs)} đến giờ ăn`}</div>`;
+  const pills=`<div class="if-times">
+      <div class="if-pill"><span>🌙 Bắt đầu</span><b>${hhmm(o.start)}</b></div>
+      <div class="if-pill if-pill--eat"><span>🍽️ Được ăn</span><b>${hhmm(o.start+Fms)}</b></div>
+      <div class="if-pill"><span>⏳ Còn lại</span><b>${done?'0h 00m':fmtMs(remMs)}</b></div>
     </div>`;
-  const pills = o.start
-    ? `<div class="if-times"><div class="if-pill"><span>🌙 Bắt đầu nhịn</span><b>${hhmm(o.start)}</b></div><div class="if-pill if-pill--eat"><span>🍽️ Được ăn lúc</span><b>${hhmm(o.start+proto*3600000)}</b></div></div>`
-    : `<div style="text-align:center;font-size:.76rem;color:var(--muted);font-weight:700;margin-top:10px">Bấm “Bắt đầu nhịn ăn” để Mèo tính sẵn giờ được ăn 🐾</div>`;
   const strip=`<div class="if-phases">${IF_PHASES.map((p,i)=>`<div class="if-ph ${i===phIdx?'on':''}">${p.e}<small>${p.n}</small></div>`).join('')}</div>`;
   return ring+pills+strip;
 }
@@ -1246,6 +1284,7 @@ function openGuide(){
       <div class="ex" style="box-shadow:none;background:transparent;border-left:none;padding:0;margin:0">
         <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
         ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
+        ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
       </div>
       <button class="btn" onclick="closeGuide()">${_guidePaused?'▶️ Đóng & tập tiếp':'✓ Đóng'}</button>
       <div style="font-size:.74rem;color:var(--muted);text-align:center;margin-top:8px">Video mở ở tab mới — không mất tiến trình tập 🐾</div>
