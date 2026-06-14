@@ -216,6 +216,11 @@
   .if-pill span{display:block;font-size:.66rem;color:var(--muted);font-weight:700;margin-bottom:2px}
   .if-pill b{font-size:1.35rem;color:var(--green-d)}
   .if-pill--eat b{color:#e0559b}
+  .if-ticks{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .if-phases{display:flex;gap:4px;margin-top:12px}
+  .if-ph{flex:1;min-width:0;text-align:center;background:var(--surface-2);border-radius:10px;padding:6px 2px;font-size:1rem;opacity:.5}
+  .if-ph small{display:block;font-size:.52rem;color:var(--muted);font-weight:800;line-height:1.1;margin-top:1px}
+  .if-ph.on{opacity:1;background:var(--card);box-shadow:var(--shadow);outline:2px solid var(--green-l)}
   .player .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .player .phase-lbl{font-size:1rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .player .ex-name{font-size:1.55rem;font-weight:800;line-height:1.2;margin-bottom:6px;padding:0 6px}
@@ -1047,24 +1052,33 @@ function fastReportHTML(){
 }
 function fmtRem(hf){ const h=Math.floor(hf), m=Math.floor((hf-h)*60); return `${h}h${m>0?' '+m+'m':''}`; }
 function hhmm(ts){ const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+const IF_PHASES=[{to:4,n:'Tiêu hoá',e:'🍽️'},{to:8,n:'Hạ đường huyết',e:'📉'},{to:12,n:'Cạn glycogen',e:'⚡'},{to:16,n:'Đốt mỡ',e:'🔥'},{to:99,n:'Tự thực bào',e:'✨'}];
+function ptOC(r,deg){ const a=(deg-90)*Math.PI/180; return [(50+r*Math.cos(a)).toFixed(1),(50+r*Math.sin(a)).toFixed(1)]; }
 function ifRingHTML(){
   const o=loadIF(), proto=o.proto, fastPct=(proto/24*100).toFixed(1);
   const elapsed = o.start? (Date.now()-o.start)/3600000 : null;
   const angle = elapsed!=null? Math.min(360, elapsed/24*360) : 0;
+  const phIdx = elapsed!=null? IF_PHASES.findIndex(p=>elapsed<p.to) : -1;
   let center, sub, face;
-  if(elapsed==null){ center='Sẵn sàng'; sub=`nhịn ${proto}h · ăn ${24-proto}h`; face='😺'; }
-  else if(elapsed<proto){ center='Đang nhịn'; sub=`${fmtRem(elapsed)} · còn ${fmtRem(proto-elapsed)}`; face='😼'; }
-  else if(elapsed<24){ center='Tới giờ ăn!'; sub=`còn ${fmtRem(24-elapsed)} hết chu kỳ`; face='😋'; }
-  else { center='Xong chu kỳ'; sub='bắt đầu vòng mới nhé'; face='😻'; }
+  if(elapsed==null){ face='😺'; center='Sẵn sàng'; sub=`vòng 24h · nhịn ${proto}h + ăn ${24-proto}h`; }
+  else if(elapsed<proto){ const ph=IF_PHASES[phIdx]; face=ph.e; center=ph.n; sub=`${fmtRem(elapsed)} · còn ${fmtRem(proto-elapsed)} đến giờ ăn`; }
+  else if(elapsed<24){ face='😋'; center='Tới giờ ăn!'; sub=`còn ${fmtRem(24-elapsed)} hết chu kỳ`; }
+  else { face='😻'; center='Xong chu kỳ'; sub='bắt đầu vòng mới nhé'; }
+  // vạch giờ + mốc giai đoạn (SVG overlay)
+  let ticks=''; for(let i=0;i<24;i++){ const big=i%6===0; const a=ptOC(big?43:45.5,i*15), b=ptOC(49.5,i*15); ticks+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="rgba(255,255,255,.75)" stroke-width="${big?1.6:.8}"/>`; }
+  let bdots=[4,8,12,16].filter(x=>x<proto).map(x=>{ const p=ptOC(50,x/24*360); return `<circle cx="${p[0]}" cy="${p[1]}" r="2" fill="#fff" stroke="#2f7d3a" stroke-width=".7"/>`; }).join('');
+  const eatPt=ptOC(50,proto/24*360);
+  const eatMark=`<circle cx="${eatPt[0]}" cy="${eatPt[1]}" r="2.6" fill="#e0559b" stroke="#fff" stroke-width="1"/>`;
   const ring=`<div class="if-ring" style="background:conic-gradient(#7bd389 0 ${fastPct}%, #ffb3d9 ${fastPct}% 100%)">
+      <svg class="if-ticks" viewBox="0 0 100 100">${ticks}${bdots}${eatMark}</svg>
       ${elapsed!=null?`<div class="if-needle" style="transform:rotate(${angle.toFixed(2)}deg)"><span class="if-dot">🐾</span></div>`:''}
-      <div class="if-ring-in"><div style="font-size:1.9rem;line-height:1">${face}</div><div style="font-size:.95rem;font-weight:800;color:var(--green-d);margin-top:1px">${center}</div><div style="font-size:.64rem;color:var(--muted);font-weight:700;margin-top:2px;padding:0 10px;line-height:1.3">${sub}</div></div>
-    </div>
-    <div style="display:flex;justify-content:center;gap:16px;margin-top:10px;font-size:.76rem;font-weight:800"><span style="color:#2f7d3a">🟢 Nhịn ${proto}h</span><span style="color:#e0559b">🩷 Ăn ${24-proto}h</span></div>`;
+      <div class="if-ring-in"><div style="font-size:1.7rem;line-height:1">${face}</div><div style="font-size:.92rem;font-weight:800;color:var(--green-d);margin-top:1px">${center}</div><div style="font-size:.62rem;color:var(--muted);font-weight:700;margin-top:2px;padding:0 12px;line-height:1.3">${sub}</div></div>
+    </div>`;
   const pills = o.start
     ? `<div class="if-times"><div class="if-pill"><span>🌙 Bắt đầu nhịn</span><b>${hhmm(o.start)}</b></div><div class="if-pill if-pill--eat"><span>🍽️ Được ăn lúc</span><b>${hhmm(o.start+proto*3600000)}</b></div></div>`
     : `<div style="text-align:center;font-size:.76rem;color:var(--muted);font-weight:700;margin-top:10px">Bấm “Bắt đầu nhịn ăn” để Mèo tính sẵn giờ được ăn 🐾</div>`;
-  return ring+pills;
+  const strip=`<div class="if-phases">${IF_PHASES.map((p,i)=>`<div class="if-ph ${i===phIdx?'on':''}">${p.e}<small>${p.n}</small></div>`).join('')}</div>`;
+  return ring+pills+strip;
 }
 function ifCardHTML(){
   const o=loadIF();
