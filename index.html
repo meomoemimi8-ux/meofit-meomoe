@@ -24,6 +24,7 @@
     --shadow:0 8px 22px rgba(63,163,77,.14);
     --r:22px; font-size:16px;
     --paw:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='34'%20height='34'%20viewBox='0%200%2034%2034'%3E%3Cg%20transform='rotate(-25%2017%2017)'%20stroke='%23d65b86'%20stroke-width='1.5'%20stroke-linejoin='round'%3E%3Crect%20x='11'%20y='14.5'%20width='12'%20height='5'%20rx='2.5'%20fill='%23ff8fb1'/%3E%3Crect%20x='6'%20y='11'%20width='5'%20height='12'%20rx='2.5'%20fill='%23ffb3c9'/%3E%3Crect%20x='23'%20y='11'%20width='5'%20height='12'%20rx='2.5'%20fill='%23ffb3c9'/%3E%3Crect%20x='2.5'%20y='9'%20width='4.5'%20height='16'%20rx='2'%20fill='%23ff8fb1'/%3E%3Crect%20x='27'%20y='9'%20width='4.5'%20height='16'%20rx='2'%20fill='%23ff8fb1'/%3E%3C/g%3E%3C/svg%3E") 17 17;
+    --cur-active:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='30'%20height='30'%20viewBox='0%200%2030%2030'%3E%3Ccircle%20cx='15'%20cy='15'%20r='13'%20fill='%23ff8fb1'%20stroke='%23d65b86'%20stroke-width='2.5'/%3E%3Ccircle%20cx='15'%20cy='15'%20r='4.5'%20fill='%23fff'%20stroke='%23d65b86'%20stroke-width='1.5'/%3E%3C/svg%3E") 15 15;
   }
   [data-theme='dark']{
     --bg:#16201a; --bg-1:#1d2a22; --bg-2:#241d2f;
@@ -53,6 +54,7 @@
     cursor:var(--paw),auto;
   }
   a,button{cursor:var(--paw),pointer}
+  *:active{cursor:var(--cur-active),auto !important}
   .flowers{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
   .flowers span{position:absolute;font-size:20px;opacity:.5;animation:float 9s ease-in-out infinite}
   @keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-16px) rotate(12deg)}}
@@ -202,7 +204,12 @@
   .if-ring{position:relative;width:172px;height:172px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center}
   .if-ring-in{width:130px;height:130px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .if-needle{position:absolute;inset:0;transform-origin:50% 50%;transition:transform .9s linear}
-  .if-dot{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--green-d);box-shadow:0 1px 5px rgba(0,0,0,.35)}
+  .if-dot{position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+  .if-times{display:flex;gap:10px;margin-top:14px}
+  .if-pill{flex:1;background:var(--surface-2);border-radius:16px;padding:10px 8px;text-align:center}
+  .if-pill span{display:block;font-size:.66rem;color:var(--muted);font-weight:700;margin-bottom:2px}
+  .if-pill b{font-size:1.35rem;color:var(--green-d)}
+  .if-pill--eat b{color:#e0559b}
   .player .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .player .phase-lbl{font-size:1rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .player .ex-name{font-size:1.55rem;font-weight:800;line-height:1.2;margin-bottom:6px;padding:0 6px}
@@ -966,20 +973,25 @@ function fastReportHTML(){
   </div>`;
 }
 function fmtRem(hf){ const h=Math.floor(hf), m=Math.floor((hf-h)*60); return `${h}h${m>0?' '+m+'m':''}`; }
+function hhmm(ts){ const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function ifRingHTML(){
   const o=loadIF(), proto=o.proto, fastPct=(proto/24*100).toFixed(1);
   const elapsed = o.start? (Date.now()-o.start)/3600000 : null;
   const angle = elapsed!=null? Math.min(360, elapsed/24*360) : 0;
-  let center, sub;
-  if(elapsed==null){ center='⏳ Sẵn sàng'; sub=`Vòng tròn = 24h: nhịn ${proto}h + ăn ${24-proto}h`; }
-  else if(elapsed<proto){ center='🔒 Đang nhịn'; sub=`${fmtRem(elapsed)} · còn ${fmtRem(proto-elapsed)} đến giờ ăn`; }
-  else if(elapsed<24){ center='🍽️ Khung ăn'; sub=`đã ăn ${fmtRem(elapsed-proto)} · còn ${fmtRem(24-elapsed)} hết chu kỳ`; }
-  else { center='✅ Hết chu kỳ'; sub='Bắt đầu chu kỳ mới nhé 🐾'; }
-  return `<div class="if-ring" style="background:conic-gradient(#3fa34d 0 ${fastPct}%, #ffb37a ${fastPct}% 100%)">
-      ${elapsed!=null?`<div class="if-needle" style="transform:rotate(${angle.toFixed(2)}deg)"><span class="if-dot"></span></div>`:''}
-      <div class="if-ring-in"><div style="font-size:1.02rem;font-weight:800;color:var(--green-d)">${center}</div><div style="font-size:.66rem;color:var(--muted);font-weight:700;margin-top:3px;padding:0 8px;line-height:1.3">${sub}</div></div>
+  let center, sub, face;
+  if(elapsed==null){ center='Sẵn sàng'; sub=`nhịn ${proto}h · ăn ${24-proto}h`; face='😺'; }
+  else if(elapsed<proto){ center='Đang nhịn'; sub=`${fmtRem(elapsed)} · còn ${fmtRem(proto-elapsed)}`; face='😼'; }
+  else if(elapsed<24){ center='Tới giờ ăn!'; sub=`còn ${fmtRem(24-elapsed)} hết chu kỳ`; face='😋'; }
+  else { center='Xong chu kỳ'; sub='bắt đầu vòng mới nhé'; face='😻'; }
+  const ring=`<div class="if-ring" style="background:conic-gradient(#7bd389 0 ${fastPct}%, #ffb3d9 ${fastPct}% 100%)">
+      ${elapsed!=null?`<div class="if-needle" style="transform:rotate(${angle.toFixed(2)}deg)"><span class="if-dot">🐾</span></div>`:''}
+      <div class="if-ring-in"><div style="font-size:1.9rem;line-height:1">${face}</div><div style="font-size:.95rem;font-weight:800;color:var(--green-d);margin-top:1px">${center}</div><div style="font-size:.64rem;color:var(--muted);font-weight:700;margin-top:2px;padding:0 10px;line-height:1.3">${sub}</div></div>
     </div>
-    <div style="display:flex;justify-content:center;gap:16px;margin-top:10px;font-size:.76rem;font-weight:700"><span style="color:#2f7d3a">🟢 Nhịn ${proto}h</span><span style="color:#d9822b">🟠 Ăn ${24-proto}h</span></div>`;
+    <div style="display:flex;justify-content:center;gap:16px;margin-top:10px;font-size:.76rem;font-weight:800"><span style="color:#2f7d3a">🟢 Nhịn ${proto}h</span><span style="color:#e0559b">🩷 Ăn ${24-proto}h</span></div>`;
+  const pills = o.start
+    ? `<div class="if-times"><div class="if-pill"><span>🌙 Bắt đầu nhịn</span><b>${hhmm(o.start)}</b></div><div class="if-pill if-pill--eat"><span>🍽️ Được ăn lúc</span><b>${hhmm(o.start+proto*3600000)}</b></div></div>`
+    : `<div style="text-align:center;font-size:.76rem;color:var(--muted);font-weight:700;margin-top:10px">Bấm “Bắt đầu nhịn ăn” để Mèo tính sẵn giờ được ăn 🐾</div>`;
+  return ring+pills;
 }
 function ifCardHTML(){
   const o=loadIF();
@@ -1356,14 +1368,15 @@ function cycleTheme(){ let t='light'; try{ t=localStorage.getItem('meo:theme')||
       s.style.fontSize=(11+Math.random()*10)+'px';
       document.body.appendChild(s); setTimeout(()=>s.remove(),760); }
   }, {passive:true});
-  // vệt chân mèo 🐾 theo con trỏ (chỉ trên thiết bị có chuột)
-  const trail=document.getElementById('trail'); let last=0;
+  // ✨ lấp lánh theo con trỏ (cục tạ hồng)
+  const trail=document.getElementById('trail'); let last=0; const SPK=['✨','💫','⭐','🌟','💖'];
   window.addEventListener('mousemove', e=>{
-    const now=e.timeStamp||performance.now(); if(now-last<70) return; last=now;
-    const p=document.createElement('span'); p.className='paw'; p.textContent='🐾';
-    p.style.left=e.clientX+'px'; p.style.top=e.clientY+'px';
+    const now=e.timeStamp||performance.now(); if(now-last<55) return; last=now;
+    const p=document.createElement('span'); p.className='paw'; p.textContent=SPK[Math.floor(Math.random()*SPK.length)];
+    p.style.left=(e.clientX+(Math.random()*14-7))+'px'; p.style.top=(e.clientY+(Math.random()*14-7))+'px';
+    p.style.fontSize=(9+Math.random()*8)+'px';
     p.style.setProperty('--r',(Math.random()*60-30)+'deg');
-    trail.appendChild(p); setTimeout(()=>p.remove(),900);
+    trail.appendChild(p); setTimeout(()=>p.remove(),800);
   }, {passive:true});
 })();
 renderHome();
