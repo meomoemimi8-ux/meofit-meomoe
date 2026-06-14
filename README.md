@@ -20,13 +20,12 @@ node serve.mjs
 ```
 Rồi mở http://localhost:5520
 
-## Đưa lên mạng (GitHub Pages)
-- Tạo repo riêng cho vũ trụ này, bật **GitHub Pages** (Settings → Pages → branch `main` / root).
-- File `CNAME` gắn tên miền **fit.meomoe.com**.
-- Tại nhà cung cấp tên miền `meomoe.com`, thêm bản ghi:
-  `CNAME  fit  →  <tài-khoản>.github.io`
-- Khi subdomain đã chạy: đổi `href` của thẻ Fitness trong hub `meomoe-multiverse/index.html`
-  sang `https://fit.meomoe.com` (hiện đang trỏ tạm vào `fit/` cùng repo hub).
+## Đưa lên mạng — ĐÃ LIVE 🌐 https://fit.meomoe.com
+- Repo: `meomoemimi8-ux/meofit-meomoe` (Public) · GitHub Pages từ branch `main` / root.
+- `CNAME` = `fit.meomoe.com`; DNS quản lý ở **Cloudflare**: bản ghi `CNAME  fit → meomoemimi8-ux.github.io` (DNS only, đám mây xám).
+- Hub `meomoe-multiverse` đã trỏ thẻ Fitness sang `https://fit.meomoe.com`.
+- **Đây là nguồn DUY NHẤT** — sửa ở đây rồi `git push` là tự deploy. (Không còn bản tạm `/fit/` trong hub.)
+- Muốn lên App Store / CH Play sau này: bọc chính web này bằng **Capacitor** hoặc **PWABuilder** — không cần viết lại.
 
 ## Nguồn tham khảo
 - Nhịp tập (giây/rep) cho người mới: ACSM / hướng dẫn tempo training.
