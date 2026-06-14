@@ -65,7 +65,7 @@
 
   header.top{position:relative;display:flex;align-items:center;gap:10px;justify-content:center;padding:8px 4px 14px}
   header.top .logo{font-size:30px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.12))}
-  .theme-btn{position:absolute;right:2px;top:8px;border:none;background:var(--card);box-shadow:var(--shadow);width:40px;height:40px;border-radius:50%;font-size:1.15rem;cursor:pointer;transition:transform .18s}
+  .theme-btn{position:absolute;right:2px;top:8px;border:none;background:var(--card);box-shadow:var(--shadow);width:40px;height:40px;border-radius:50%;font-size:1.15rem;cursor:var(--paw),pointer;transition:transform .18s}
   .theme-btn:active{transform:scale(.9) rotate(-12deg)}
   header.top h1{font-size:1.45rem;margin:0;font-weight:800;letter-spacing:.5px;
     background:linear-gradient(90deg,var(--green-d),var(--green-l),var(--purple));
@@ -86,7 +86,7 @@
   .stat .num{font-size:1.5rem;font-weight:800;color:var(--green-d)}
   .stat .lbl{font-size:.72rem;color:var(--muted);font-weight:600;margin-top:2px}
 
-  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;border-radius:18px;padding:16px;font-size:1.1rem;font-weight:800;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;box-shadow:0 8px 18px rgba(47,125,58,.35);cursor:pointer;transition:transform .08s;font-family:inherit}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;border-radius:18px;padding:16px;font-size:1.1rem;font-weight:800;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;box-shadow:0 8px 18px rgba(47,125,58,.35);cursor:var(--paw),pointer;transition:transform .08s;font-family:inherit}
   .btn:active{transform:scale(.97)}
   .btn.sec{background:var(--card);color:var(--green-d);border:2px solid var(--green-l);box-shadow:none}
   .btn.rest-day{background:linear-gradient(135deg,#b197fc,#9775fa);box-shadow:0 8px 18px rgba(151,117,250,.35)}
@@ -97,7 +97,7 @@
   .levels{margin-bottom:14px}
   .levels .lab{font-size:.78rem;color:var(--muted);font-weight:700;margin:0 4px 6px}
   .seg{display:flex;gap:6px;background:var(--surface-2);padding:5px;border-radius:16px}
-  .seg button{flex:1;border:none;background:none;padding:9px 4px;border-radius:12px;font-weight:800;color:var(--muted);font-family:inherit;font-size:.8rem;cursor:pointer;line-height:1.15}
+  .seg button{flex:1;border:none;background:none;padding:9px 4px;border-radius:12px;font-weight:800;color:var(--muted);font-family:inherit;font-size:.8rem;cursor:var(--paw),pointer;line-height:1.15}
   .seg button small{display:block;font-size:.62rem;font-weight:600;opacity:.85;margin-top:2px}
   .seg button.on{background:var(--card);color:var(--green-d);box-shadow:var(--shadow)}
 
@@ -109,7 +109,7 @@
   .week-row .body .tg{font-size:.76rem;color:var(--muted)}
   .week-row .dot{width:10px;height:10px;border-radius:50%;flex:none}
 
-  .sess-card{display:flex;align-items:center;gap:14px;padding:16px;border-radius:20px;margin-bottom:12px;color:#fff;cursor:pointer;box-shadow:var(--shadow);transition:transform .08s}
+  .sess-card{display:flex;align-items:center;gap:14px;padding:16px;border-radius:20px;margin-bottom:12px;color:#fff;cursor:var(--paw),pointer;box-shadow:var(--shadow);transition:transform .08s}
   .sess-card:active{transform:scale(.98)}
   .sess-card .ic{font-size:30px}
   .sess-card .info{flex:1}
@@ -138,7 +138,7 @@
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
 
   nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;background:var(--card);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
-  nav.tabbar button{background:none;border:none;flex:1;padding:7px 2px;cursor:pointer;color:var(--muted);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.68rem;font-weight:700;transition:color .15s}
+  nav.tabbar button{background:none;border:none;flex:1;padding:7px 2px;cursor:var(--paw),pointer;color:var(--muted);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.68rem;font-weight:700;transition:color .15s}
   nav.tabbar button .i{font-size:1.35rem;transition:transform .15s}
   nav.tabbar button.active{color:var(--green-d)}
   nav.tabbar button.active .i{transform:translateY(-2px) scale(1.12)}
@@ -148,11 +148,11 @@
   .player .pbar{height:8px;border-radius:8px;background:var(--surface-2);overflow:hidden;margin-bottom:10px}
   .player .pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--green-l),var(--green));transition:width .3s}
   .player .phead{display:flex;justify-content:space-between;align-items:center;font-weight:800;color:var(--green-d);margin-bottom:10px}
-  .player .phead .x{background:var(--card);border:none;width:38px;height:38px;border-radius:50%;font-size:1.1rem;box-shadow:var(--shadow);cursor:pointer;color:var(--ink)}
+  .player .phead .x{background:var(--card);border:none;width:38px;height:38px;border-radius:50%;font-size:1.1rem;box-shadow:var(--shadow);cursor:var(--paw),pointer;color:var(--ink)}
   .player .phead{gap:8px}
   .player #p-session{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .player .phead-btns{display:flex;gap:6px;align-items:center;flex:none}
-  .player .picon{background:var(--card);border:none;width:36px;height:36px;border-radius:50%;font-size:1rem;box-shadow:var(--shadow);cursor:pointer}
+  .player .picon{background:var(--card);border:none;width:36px;height:36px;border-radius:50%;font-size:1rem;box-shadow:var(--shadow);cursor:var(--paw),pointer}
   .player .picon.off{opacity:.4}
   /* thẻ hướng dẫn trong player (không mất tiến trình) */
   .guide-sheet{position:absolute;inset:0;z-index:10;background:rgba(0,0,0,.4);display:none;align-items:flex-end}
@@ -175,23 +175,29 @@
   .metric{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow);text-align:center}
   .metric .big{font-size:2rem;font-weight:800;color:var(--green-d);line-height:1.1}
   .bmi-badge{display:inline-block;padding:3px 12px;border-radius:20px;color:#fff;font-weight:800;font-size:.8rem;margin-top:5px}
+  .plan-card{background:var(--card);border-radius:16px;padding:14px;box-shadow:var(--shadow);margin-bottom:10px}
+  .plan-card.on{outline:3px solid var(--green-l)}
+  .plan-h{font-weight:800;font-size:1.02rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .plan-d{font-size:.82rem;color:var(--muted);margin:6px 0 10px;line-height:1.45}
+  .rec-badge{font-size:.66rem;background:var(--yellow);color:#6a5413;padding:2px 8px;border-radius:10px;font-weight:800}
+  .plan-using{color:var(--green-d);font-weight:800;font-size:.92rem}
   .food-chips{display:flex;flex-wrap:wrap;gap:6px}
-  .food-chip{border:2px solid var(--border);background:var(--card);border-radius:14px;padding:7px 10px;font-size:.76rem;font-weight:700;font-family:inherit;color:var(--green-d);cursor:pointer}
+  .food-chip{border:2px solid var(--border);background:var(--card);border-radius:14px;padding:7px 10px;font-size:.76rem;font-weight:700;font-family:inherit;color:var(--green-d);cursor:var(--paw),pointer}
   .food-chip:active{transform:scale(.95)}
   .food-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:.86rem}
   .food-row span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .food-row b{color:var(--green-d)}
-  .food-row button{border:none;background:none;color:var(--muted);cursor:pointer;font-size:.95rem;flex:none}
+  .food-row button{border:none;background:none;color:var(--muted);cursor:var(--paw),pointer;font-size:.95rem;flex:none}
   .food-thumb{width:34px;height:34px;object-fit:cover;border-radius:8px;flex:none}
   #foodSheet{position:fixed;z-index:120}
-  .food-pick{display:flex;width:100%;align-items:center;gap:8px;border:none;border-bottom:1px solid var(--border);background:none;padding:11px 4px;font-family:inherit;font-size:.9rem;color:var(--ink);cursor:pointer;text-align:left}
+  .food-pick{display:flex;width:100%;align-items:center;gap:8px;border:none;border-bottom:1px solid var(--border);background:none;padding:11px 4px;font-family:inherit;font-size:.9rem;color:var(--ink);cursor:var(--paw),pointer;text-align:left}
   .food-pick span{flex:1}
   .food-pick b{color:var(--green-d);flex:none}
   .food-pick:active{background:var(--surface-2)}
   .fp-cat{font-weight:800;color:var(--green-d);font-size:.82rem;margin:12px 2px 4px}
   #fp-list{max-height:40vh;overflow-y:auto}
   #fp-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px}
-  .fp-tab{flex:none;border:2px solid var(--border);background:var(--card);border-radius:12px;padding:7px 12px;font-size:1.15rem;line-height:1;cursor:pointer}
+  .fp-tab{flex:none;border:2px solid var(--border);background:var(--card);border-radius:12px;padding:7px 12px;font-size:1.15rem;line-height:1;cursor:var(--paw),pointer}
   .fp-tab.on{border-color:var(--green);background:var(--surface-2)}
   .fp-del{flex:none;color:var(--muted);padding:0 4px;font-size:.85rem}
   .macro-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:.78rem}
@@ -199,7 +205,7 @@
   .macro-bar{flex:1;height:9px;border-radius:6px;background:rgba(127,127,127,.18);overflow:hidden}
   .macro-bar i{display:block;height:100%;border-radius:6px;transition:width .3s}
   .macro-row .mv{width:72px;text-align:right;color:var(--muted);font-weight:700;font-size:.72rem;flex:none}
-  .seg-if{flex:1;border:none;background:none;padding:9px 4px;border-radius:12px;font-weight:800;color:var(--muted);font-family:inherit;font-size:.85rem;cursor:pointer}
+  .seg-if{flex:1;border:none;background:none;padding:9px 4px;border-radius:12px;font-weight:800;color:var(--muted);font-family:inherit;font-size:.85rem;cursor:var(--paw),pointer}
   .seg-if.on{background:var(--card);color:var(--green-d);box-shadow:var(--shadow)}
   .if-ring{position:relative;width:172px;height:172px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center}
   .if-ring-in{width:130px;height:130px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
@@ -265,7 +271,7 @@
   h1, .hero .title, h2.sec-title, .player .ex-name{font-family:'Baloo 2','Quicksand',sans-serif}
 
   /* nút cài app (PWA) */
-  .install-fab{position:fixed;right:12px;bottom:78px;z-index:45;border:none;border-radius:999px;padding:11px 16px;font-size:.9rem;font-weight:800;font-family:inherit;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;box-shadow:0 8px 20px rgba(47,125,58,.4);cursor:pointer;display:none;align-items:center;gap:6px;animation:fabPop .4s}
+  .install-fab{position:fixed;right:12px;bottom:78px;z-index:45;border:none;border-radius:999px;padding:11px 16px;font-size:.9rem;font-weight:800;font-family:inherit;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;box-shadow:0 8px 20px rgba(47,125,58,.4);cursor:var(--paw),pointer;display:none;align-items:center;gap:6px;animation:fabPop .4s}
   .install-fab.show{display:inline-flex}
   @keyframes fabPop{0%{transform:scale(0) translateY(20px)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
 
@@ -465,8 +471,76 @@ const WEEK = [
   {dow:'Thứ 6',day:5, sid:4, extra:'+ nhảy dây + dãn cơ', rope:true},
   {dow:'Thứ 7',day:6, sid:1, extra:'+ dãn cơ', rope:false},
 ];
-const weekByDay = d => WEEK.find(w=>w.day===d);
-const sessById = id => SESSIONS.find(s=>s.id===id);
+// ===== Gói 2: Tập gym có máy (toàn thân 3 buổi) =====
+const GYM_SESSIONS=[
+ { id:11, name:'Gym · Toàn thân A', icon:'🔵', grad:'linear-gradient(135deg,#4dabf7,#3b82c4)', ex:[
+   WGS,
+   {n:'Leg Press', en:'Leg press machine', mi:'🦵', m:'Chân', sets:4, reps:'12 lần', work:48, rest:60, type:'reps', tempo:'Đẩy gót, không khoá gối', mp:'Cơ đùi trước (quads), cơ mông', ms:'Gân kheo', gymName:'Tại nhà: Squat / Bulgarian split squat'},
+   {n:'Lat Pulldown', en:'Lat pulldown machine', mi:'🔽', m:'Lưng', sets:4, reps:'12 lần', work:48, rest:60, type:'reps', tempo:'Kéo xuống ngực, siết xô', mp:'Cơ xô (lats)', ms:'Tay trước, vai sau', gymName:'Tại nhà: Pull-up / kéo dây kháng lực'},
+   {n:'Chest Press (máy)', en:'Machine chest press', mi:'💪', m:'Ngực', sets:4, reps:'12 lần', work:48, rest:60, type:'reps', tempo:'Đẩy ra kiểm soát 2s', mp:'Cơ ngực (pectoral)', ms:'Tay sau, vai trước', gymName:'Tại nhà: Chống đẩy'},
+   {n:'Seated Cable Row', en:'Seated cable row', mi:'🚣', m:'Lưng', sets:3, reps:'12 lần', work:36, rest:45, type:'reps', tempo:'Kéo siết bả vai 1s', mp:'Cơ lưng giữa, cơ xô', ms:'Tay trước', gymName:'Tại nhà: Chèo dây kháng lực'},
+   {n:'Leg Curl (máy)', en:'Lying leg curl machine', mi:'🦵', m:'Đùi sau', sets:3, reps:'12 lần', work:36, rest:45, type:'reps', tempo:'Co chậm, siết gân kheo', mp:'Gân kheo (đùi sau)', ms:'Bắp chân', gymName:'Tại nhà: Nordic curl / cầu mông 1 chân'},
+   {n:'Cable Crunch', en:'Cable crunch', mi:'🪢', m:'Core / Bụng', sets:3, reps:'15 lần', work:45, rest:40, type:'reps', tempo:'Gập bụng, siết 1s', mp:'Cơ bụng thẳng', ms:'Cơ bụng chéo', gymName:'Tại nhà: Gập bụng / plank'},
+   PIGEON, WGS_END ]},
+ { id:12, name:'Gym · Toàn thân B', icon:'🟣', grad:'linear-gradient(135deg,#b197fc,#9775fa)', ex:[
+   WGS,
+   {n:'Hack Squat', en:'Hack squat machine', mi:'🦵', m:'Chân', sets:4, reps:'12 lần', work:48, rest:60, type:'reps', tempo:'Xuống sâu, lưng áp đệm', mp:'Cơ đùi trước, cơ mông', ms:'Gân kheo', gymName:'Tại nhà: Goblet squat'},
+   {n:'Incline Chest Press', en:'Incline machine chest press', mi:'💪', m:'Ngực', sets:4, reps:'12 lần', work:48, rest:60, type:'reps', tempo:'Đẩy chếch lên', mp:'Cơ ngực trên', ms:'Vai trước, tay sau', gymName:'Tại nhà: Chống đẩy dốc'},
+   {n:'Seated Row (máy)', en:'Machine seated row', mi:'🚣', m:'Lưng', sets:4, reps:'12 lần', work:48, rest:60, type:'reps', tempo:'Kéo siết bả vai', mp:'Cơ lưng giữa, xô', ms:'Tay trước', gymName:'Tại nhà: Chèo dây'},
+   {n:'Leg Extension', en:'Leg extension machine', mi:'🦵', m:'Chân', sets:3, reps:'15 lần', work:60, rest:45, type:'reps', tempo:'Duỗi siết đùi trước 1s', mp:'Cơ đùi trước (quads)', ms:'—', gymName:'Tại nhà: Wall sit / squat'},
+   {n:'Lateral Raise', en:'Lateral raise', mi:'🦅', m:'Vai', sets:3, reps:'15 lần', work:45, rest:40, type:'reps', tempo:'Nâng ngang vai, hạ chậm', mp:'Cơ vai giữa (deltoid)', ms:'Cơ thang', gymName:'Tại nhà: nâng tạ/chai nước sang ngang'},
+   {n:'Plank', en:'Plank hold', mi:'🪵', m:'Core / Bụng', sets:3, reps:'giữ 60 giây', work:60, rest:40, type:'time', tempo:'Thẳng người, siết bụng', mp:'Cơ lõi', ms:'Vai, mông', gymName:'Ab Wheel'},
+   PIGEON, WGS_END ]},
+ { id:13, name:'Gym · Toàn thân C', icon:'🟢', grad:'linear-gradient(135deg,#3fa34d,#7bd389)', ex:[
+   WGS,
+   {n:'Hip Thrust (máy)', en:'Machine hip thrust', mi:'🍑', m:'Mông', sets:4, reps:'12 lần', work:48, rest:60, type:'reps', tempo:'Đẩy hông lên, siết mông 1s', mp:'Cơ mông lớn', ms:'Gân kheo', gymName:'Tại nhà: cầu mông tạ đòn'},
+   {n:'Pec Deck Fly', en:'Pec deck fly machine', mi:'🦋', m:'Ngực', sets:3, reps:'15 lần', work:60, rest:45, type:'reps', tempo:'Ép ngực, mở chậm', mp:'Cơ ngực', ms:'Vai trước', gymName:'Tại nhà: Chống đẩy / fly dây'},
+   {n:'Assisted Pull-up', en:'Assisted pull up machine', mi:'🔼', m:'Lưng', sets:3, reps:'10 lần', work:40, rest:60, type:'reps', tempo:'Kéo cằm qua xà', mp:'Cơ xô (lats)', ms:'Tay trước', gymName:'Tại nhà: Lat pulldown dây'},
+   {n:'Romanian Deadlift (tạ)', en:'Romanian deadlift', mi:'🦵', m:'Đùi sau', sets:4, reps:'12 lần', work:48, rest:60, type:'reps', tempo:'Hạ chậm, lưng thẳng', mp:'Gân kheo, cơ mông', ms:'Lưng dưới', gymName:'Tại nhà: RDL tạ đơn'},
+   {n:'Shoulder Press (máy)', en:'Machine shoulder press', mi:'🏋️', m:'Vai', sets:3, reps:'12 lần', work:36, rest:45, type:'reps', tempo:'Đẩy lên kiểm soát', mp:'Cơ vai (deltoid)', ms:'Tay sau', gymName:'Tại nhà: đẩy vai tạ đơn'},
+   {n:'Hanging Leg Raise', en:'Hanging leg raise', mi:'🦵', m:'Core / Bụng', sets:3, reps:'12 lần', work:36, rest:40, type:'reps', tempo:'Nâng chân, không đung đưa', mp:'Cơ bụng dưới', ms:'Cơ gập hông', gymName:'Tại nhà: nằm nâng chân'},
+   PIGEON, WGS_END ]},
+];
+const GYM_WEEK=[
+  {dow:'CN',day:0,sid:null,extra:'',rope:false},
+  {dow:'Thứ 2',day:1,sid:11,extra:'+ dãn cơ',rope:false},
+  {dow:'Thứ 3',day:2,sid:null,extra:'',rope:false},
+  {dow:'Thứ 4',day:3,sid:12,extra:'+ dãn cơ',rope:false},
+  {dow:'Thứ 5',day:4,sid:null,extra:'',rope:false},
+  {dow:'Thứ 6',day:5,sid:13,extra:'+ dãn cơ',rope:false},
+  {dow:'Thứ 7',day:6,sid:null,extra:'',rope:false},
+];
+const PLANS={
+  home:{id:'home',name:'Người mới · tại nhà',emoji:'🌱',grad:'linear-gradient(135deg,#3fa34d,#7bd389)',equip:'home',levels:true,sessions:SESSIONS,week:WEEK,
+        desc:'Không cần dụng cụ · 4 buổi/tuần · làm quen kỹ thuật. Lộ trình cơ bản nhất cho người mới.'},
+  gym:{id:'gym',name:'Tập gym có máy · toàn thân',emoji:'🏋️',grad:'linear-gradient(135deg,#4dabf7,#3b82c4)',equip:'gym',levels:false,sessions:GYM_SESSIONS,week:GYM_WEEK,
+        desc:'Dùng máy phòng gym · 3 buổi toàn thân/tuần · tăng cơ & giảm mỡ. Cho người đã quen kỹ thuật.'}
+};
+function curPlanId(){ try{ return localStorage.getItem('meofit_plan')||'home' }catch(e){ return 'home' } }
+function curPlan(){ return PLANS[curPlanId()]||PLANS.home; }
+function setPlan(id){ if(!PLANS[id]) return; try{ localStorage.setItem('meofit_plan',id); }catch(e){} if(getLevel) setLevel(1); renderProfile(); }
+function recommendPlan(){ const p=loadProfile(); return p.equip==='gym'?'gym':'home'; }
+function planPickerHTML(){
+  const p=loadProfile(), cur=curPlanId(), rec=recommendPlan();
+  const goalTxt={giam:'giảm mỡ',giu:'giữ dáng',tang:'tăng cơ'}[p.goal||'giu'];
+  const equipTxt={home:'tại nhà',gym:'ở phòng gym',both:'linh hoạt'}[p.equip||'home'];
+  const cards=Object.values(PLANS).map(pl=>{
+    const active=pl.id===cur, isRec=pl.id===rec;
+    return `<div class="plan-card ${active?'on':''}" style="border-left:6px solid ${pl.grad.match(/#\w+/)[0]}">
+      <div class="plan-h">${pl.emoji} ${pl.name} ${isRec?'<span class="rec-badge">Mèo gợi ý ⭐</span>':''}</div>
+      <div class="plan-d">${pl.desc}</div>
+      ${active?`<div class="plan-using">✅ Đang dùng</div>`:`<button class="btn sec" onclick="setPlan('${pl.id}')">Chọn gói này</button>`}
+    </div>`;
+  }).join('');
+  return `<h2 class="sec-title" style="margin-top:10px">🎯 Lộ trình tập</h2>
+    <div class="card" style="text-align:center">
+      <div style="font-size:1.5rem">🐾🐱</div>
+      <div style="font-weight:800;color:var(--green-d)">Mèo Lực Sĩ gợi ý</div>
+      <p style="color:var(--muted);font-size:.85rem;margin:6px 0 0">Mục tiêu <b>${goalTxt}</b>, tập <b>${equipTxt}</b> → nên theo gói <b>${PLANS[rec].name}</b> 💪</p></div>
+    ${cards}`;
+}
+const weekByDay = d => curPlan().week.find(w=>w.day===d);
+const sessById = id => Object.values(PLANS).flatMap(p=>p.sessions).find(s=>s.id===id);
 
 const ROPE_NOTE = `🪢 <b>Nhảy dây (Thứ 3 & Thứ 6):</b> mỗi buổi <b>5 hiệp × 100 cái</b>. <b>BẮT BUỘC khởi động kỹ</b> trước khi nhảy — nếu không dễ to bắp chuối, hại khớp gối, phản tác dụng. Người mới sức yếu: nhảy nhanh & nhiều cái nhất có thể rồi nghỉ vài giây, tập đều đặn cơ thể sẽ khỏe dần lên.`;
 
@@ -510,7 +584,7 @@ function renderHome(){
   if(sess){
     hero=`<div class="hero" style="background:${sess.grad}">
       <div class="hero-txt">
-        <div class="day">${DOW_FULL[today]} • ${LEVELS[lv].name}</div>
+        <div class="day">${DOW_FULL[today]}${curPlan().levels?' • '+LEVELS[lv].name:' • '+curPlan().name}</div>
         <div class="title">${sess.icon} ${sess.name}</div>
         <div class="sub">${sess.ex.length} bài • ~${estMinutes(sess)} phút • ${w.extra}</div>
         <div class="extra"><span class="chip">${done?'✅ Đã tập hôm nay':'🐾 Sẵn sàng nào!'}</span></div>
@@ -537,7 +611,7 @@ function renderHome(){
       <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng buổi tập</div></div>
       <div class="stat"><div class="num">${done?'✅':'⭕'}</div><div class="lbl">Hôm nay</div></div>
     </div>
-    ${levelSeg('chooseLevelHome')}
+    ${curPlan().levels?levelSeg('chooseLevelHome'):''}
     ${startBtn}
     <div style="height:14px"></div>
     ${ifCardHTML()}
@@ -549,28 +623,28 @@ function renderHome(){
 
 /* ============ WEEK ============ */
 function renderWeek(){
-  const today=new Date().getDay();
-  const rows=WEEK.map(w=>{
+  const today=new Date().getDay(); const pl=curPlan();
+  const rows=pl.week.map(w=>{
     const sess=w.sid?sessById(w.sid):null;
     const color=sess?sess.grad.match(/#\w+/)[0]:'#b197fc';
     const nm=sess?sess.name:'😴 Nghỉ';
     const tg=sess?(w.extra||''):'Thư giãn, nạp năng lượng';
-    return `<div class="week-row ${w.day===today?'today':''}" ${sess?`onclick="openSession(${sess.id})" style="cursor:pointer"`:''}>
+    return `<div class="week-row ${w.day===today?'today':''}" ${sess?`onclick="openSession(${sess.id})" style="cursor:var(--paw),pointer"`:''}>
       <div class="dow">${w.dow}</div><div class="dot" style="background:${color}"></div>
       <div class="body"><div class="nm">${nm}${w.rope?' 🪢':''}</div><div class="tg">${tg}</div></div>
       ${sess?'<span style="opacity:.4">›</span>':''}</div>`;
   }).join('');
   document.getElementById('v-week').innerHTML=`
-    <h2 class="sec-title">📅 Lịch tập trong tuần</h2>
+    <h2 class="sec-title">📅 Lịch tuần · ${pl.emoji} ${pl.name}</h2>
     ${rows}
-    <div class="note-box rope" style="margin-top:8px">${ROPE_NOTE}</div>
-    <div class="note-box" style="margin-top:0">🔁 Tuần sau lặp lại y như trên. Bấm vào một buổi để xem chi tiết & bắt đầu tập nhé!</div>`;
+    ${pl.id==='home'?`<div class="note-box rope" style="margin-top:8px">${ROPE_NOTE}</div>`:''}
+    <div class="note-box" style="margin-top:${pl.id==='home'?'0':'8px'}">🔁 Tuần sau lặp lại y như trên. Bấm vào một buổi để xem chi tiết & bắt đầu tập nhé!</div>`;
 }
 
 /* ============ SESSIONS ============ */
 function renderSessList(){
-  const h=loadHist(), lv=getLevel();
-  const cards=SESSIONS.map(s=>{
+  const h=loadHist(), lv=getLevel(), pl=curPlan();
+  const cards=pl.sessions.map(s=>{
     const cnt=h.filter(e=>e.sid===s.id).length;
     return `<div class="sess-card" style="background:${s.grad}" onclick="openSession(${s.id})">
       <div class="ic">${s.icon}</div>
@@ -578,9 +652,9 @@ function renderSessList(){
       ${cnt?`<span class="badge-done">×${cnt}</span>`:''}<div class="arrow">›</div></div>`;
   }).join('');
   document.getElementById('v-sess').innerHTML=`
-    <h2 class="sec-title">🏋️ 4 Buổi tập</h2>
-    <div style="font-size:.82rem;color:var(--muted);margin:0 4px 12px;font-weight:600">Tập tại nhà, không cần dụng cụ. Mỗi bài có ghi nhóm cơ tác động + gợi ý máy/biến thể khi ra phòng gym.</div>
-    ${levelSeg('chooseLevelList')}
+    <h2 class="sec-title">🏋️ ${pl.emoji} ${pl.name}</h2>
+    <div style="font-size:.82rem;color:var(--muted);margin:0 4px 12px;font-weight:600">${pl.desc} <a onclick="go('prof')" style="color:var(--green-d);font-weight:800">Đổi gói ›</a></div>
+    ${pl.levels?levelSeg('chooseLevelList'):''}
     ${cards}
     <div class="note-box">📺 Nên kết hợp <b>PLAN + xem video</b> để tập chuẩn kỹ thuật, hiệu quả cao & tránh chấn thương nhé!</div>`;
 }
@@ -588,7 +662,7 @@ function chooseLevelList(l){ setLevel(l); renderSessList(); }
 function chooseLevelDetail(l, sid){ setLevel(l); openSession(sid); }
 
 function openSession(id){
-  const s=sessById(id), lv=getLevel(), vid=s.videos[lv];
+  const s=sessById(id), pl=curPlan(), lv=getLevel(), vid=(s.videos&&pl.levels)?s.videos[lv]:null;
   const exs=s.ex.map((e,i)=>{
     const links=`<div class="links">
       <a class="vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener">▶️ Cách tập đúng</a>
@@ -606,11 +680,11 @@ function openSession(id){
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <button class="btn sec" style="width:auto;padding:10px 14px" onclick="renderSessList()">‹ Quay lại</button>
       <div style="font-weight:800;font-size:1.15rem">${s.icon} ${s.name}</div></div>
-    <div class="levels"><div class="lab">🎚️ Cấp độ (đổi video & cường độ):</div><div class="seg">
+    ${pl.levels?`<div class="levels"><div class="lab">🎚️ Cấp độ (đổi video & cường độ):</div><div class="seg">
       ${[1,2,3].map(l=>`<button class="${l===lv?'on':''}" onclick="chooseLevelDetail(${l},${id})">${LEVELS[l].name}<small>${LEVELS[l].desc}</small></button>`).join('')}
-    </div></div>
-    <a class="vidlink" href="https://youtu.be/${vid}" target="_blank" rel="noopener">▶️ Video full ${s.name} — ${LEVELS[lv].name}</a>
-    ${lv===3?`<div class="note-box" style="margin-top:8px">💡 <b>Level 3:</b> thêm tạ tay/tạ đòn hoặc tăng sức cản dây kháng lực cho các bài. Chỉ lên Level 3 khi đã tập chạy kỹ thuật vững.</div>`:'<div style="height:10px"></div>'}
+    </div></div>`:''}
+    ${vid?`<a class="vidlink" href="https://youtu.be/${vid}" target="_blank" rel="noopener">▶️ Video full ${s.name} — ${LEVELS[lv].name}</a>`:''}
+    ${pl.levels&&lv===3?`<div class="note-box" style="margin-top:8px">💡 <b>Level 3:</b> thêm tạ tay/tạ đòn hoặc tăng sức cản dây kháng lực cho các bài. Chỉ lên Level 3 khi đã tập chạy kỹ thuật vững.</div>`:'<div style="height:10px"></div>'}
     ${exs}
     <button class="btn" onclick="startWorkout(${s.id})">▶️ Bắt đầu tập buổi này</button>
     <div style="height:10px"></div>`;
@@ -662,9 +736,10 @@ const GOAL_LBL={giam:'giảm mỡ',giu:'giữ dáng',tang:'tăng cơ'};
 function pv(id){ const el=document.getElementById(id); return el?el.value:''; }
 function calcProfile(){
   const p={ sex:pv('pf-sex'), age:+pv('pf-age')||'', height:+pv('pf-height')||'', weight:+pv('pf-weight')||'',
-    act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu', macro:pv('pf-macro')||goalMacro(pv('pf-goal')||'giu'),
+    act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu', macro:pv('pf-macro')||goalMacro(pv('pf-goal')||'giu'), equip:pv('pf-equip')||'home',
     waist:+pv('pf-waist')||'', hip:+pv('pf-hip')||'', thigh:+pv('pf-thigh')||'', arm:+pv('pf-arm')||'' };
   saveProfile(p);
+  { const pp=document.getElementById('pf-plans'); if(pp) pp.innerHTML=planPickerHTML(); }
   const r=document.getElementById('pf-results'); if(!r) return;
   if(!p.height||!p.weight||!p.age){ r.innerHTML='<div class="note-box">📏 Nhập đủ <b>tuổi, chiều cao, cân nặng</b> để Mèo Lực Sĩ tính chỉ số cho cậu nhé!</div>'; return; }
   const hm=p.height/100, bmi=p.weight/(hm*hm), [bcat,bcol]=bmiClass(bmi);
@@ -683,11 +758,7 @@ function calcProfile(){
       <div style="font-weight:700;font-size:.85rem;opacity:.95">🎯 Calo mục tiêu/ngày (${GOAL_LBL[p.goal]})</div>
       <div class="big" style="color:#fff">${Math.round(target)} <span style="font-size:1rem;font-weight:700">kcal</span></div>
       <div style="font-size:.82rem;opacity:.95;margin-top:3px">🍗 Đạm ${mg.p}g · 🍚 Carb ${mg.c}g · 🥑 Béo ${mg.f}g</div></div>
-    <div class="note-box">⚖️ Số liệu ước tính (công thức Mifflin-St Jeor). Theo dõi 2-3 tuần rồi tinh chỉnh theo thực tế nhé.</div>
-    <div class="card" style="text-align:center">
-      <div style="font-size:1.7rem">🎯🐱</div>
-      <b>Gợi ý lộ trình theo mục tiêu</b>
-      <p style="color:var(--muted);font-size:.85rem;margin:6px 0 0">Sắp tới: Mèo Lực Sĩ sẽ dựa trên hồ sơ này để gợi ý bộ plan phù hợp hơn (giảm mỡ / tăng cơ / tập gym có máy). Plan hiện tại là lộ trình cơ bản cho người mới 🚧</p></div>`;
+    <div class="note-box">⚖️ Số liệu ước tính (công thức Mifflin-St Jeor). Theo dõi 2-3 tuần rồi tinh chỉnh theo thực tế nhé.</div>`;
 }
 function renderProfile(){
   const p=loadProfile();
@@ -706,12 +777,14 @@ function renderProfile(){
       <div class="field"><label>Mức vận động</label>${sel('pf-act',[[1.2,'Ít vận động (ngồi nhiều)'],[1.375,'Nhẹ (1-3 buổi/tuần)'],[1.55,'Vừa (3-5 buổi/tuần)'],[1.725,'Nhiều (6-7 buổi/tuần)'],[1.9,'Rất nhiều (lao động nặng)']],p.act||1.375)}</div>
       <div class="field"><label>Mục tiêu</label>${sel('pf-goal',[['giam','Giảm mỡ'],['giu','Giữ dáng'],['tang','Tăng cơ']],p.goal||'giu')}</div>
       <div class="field"><label>Tỷ lệ dinh dưỡng (đạm/carb/béo)</label>${sel('pf-macro',Object.keys(MACRO_PRESETS).map(k=>[k,MACRO_PRESETS[k].n]),p.macro||goalMacro(p.goal||'giu'))}</div>
-      <details><summary style="cursor:pointer;font-weight:700;color:var(--green-d);font-size:.85rem;margin:4px 2px 10px">📐 Số đo cơ thể (tuỳ chọn)</summary>
+      <div class="field"><label>Bạn tập ở đâu?</label>${sel('pf-equip',[['home','🏠 Tại nhà'],['gym','🏋️ Phòng gym'],['both','🔁 Cả hai']],p.equip||'home')}</div>
+      <details><summary style="cursor:var(--paw),pointer;font-weight:700;color:var(--green-d);font-size:.85rem;margin:4px 2px 10px">📐 Số đo cơ thể (tuỳ chọn)</summary>
         <div class="frow"><div class="field"><label>Eo (cm)</label><input id="pf-waist" type="number" value="${p.waist||''}" oninput="calcProfile()"></div><div class="field"><label>Mông (cm)</label><input id="pf-hip" type="number" value="${p.hip||''}" oninput="calcProfile()"></div></div>
         <div class="frow"><div class="field"><label>Đùi (cm)</label><input id="pf-thigh" type="number" value="${p.thigh||''}" oninput="calcProfile()"></div><div class="field"><label>Bắp tay (cm)</label><input id="pf-arm" type="number" value="${p.arm||''}" oninput="calcProfile()"></div></div>
       </details>
     </div>
     <div id="pf-results"></div>
+    <div id="pf-plans">${planPickerHTML()}</div>
     <div id="pf-track"></div>`;
   calcProfile();
   renderTrack();
@@ -932,7 +1005,7 @@ function caloCardHTML(){
     </div>
     <div id="food-prev" style="font-size:.8rem;color:var(--green-d);font-weight:700;margin:0 2px 8px">${_pendingPhoto?'':''}</div>
     <div class="frow" style="align-items:center">
-      <label class="btn sec" style="width:auto;flex:none;padding:11px 14px;cursor:pointer">📷 Ảnh nhãn<input type="file" accept="image/*" capture="environment" onchange="onFoodPhoto(this)" hidden></label>
+      <label class="btn sec" style="width:auto;flex:none;padding:11px 14px;cursor:var(--paw),pointer">📷 Ảnh nhãn<input type="file" accept="image/*" capture="environment" onchange="onFoodPhoto(this)" hidden></label>
       <img id="food-photo-prev" src="${_pendingPhoto||''}" style="${_pendingPhoto?'display:block':'display:none'};width:42px;height:42px;object-fit:cover;border-radius:10px">
       <button class="btn" style="flex:1" onclick="addFoodManual()">➕ Thêm món</button>
     </div>
