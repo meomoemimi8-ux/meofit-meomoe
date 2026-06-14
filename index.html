@@ -185,7 +185,17 @@
   .food-pick b{color:var(--green-d);flex:none}
   .food-pick:active{background:var(--surface-2)}
   .fp-cat{font-weight:800;color:var(--green-d);font-size:.82rem;margin:12px 2px 4px}
-  #fp-list{max-height:46vh;overflow-y:auto}
+  #fp-list{max-height:42vh;overflow-y:auto}
+  .fp-del{flex:none;color:var(--muted);padding:0 4px;font-size:.85rem}
+  .macro-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:.78rem}
+  .macro-row .ml{width:42px;font-weight:800;color:var(--ink);flex:none}
+  .macro-bar{flex:1;height:9px;border-radius:6px;background:rgba(127,127,127,.18);overflow:hidden}
+  .macro-bar i{display:block;height:100%;border-radius:6px;transition:width .3s}
+  .macro-row .mv{width:72px;text-align:right;color:var(--muted);font-weight:700;font-size:.72rem;flex:none}
+  .seg-if{flex:1;border:none;background:none;padding:9px 4px;border-radius:12px;font-weight:800;color:var(--muted);font-family:inherit;font-size:.85rem;cursor:pointer}
+  .seg-if.on{background:var(--card);color:var(--green-d);box-shadow:var(--shadow)}
+  .if-ring{width:160px;height:160px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center}
+  .if-ring-in{width:128px;height:128px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center}
   .player .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
   .player .phase-lbl{font-size:1rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .player .ex-name{font-size:1.55rem;font-weight:800;line-height:1.2;margin-bottom:6px;padding:0 6px}
@@ -516,8 +526,11 @@ function renderHome(){
     ${levelSeg('chooseLevelHome')}
     ${startBtn}
     <div style="height:14px"></div>
+    ${ifCardHTML()}
     ${w.rope?`<div class="note-box rope">${ROPE_NOTE}</div>`:''}
     <div class="note-box">🌸 <b>Mẹo:</b> Dãn cơ luôn là bài cuối buổi. Trước khi dãn nên làm ấm cơ thể (đi bộ, tắm nước ấm) thì mới hiệu quả. Ai bận có thể dãn cuối ngày trước khi ngủ — ngủ ngon hơn nhiều đó!</div>`;
+  clearInterval(_ifTimer);
+  if(loadIF().start){ updateIfClock(); _ifTimer=setInterval(updateIfClock,1000); }
 }
 
 /* ============ WEEK ============ */
@@ -634,7 +647,7 @@ const GOAL_LBL={giam:'giảm mỡ',giu:'giữ dáng',tang:'tăng cơ'};
 function pv(id){ const el=document.getElementById(id); return el?el.value:''; }
 function calcProfile(){
   const p={ sex:pv('pf-sex'), age:+pv('pf-age')||'', height:+pv('pf-height')||'', weight:+pv('pf-weight')||'',
-    act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu',
+    act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu', macro:pv('pf-macro')||goalMacro(pv('pf-goal')||'giu'),
     waist:+pv('pf-waist')||'', hip:+pv('pf-hip')||'', thigh:+pv('pf-thigh')||'', arm:+pv('pf-arm')||'' };
   saveProfile(p);
   const r=document.getElementById('pf-results'); if(!r) return;
@@ -643,7 +656,7 @@ function calcProfile(){
   const bmr=10*p.weight + 6.25*p.height - 5*p.age + (p.sex==='nu'?-161:5);
   const tdee=bmr*p.act;
   const gf=p.goal==='giam'?0.8:(p.goal==='tang'?1.1:1.0);
-  const target=tdee*gf, protein=Math.round(p.weight*1.8);
+  const target=tdee*gf, mg=macroGrams(target,(MACRO_PRESETS[p.macro]||MACRO_PRESETS.canbang).r);
   r.innerHTML=`
     <div class="metric" style="margin-bottom:12px">
       <div style="color:var(--muted);font-weight:700;font-size:.8rem">Chỉ số khối cơ thể (BMI)</div>
@@ -654,7 +667,7 @@ function calcProfile(){
     <div class="metric" style="margin:12px 0;background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff">
       <div style="font-weight:700;font-size:.85rem;opacity:.95">🎯 Calo mục tiêu/ngày (${GOAL_LBL[p.goal]})</div>
       <div class="big" style="color:#fff">${Math.round(target)} <span style="font-size:1rem;font-weight:700">kcal</span></div>
-      <div style="font-size:.82rem;opacity:.95;margin-top:2px">🥚 Đạm gợi ý ~${protein}g/ngày</div></div>
+      <div style="font-size:.82rem;opacity:.95;margin-top:3px">🍗 Đạm ${mg.p}g · 🍚 Carb ${mg.c}g · 🥑 Béo ${mg.f}g</div></div>
     <div class="note-box">⚖️ Số liệu ước tính (công thức Mifflin-St Jeor). Theo dõi 2-3 tuần rồi tinh chỉnh theo thực tế nhé.</div>
     <div class="card" style="text-align:center">
       <div style="font-size:1.7rem">🎯🐱</div>
@@ -677,6 +690,7 @@ function renderProfile(){
       </div>
       <div class="field"><label>Mức vận động</label>${sel('pf-act',[[1.2,'Ít vận động (ngồi nhiều)'],[1.375,'Nhẹ (1-3 buổi/tuần)'],[1.55,'Vừa (3-5 buổi/tuần)'],[1.725,'Nhiều (6-7 buổi/tuần)'],[1.9,'Rất nhiều (lao động nặng)']],p.act||1.375)}</div>
       <div class="field"><label>Mục tiêu</label>${sel('pf-goal',[['giam','Giảm mỡ'],['giu','Giữ dáng'],['tang','Tăng cơ']],p.goal||'giu')}</div>
+      <div class="field"><label>Tỷ lệ dinh dưỡng (đạm/carb/béo)</label>${sel('pf-macro',Object.keys(MACRO_PRESETS).map(k=>[k,MACRO_PRESETS[k].n]),p.macro||goalMacro(p.goal||'giu'))}</div>
       <details><summary style="cursor:pointer;font-weight:700;color:var(--green-d);font-size:.85rem;margin:4px 2px 10px">📐 Số đo cơ thể (tuỳ chọn)</summary>
         <div class="frow"><div class="field"><label>Eo (cm)</label><input id="pf-waist" type="number" value="${p.waist||''}" oninput="calcProfile()"></div><div class="field"><label>Mông (cm)</label><input id="pf-hip" type="number" value="${p.hip||''}" oninput="calcProfile()"></div></div>
         <div class="frow"><div class="field"><label>Đùi (cm)</label><input id="pf-thigh" type="number" value="${p.thigh||''}" oninput="calcProfile()"></div><div class="field"><label>Bắp tay (cm)</label><input id="pf-arm" type="number" value="${p.arm||''}" oninput="calcProfile()"></div></div>
@@ -747,20 +761,74 @@ function getTargetKcal(){
 }
 function todayKcalOut(){ const t=todayStr(); return loadHist().filter(e=>e.date===t).reduce((s,e)=>s+(e.kcal||0),0); }
 function todayKcalIn(){ const t=todayStr(); return loadFood().filter(e=>e.date===t).reduce((s,e)=>s+(e.kcal||0),0); }
-// Danh sách món ăn Việt cơ bản (calo/khẩu phần — ước tính, tham khảo bảng dinh dưỡng phổ biến)
+// ===== Macro (đạm/carb/béo) =====
+const MACRO_PRESETS={
+  canbang:{n:'Cân bằng (30/40/30)',r:[30,40,30]},
+  giammo:{n:'Giảm mỡ – nhiều đạm (40/30/30)',r:[40,30,30]},
+  tangco:{n:'Tăng cơ – nhiều carb (30/45/25)',r:[30,45,25]},
+  lowcarb:{n:'Low-carb (40/20/40)',r:[40,20,40]}
+};
+function goalMacro(g){ return g==='giam'?'giammo':(g==='tang'?'tangco':'canbang'); }
+function macroGrams(kcal,r){ return {p:Math.round(kcal*r[0]/100/4), c:Math.round(kcal*r[1]/100/4), f:Math.round(kcal*r[2]/100/9)}; }
+function profileMacroRatio(){ const p=loadProfile(); return (MACRO_PRESETS[p.macro||goalMacro(p.goal||'giu')]||MACRO_PRESETS.canbang).r; }
+
+// Danh sách món ăn Việt (calo/khẩu phần; món "(100g)" tính theo 100g — ước tính). mac = tỉ lệ đạm/carb/béo (%kcal) của nhóm.
 const FOODS=[
-  {cat:'🍚 Cơm & tinh bột', items:[['Cơm trắng (1 chén)',180],['Cơm tấm sườn',600],['Cơm chiên',560],['Xôi (1 chén)',300],['Bánh mì thịt',400],['Bánh mì trứng',330],['Bánh cuốn (1 phần)',300],['Bánh chưng (1 miếng)',250],['Khoai lang luộc (1 củ)',120],['Bắp/ngô luộc (1 trái)',100]]},
-  {cat:'🍜 Bún · Phở · Mì', items:[['Phở bò (1 tô)',430],['Phở gà (1 tô)',380],['Bún bò Huế',480],['Bún chả',500],['Bún riêu',400],['Bún thịt nướng',450],['Hủ tiếu',400],['Bánh canh',400],['Miến gà',350],['Mì gói',350]]},
-  {cat:'🍗 Món mặn (đạm)', items:[['Ức gà (100g)',165],['Đùi gà (1 cái)',180],['Thịt heo nạc (100g)',145],['Thịt ba chỉ (100g)',290],['Thịt bò (100g)',180],['Cá (100g)',110],['Tôm (100g)',99],['Trứng luộc (1 quả)',78],['Trứng chiên (1 quả)',110],['Đậu hũ (100g)',76],['Chả lụa (100g)',230],['Nem rán (1 cái)',100]]},
-  {cat:'🥬 Rau & canh', items:[['Rau luộc (1 chén)',35],['Salad (1 phần)',80],['Canh rau',60],['Canh chua',120],['Gỏi cuốn (1 cuốn)',60]]},
-  {cat:'🍌 Trái cây', items:[['Chuối (1 quả)',90],['Táo (1 quả)',80],['Cam (1 quả)',60],['Xoài (1/2 quả)',100],['Dưa hấu (1 lát)',45],['Bơ (1/2 quả)',160],['Nho (1 chùm nhỏ)',90],['Ổi (1 quả)',70]]},
-  {cat:'🥤 Đồ uống', items:[['Cà phê đen',5],['Cà phê sữa',120],['Trà sữa (1 ly)',350],['Nước ngọt (1 lon)',140],['Nước cam (1 ly)',110],['Sữa tươi (1 hộp)',130],['Sữa chua (1 hũ)',105],['Bia (1 lon)',150],['Sinh tố',200]]},
-  {cat:'🍰 Ăn vặt · tráng miệng', items:[['Chè (1 ly)',250],['Bánh ngọt (1 cái)',250],['Kem (1 cây)',200],['Snack (1 gói)',280],['Sô-cô-la (thanh nhỏ)',230],['Khoai tây chiên',320]]}
+  {cat:'🍚 Cơm & tinh bột', mac:[10,78,12], items:[['Cơm trắng (1 chén)',180],['Cơm tấm sườn',600],['Cơm chiên',560],['Xôi (1 chén)',300],['Bánh mì thịt',400],['Bánh mì trứng',330],['Bánh cuốn (1 phần)',300],['Bánh chưng (1 miếng)',250],['Khoai lang luộc (1 củ)',120],['Bắp/ngô luộc (1 trái)',100]]},
+  {cat:'🍜 Bún · Phở · Mì', mac:[20,55,25], items:[['Phở bò (1 tô)',430],['Phở gà (1 tô)',380],['Bún bò Huế',480],['Bún chả',500],['Bún riêu',400],['Bún thịt nướng',450],['Hủ tiếu',400],['Bánh canh',400],['Miến gà',350],['Mì gói',350]]},
+  {cat:'🍗 Món mặn (đạm)', mac:[45,8,47], items:[['Ức gà (100g)',165],['Đùi gà (1 cái)',180],['Thịt heo nạc (100g)',145],['Thịt ba chỉ (100g)',290],['Thịt bò (100g)',180],['Cá (100g)',110],['Tôm (100g)',99],['Trứng luộc (1 quả)',78],['Trứng chiên (1 quả)',110],['Đậu hũ (100g)',76],['Chả lụa (100g)',230],['Nem rán (1 cái)',100]]},
+  {cat:'🥬 Rau & canh', mac:[20,60,20], items:[['Rau luộc (1 chén)',35],['Salad (1 phần)',80],['Canh rau',60],['Canh chua',120],['Gỏi cuốn (1 cuốn)',60]]},
+  {cat:'🍌 Trái cây', mac:[5,92,3], items:[['Chuối (1 quả)',90],['Táo (1 quả)',80],['Cam (1 quả)',60],['Xoài (1/2 quả)',100],['Dưa hấu (1 lát)',45],['Bơ (1/2 quả)',160],['Nho (1 chùm nhỏ)',90],['Ổi (1 quả)',70]]},
+  {cat:'🥤 Đồ uống', mac:[8,84,8], items:[['Cà phê đen',5],['Cà phê sữa',120],['Trà sữa (1 ly)',350],['Nước ngọt (1 lon)',140],['Nước cam (1 ly)',110],['Sữa tươi (1 hộp)',130],['Sữa chua (1 hũ)',105],['Bia (1 lon)',150],['Sinh tố',200]]},
+  {cat:'🍰 Ăn vặt · tráng miệng', mac:[8,55,37], items:[['Chè (1 ly)',250],['Bánh ngọt (1 cái)',250],['Kem (1 cây)',200],['Snack (1 gói)',280],['Sô-cô-la (thanh nhỏ)',230],['Khoai tây chiên',320]]}
 ];
-let _pendingPhoto='';
-function addFood(name,kcal,photo){ kcal=+kcal; if(!kcal) return; const f=loadFood(); f.push({date:todayStr(),ts:Date.now(),name:name||'Bữa ăn',kcal,photo:photo||''}); saveFood(f); _pendingPhoto=''; renderProgress(); }
-function addFoodManual(){ addFood(pv('food-name'), pv('food-kcal'), _pendingPhoto); }
+// "Món của tôi" — user tự nhập, lưu lại tái dùng. {name, base(kcal/đơn vị), gram(bool: base theo 100g), p,c,f (g/đơn vị)}
+function loadMyFoods(){ try{ return JSON.parse(localStorage.getItem('meofit_myfoods'))||[] }catch(e){ return [] } }
+function saveMyFoods(a){ try{ localStorage.setItem('meofit_myfoods', JSON.stringify(a)); }catch(e){} }
+let _pendingPhoto='', _sel=null;
+function addFood(name,kcal,p,c,f,photo){ kcal=+kcal; if(!kcal&&!(+p||+c||+f)) return;
+  const fd=loadFood(); fd.push({date:todayStr(),ts:Date.now(),name:name||'Bữa ăn',kcal:Math.round(kcal),p:Math.round(+p||0),c:Math.round(+c||0),f:Math.round(+f||0),photo:photo||''});
+  saveFood(fd); _pendingPhoto=''; renderProgress(); }
+function addQuick(name,kcal){ const g=macroGrams(kcal,[20,50,30]); addFood(name,kcal,g.p,g.c,g.f,''); }
 function delFood(ts){ saveFood(loadFood().filter(e=>e.ts!==ts)); renderProgress(); }
+function todayMacros(){ const t=todayStr(); return loadFood().filter(e=>e.date===t).reduce((s,e)=>({p:s.p+(e.p||0),c:s.c+(e.c||0),f:s.f+(e.f||0)}),{p:0,c:0,f:0}); }
+function macroBar(lbl,cur,tot,col){ const pct=tot?Math.min(100,cur/tot*100):0; return `<div class="macro-row"><span class="ml">${lbl}</span><span class="macro-bar"><i style="width:${pct}%;background:${col}"></i></span><span class="mv">${cur}/${tot}g</span></div>`; }
+// Tự nhập món: nhập kcal & macro theo 100g (đọc từ nhãn) + số gram → tính tổng; lưu "Món của tôi"
+function addFoodManual(){
+  const name=pv('food-name'), k100=+pv('food-kcal')||0, g=+pv('food-gram')||100;
+  if(!k100){ alert('Nhập calo (trên 100g, hoặc tổng nếu để 100g) nhé 🐾'); return; }
+  const p100=+pv('food-p')||0, c100=+pv('food-c')||0, f100=+pv('food-f')||0, sc=g/100;
+  if(name){ const mf=loadMyFoods().filter(x=>x.name.toLowerCase()!==name.toLowerCase()); mf.unshift({name,base:k100,gram:true,p:p100,c:c100,f:f100}); saveMyFoods(mf.slice(0,40)); }
+  let P=p100*sc,C=c100*sc,F=f100*sc;
+  if(!p100&&!c100&&!f100){ const gg=macroGrams(k100*sc,[20,50,30]); P=gg.p;C=gg.c;F=gg.f; }
+  addFood((name||'Món tự nhập')+(g!==100?` ${g}g`:''), k100*sc, P, C, F, _pendingPhoto);
+}
+// Chọn món → nhập gram/phần → scale
+function selectFood(name,base,ci){ _sel={name,base:+base,ci:+ci,gram:/100g/i.test(name)}; showAmount(); }
+function selectMyFood(i){ const m=loadMyFoods()[i]; if(!m) return; _sel={name:m.name,base:m.base,ci:-1,gram:!!m.gram,perUnit:true,p:m.p||0,c:m.c||0,f:m.f||0}; showAmount(); }
+function showAmount(){
+  const ap=document.getElementById('fp-amount'); if(!ap||!_sel) return;
+  ap.style.display='block';
+  ap.innerHTML=`<div style="font-weight:800;margin-bottom:6px">${_sel.name}</div>
+    <div class="frow" style="align-items:flex-end">
+      <div class="field" style="margin:0;flex:1"><label>${_sel.gram?'Số gram (g)':'Số phần'}</label><input id="fp-amt" type="number" inputmode="decimal" value="${_sel.gram?100:1}" oninput="amtPrev()"></div>
+      <button class="btn" style="flex:none;width:auto;padding:11px 16px" onclick="confirmSel()">➕ Thêm</button>
+    </div>
+    <div id="fp-amt-prev" style="font-size:.82rem;color:var(--green-d);font-weight:700;margin-top:6px"></div>`;
+  amtPrev();
+}
+function amtScale(){ if(!_sel) return 0; const a=+pv('fp-amt')||0; return _sel.gram? a/100 : a; }
+function amtPrev(){ const el=document.getElementById('fp-amt-prev'); if(el&&_sel) el.textContent='≈ '+Math.round(_sel.base*amtScale())+' kcal'; }
+function confirmSel(){
+  if(!_sel) return; const sc=amtScale(); if(!sc) return; const amt=+pv('fp-amt'); const kcal=_sel.base*sc;
+  let P,C,F;
+  if(_sel.perUnit){ P=(_sel.p||0)*sc; C=(_sel.c||0)*sc; F=(_sel.f||0)*sc; }
+  else { const r=(FOODS[_sel.ci]&&FOODS[_sel.ci].mac)||[20,50,30]; const gg=macroGrams(kcal,r); P=gg.p;C=gg.c;F=gg.f; }
+  const nm=_sel.gram? `${_sel.name.replace(/\s*\(100g\)/i,'')} ${amt}g` : (amt!==1?`${_sel.name} x${amt}`:_sel.name);
+  addFood(nm,kcal,P,C,F,''); const t=document.getElementById('fp-total'); if(t) t.textContent=todayKcalIn();
+  const ap=document.getElementById('fp-amount'); if(ap){ ap.style.display='none'; ap.innerHTML=''; } _sel=null;
+}
+function delMyFood(i){ const m=loadMyFoods(); m.splice(i,1); saveMyFoods(m); renderFoodList(pv('fp-search')); }
 function onFoodPhoto(input){
   const file=input.files&&input.files[0]; if(!file) return;
   const rd=new FileReader();
@@ -779,29 +847,42 @@ function openFoodPicker(){
     <div class="guide-h">🍱 Chọn món ăn <span style="float:right;font-size:.8rem;color:var(--green-d)">Hôm nay <span id="fp-total">${todayKcalIn()}</span> kcal</span></div>
     <input id="fp-search" placeholder="🔍 Tìm món…" oninput="renderFoodList(this.value)" style="width:100%;box-sizing:border-box;border:2px solid var(--border);border-radius:14px;padding:10px 13px;font-size:1rem;font-family:inherit;margin:8px 0 10px;background:var(--card);color:var(--ink)">
     <div id="fp-list"></div>
+    <div id="fp-amount" style="display:none;border-top:2px solid var(--border);margin-top:10px;padding-top:10px"></div>
     <button class="btn" onclick="closeFoodPicker()" style="margin-top:12px">✓ Xong</button>
-    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:8px">Calo là ước tính theo khẩu phần phổ biến 🐾</div>
+    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:8px">Chọn món → nhập gram/số phần. Calo là ước tính 🐾</div>
   </div>`;
   sh.classList.add('show'); renderFoodList('');
 }
-function closeFoodPicker(){ document.getElementById('foodSheet').classList.remove('show'); }
+function closeFoodPicker(){ _sel=null; document.getElementById('foodSheet').classList.remove('show'); }
 function renderFoodList(q){
   const el=document.getElementById('fp-list'); if(!el) return;
   q=(q||'').trim().toLowerCase();
-  const it=(n,k)=>`<button class="food-pick" onclick="pickFood('${n.replace(/'/g,"\\'")}',${k})"><span>${n}</span><b>${k} kcal</b></button>`;
+  const my=loadMyFoods();
+  const bi=(n,k,ci)=>`<button class="food-pick" onclick="selectFood('${n.replace(/'/g,"\\'")}',${k},${ci})"><span>${n}</span><b>${k} kcal${/100g/i.test(n)?'/100g':''}</b></button>`;
+  const myItem=(m,i)=>`<button class="food-pick" onclick="selectMyFood(${i})"><span>⭐ ${m.name}</span><b>${m.base} kcal${m.gram?'/100g':''}</b><span class="fp-del" onclick="event.stopPropagation();delMyFood(${i})">✕</span></button>`;
   if(q){
-    const f=FOODS.flatMap(c=>c.items).filter(x=>x[0].toLowerCase().includes(q));
-    el.innerHTML=f.length?f.map(x=>it(x[0],x[1])).join(''):'<div class="empty" style="padding:12px">Không thấy món này — dùng “Tự nhập” bên dưới nhé 🐾</div>';
-  } else el.innerHTML=FOODS.map(c=>`<div class="fp-cat">${c.cat}</div>${c.items.map(x=>it(x[0],x[1])).join('')}`).join('');
+    let html=my.map((m,i)=>[m,i]).filter(a=>a[0].name.toLowerCase().includes(q)).map(a=>myItem(a[0],a[1])).join('');
+    FOODS.forEach((c,ci)=>c.items.forEach(x=>{ if(x[0].toLowerCase().includes(q)) html+=bi(x[0],x[1],ci); }));
+    el.innerHTML=html||'<div class="empty" style="padding:12px">Không thấy — dùng “Tự nhập” bên dưới nhé 🐾</div>';
+  } else {
+    let html = my.length?`<div class="fp-cat">⭐ Món của tôi</div>${my.map((m,i)=>myItem(m,i)).join('')}`:'';
+    html += FOODS.map((c,ci)=>`<div class="fp-cat">${c.cat}</div>${c.items.map(x=>bi(x[0],x[1],ci)).join('')}`).join('');
+    el.innerHTML=html;
+  }
 }
-function pickFood(n,k){ addFood(n,k); const t=document.getElementById('fp-total'); if(t) t.textContent=todayKcalIn(); }
+function manualPrev(){ const el=document.getElementById('food-prev'); if(!el) return; const k=+pv('food-kcal')||0,g=+pv('food-gram')||0; el.textContent=(k&&g)?`≈ ${Math.round(k*g/100)} kcal tổng (cho ${g}g)`:''; }
 function caloCardHTML(){
   const inn=todayKcalIn(), out=todayKcalOut(), target=getTargetKcal();
-  const presets=[['Cơm 1 chén',200],['Phở/Bún',400],['Bánh mì',300],['Trứng',80],['Ức gà 100g',165],['Chuối',90],['Sữa chua',120],['Trà sữa',350]];
-  const chips=presets.map(p=>`<button class="food-chip" onclick="addFood('${p[0]}',${p[1]})">${p[0]} +${p[1]}</button>`).join('');
+  const presets=[['Cơm 1 chén',180],['Phở/Bún',430],['Bánh mì',400],['Trứng',78],['Ức gà 100g',165],['Chuối',90],['Sữa chua',105],['Trà sữa',350]];
+  const chips=presets.map(p=>`<button class="food-chip" onclick="addQuick('${p[0]}',${p[1]})">${p[0]} +${p[1]}</button>`).join('');
   const food=loadFood().filter(e=>e.date===todayStr()).sort((a,b)=>b.ts-a.ts);
-  const foodList=food.length?food.map(e=>`<div class="food-row">${e.photo?`<img src="${e.photo}" class="food-thumb" alt="">`:''}<span>${e.name}</span><b>${e.kcal} kcal</b><button onclick="delFood(${e.ts})">✕</button></div>`).join(''):'<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:6px">Chưa nạp gì hôm nay</div>';
+  const foodList=food.length?food.map(e=>`<div class="food-row">${e.photo?`<img src="${e.photo}" class="food-thumb" alt="">`:''}<span>${e.name}${(e.p||e.c||e.f)?`<br><small style="color:var(--muted)">Đ ${e.p||0} · C ${e.c||0} · B ${e.f||0} g</small>`:''}</span><b>${e.kcal} kcal</b><button onclick="delFood(${e.ts})">✕</button></div>`).join(''):'<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:6px">Chưa nạp gì hôm nay</div>';
   const remain = target!=null ? (target-inn+out) : null;
+  const tm = target!=null? macroGrams(target, profileMacroRatio()) : null;
+  const dm = todayMacros();
+  const bars = tm? `<div style="margin-top:12px;background:var(--surface-2);border-radius:14px;padding:11px 13px">
+      <div style="font-weight:700;font-size:.78rem;color:var(--muted);margin-bottom:6px">🥗 Dinh dưỡng hôm nay</div>
+      ${macroBar('Đạm',dm.p,tm.p,'#ff6b6b')}${macroBar('Carb',dm.c,tm.c,'#4dabf7')}${macroBar('Béo',dm.f,tm.f,'#ffa94d')}</div>`:'';
   return `<div class="card">
     <h2 class="sec-title" style="margin:0 0 10px">🔥 Calo hôm nay</h2>
     <div class="stats" style="margin-bottom:10px">
@@ -811,17 +892,25 @@ function caloCardHTML(){
     </div>
     ${target!=null
       ? `<div class="metric" style="background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;padding:13px"><div style="font-size:.82rem;opacity:.95">Mục tiêu ${target} kcal/ngày · ${remain>=0?'còn có thể nạp':'đã vượt'}</div><div class="big" style="color:#fff;font-size:1.7rem">${Math.abs(remain)} kcal</div></div>`
-      : `<div class="note-box">Vào tab 👤 <b>Cá nhân</b> nhập hồ sơ để có <b>mục tiêu calo</b> nhé!</div>`}
+      : `<div class="note-box">Vào tab 👤 <b>Cá nhân</b> nhập hồ sơ để có <b>mục tiêu calo & macro</b> nhé!</div>`}
+    ${bars}
     <button class="btn sec" onclick="openFoodPicker()" style="margin:12px 0 8px">🍱 Chọn từ danh sách món ăn Việt</button>
     <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:6px 2px 6px">⚡ Thêm nhanh:</div>
     <div class="food-chips">${chips}</div>
-    <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">✏️ Tự nhập món (kèm ảnh nếu muốn):</div>
-    <div class="frow" style="align-items:flex-end">
-      <div class="field" style="margin:0;flex:2"><input id="food-name" placeholder="Tên món"></div>
-      <div class="field" style="margin:0;flex:1"><input id="food-kcal" type="number" inputmode="numeric" placeholder="kcal"></div>
+    <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">✏️ Tự nhập (theo 100g · gõ từ nhãn dinh dưỡng nếu có):</div>
+    <div class="field" style="margin:0 0 8px"><input id="food-name" placeholder="Tên món (lưu vào ‘Món của tôi’)"></div>
+    <div class="frow">
+      <div class="field" style="margin:0;flex:1"><label>kcal /100g</label><input id="food-kcal" type="number" inputmode="numeric" placeholder="vd 200" oninput="manualPrev()"></div>
+      <div class="field" style="margin:0;flex:1"><label>Số gram</label><input id="food-gram" type="number" inputmode="decimal" value="100" oninput="manualPrev()"></div>
     </div>
-    <div class="frow" style="align-items:center;margin-top:8px">
-      <label class="btn sec" style="width:auto;flex:none;padding:11px 14px;cursor:pointer">📷 Ảnh<input type="file" accept="image/*" capture="environment" onchange="onFoodPhoto(this)" hidden></label>
+    <div class="frow">
+      <div class="field" style="margin:0;flex:1"><label>Đạm/100g</label><input id="food-p" type="number" inputmode="decimal" placeholder="g"></div>
+      <div class="field" style="margin:0;flex:1"><label>Carb/100g</label><input id="food-c" type="number" inputmode="decimal" placeholder="g"></div>
+      <div class="field" style="margin:0;flex:1"><label>Béo/100g</label><input id="food-f" type="number" inputmode="decimal" placeholder="g"></div>
+    </div>
+    <div id="food-prev" style="font-size:.8rem;color:var(--green-d);font-weight:700;margin:0 2px 8px">${_pendingPhoto?'':''}</div>
+    <div class="frow" style="align-items:center">
+      <label class="btn sec" style="width:auto;flex:none;padding:11px 14px;cursor:pointer">📷 Ảnh nhãn<input type="file" accept="image/*" capture="environment" onchange="onFoodPhoto(this)" hidden></label>
       <img id="food-photo-prev" src="${_pendingPhoto||''}" style="${_pendingPhoto?'display:block':'display:none'};width:42px;height:42px;object-fit:cover;border-radius:10px">
       <button class="btn" style="flex:1" onclick="addFoodManual()">➕ Thêm món</button>
     </div>
@@ -829,8 +918,35 @@ function caloCardHTML(){
   </div>`;
 }
 
+/* ============ NHỊN ĂN GIÁN ĐOẠN (Intermittent Fasting) ============ */
+let _ifTimer=null;
+function loadIF(){ try{ return JSON.parse(localStorage.getItem('meofit_if'))||{proto:16,start:null} }catch(e){ return {proto:16,start:null} } }
+function saveIF(o){ try{ localStorage.setItem('meofit_if', JSON.stringify(o)); }catch(e){} }
+function setIFProto(h){ const o=loadIF(); o.proto=h; saveIF(o); renderHome(); }
+function startFast(){ const o=loadIF(); o.start=Date.now(); saveIF(o); renderHome(); }
+function stopFast(){ if(!confirm('Kết thúc nhịn ăn?')) return; const o=loadIF(); o.start=null; saveIF(o); renderHome(); }
+function ifCardHTML(){
+  const o=loadIF();
+  const segs=[14,16,18,20].map(h=>`<button class="seg-if ${o.proto===h?'on':''}" onclick="setIFProto(${h})">${h}:${24-h}</button>`).join('');
+  const body = o.start
+    ? `<div id="if-status"></div><button class="btn sec" style="margin-top:10px" onclick="stopFast()">⛔ Kết thúc nhịn</button>`
+    : `<div class="seg" style="margin-bottom:10px">${segs}</div><button class="btn" onclick="startFast()">⏳ Bắt đầu nhịn ăn (${o.proto}:${24-o.proto})</button><div style="font-size:.74rem;color:var(--muted);text-align:center;margin-top:8px">Nhịn ${o.proto}h · khung ăn ${24-o.proto}h</div>`;
+  return `<div class="card"><h2 class="sec-title" style="margin:0 0 10px">⏳ Nhịn ăn gián đoạn</h2>${body}</div>`;
+}
+function updateIfClock(){
+  const o=loadIF(); const el=document.getElementById('if-status'); if(!el||!o.start){ clearInterval(_ifTimer); return; }
+  const F=o.proto*3600000, e=Date.now()-o.start, pct=Math.min(100,e/F*100);
+  const h=Math.floor(e/3600000), m=Math.floor(e%3600000/60000), s=Math.floor(e%60000/1000);
+  const done=e>=F, rem=Math.max(0,F-e), rh=Math.floor(rem/3600000), rm=Math.floor(rem%3600000/60000);
+  el.innerHTML=`<div style="text-align:center">
+    <div class="if-ring" style="background:conic-gradient(${done?'var(--green)':'var(--green-l)'} ${pct.toFixed(1)}%, var(--surface-2) 0)">
+      <div class="if-ring-in"><div style="font-size:1.45rem;font-weight:800;color:var(--green-d)">${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div><div style="font-size:.7rem;color:var(--muted);font-weight:700">đã nhịn / ${o.proto}h</div></div></div>
+    <div style="font-weight:800;margin-top:10px;color:${done?'var(--green-d)':'var(--ink)'}">${done?'🎉 Đủ giờ nhịn — mở khung ăn!':`⏳ Còn ${rh}h ${String(rm).padStart(2,'0')}m đến khung ăn`}</div></div>`;
+}
+
 /* ============ NAV ============ */
 function go(tab, keepSess){
+  clearInterval(_ifTimer);
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
   document.getElementById('v-'+tab).classList.add('show');
   document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
