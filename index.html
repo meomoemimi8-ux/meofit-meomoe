@@ -215,6 +215,10 @@
   .pk-reps{flex:none;width:78px;padding:5px 7px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.74rem;background:var(--card);color:var(--ink)}
   .pk-x{flex:none;border:none;background:none;color:var(--muted);font-size:.9rem;cursor:var(--paw),pointer;padding:4px}
   .lib-need.ok{color:var(--green-d);font-weight:800}
+  .g-rec{font-size:.64rem;font-weight:800;color:#1f7a52;background:var(--green-l);padding:2px 7px;border-radius:8px}
+  .fchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .fchip{border:1.5px solid var(--border);background:var(--surface-2);color:var(--muted);border-radius:999px;padding:6px 11px;font-size:.78rem;font-weight:700;font-family:inherit;cursor:var(--paw),pointer}
+  .fchip.on{background:var(--green-l);border-color:var(--green-d);color:#1f7a52}
   .focus-card{background:var(--card);border-radius:16px;padding:15px;box-shadow:var(--shadow);margin-bottom:11px;cursor:var(--paw),pointer;transition:transform .08s}
   .focus-card:active{transform:scale(.99)}
   .fc-h{font-weight:800;font-size:1.04rem;display:flex;align-items:center}
@@ -913,7 +917,9 @@ function renderBuilder(){
   // ===== Đã chọn focus → chỉ hiện nhóm cơ của buổi đó =====
   const free=_focus==='free';
   const f=free?null:FOCUSES[_focus];
-  const groups=free?LIB_BUCKETS.map(b=>[b,0]):f.groups;
+  const userFocus=profFocus(loadProfile());
+  let groups=free?LIB_BUCKETS.map(b=>[b,0]):f.groups.map(([g,c])=>[g, userFocus.includes(g)?c+1:c]);
+  if(!free) groups=groups.slice().sort((a,b)=>(userFocus.includes(b[0])?1:0)-(userFocus.includes(a[0])?1:0));
   const groupKeys=groups.map(g=>g[0]);
   const target={}; groups.forEach(([g,c])=>target[g]=c);
   const cnt={}; groupKeys.forEach(b=>cnt[b]=0);
@@ -921,15 +927,15 @@ function renderBuilder(){
   const rmul=DIFF[_diff].restMul;
   const totalMin=_picked.length?Math.round(_picked.reduce((s,k)=>{const[b,n]=k.split('::');const e=libFind(b,n);const c=cfgFor(k);return s+(e?c.sets*e.work+(c.sets-1)*Math.round((e.rest||30)*rmul):0);},0)/60)+8:0;
   const balance=groups.map(([b,need])=>{const have=cnt[b],ok=need?have>=need:have>0;const col=have===0?'var(--muted)':(ok?'var(--green-d)':'var(--orange)');return `<span class="bchip" style="color:${col};border-color:${col}">${EX_LIB.find(g=>g.key===b).emoji} ${b} ${have}${need?'/'+need:''}</span>`;}).join('');
-  const lib=EX_LIB.filter(g=>groupKeys.includes(g.key)).map(g=>{
-    const need=target[g.key]||0, done=need&&cnt[g.key]>=need;
+  const lib=groupKeys.map(gk=>EX_LIB.find(g=>g.key===gk)).filter(Boolean).map(g=>{
+    const need=target[g.key]||0, done=need&&cnt[g.key]>=need, fav=userFocus.includes(g.key);
     const rows=g.items.map(e=>{const key=g.key+'::'+e.n,on=_picked.includes(key);
       return `<div class="lib-row ${on?'on':''}" onclick="togglePickEx('${g.key}::${e.n.replace(/'/g,"\\'")}')">
         <div class="lib-pick">${on?'✓':'＋'}</div>
         <div class="lib-info"><div class="lib-n">${e.mi} ${e.n}</div><div class="lib-m">${e.sets} hiệp × ${e.reps} · ${e.mp}</div></div>
         <a class="lib-vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶️</a></div>`;}).join('');
     return `<details class="lib-grp" style="border-left:5px solid ${tagColor(g.key)}" open>
-      <summary>${g.emoji} ${g.key} <span class="lib-need ${done?'ok':''}">${done?'✓ đủ rồi':'nên chọn '+need+' bài'} · đã chọn ${cnt[g.key]}</span></summary>${rows}</details>`;}).join('');
+      <summary>${g.emoji} ${g.key} ${fav?'<span class="g-rec">⭐ ưu tiên</span>':''} <span class="lib-need ${done?'ok':''}">${done?'✓ đủ rồi':'nên chọn '+need+' bài'} · đã chọn ${cnt[g.key]}</span></summary>${rows}</details>`;}).join('');
   const nameInput=`<input id="build-name" class="bname" placeholder="Đặt tên buổi…" value="${(_buildName||'').replace(/"/g,'&quot;')}" oninput="_buildName=this.value">`;
   const diffSel=`<div class="seg seg-diff">${Object.keys(DIFF).map(d=>`<button class="${d===_diff?'on':''}" onclick="setDiff('${d}')">${DIFF[d].label}</button>`).join('')}</div>`;
   const pickedList=_picked.map(k=>{const[b,n]=k.split('::');const e=libFind(b,n);if(!e)return'';const c=cfgFor(k);const ek=k.replace(/'/g,"\\'");
@@ -944,7 +950,7 @@ function renderBuilder(){
     <div class="bld-head"><button class="btn sec bld-back" onclick="setFocus(null)">‹ Đổi buổi</button><div class="bld-title">${free?'🎛️ Tự do chọn':f.emoji+' '+f.name}</div></div>
     ${free?`<div class="card" style="padding:12px"><p style="color:var(--muted);font-size:.82rem;margin:0">Chế độ nâng cao — chọn bài ở mọi nhóm tuỳ ý.</p></div>`
       :`<div class="card" style="padding:13px;border-left:5px solid ${tagColor(f.groups[0][0])}">
-        <p style="color:var(--muted);font-size:.82rem;margin:0 0 8px">${f.desc} <b>Nên chọn:</b> ${f.groups.map(([g,c])=>g+' ×'+c).join(' · ')}.</p>${quickFill}</div>`}
+        <p style="color:var(--muted);font-size:.82rem;margin:0 0 8px">${f.desc} <b>Nên chọn:</b> ${groups.map(([g,c])=>g+' ×'+c+(userFocus.includes(g)?'⭐':'')).join(' · ')}.</p>${quickFill}</div>`}
     <div class="card build-tray">
       <div style="font-weight:800;margin-bottom:6px">🧺 Đã chọn ${_picked.length} bài${_picked.length?` · ~${totalMin} phút`:''}</div>
       <div class="bchips">${balance}</div>
@@ -1041,9 +1047,18 @@ function bmiClass(b){
 const GOAL_LBL={giam:'giảm mỡ',giu:'giữ dáng',tang:'tăng cơ'};
 function pv(id){ const el=document.getElementById(id); return el?el.value:''; }
 let _pfEdit=false;
+// Nhóm cơ có thể chọn tập trung (khớp LIB_BUCKETS, trừ Cardio)
+const FOCUS_OPTS=[['Mông','🍑'],['Chân','🦵'],['Ngực','💪'],['Lưng','🚣'],['Vai','🦅'],['Core / Bụng','🪵']];
+function defaultFocus(sex){ return sex==='nam'?['Ngực','Lưng']:['Mông','Core / Bụng']; }
+function profFocus(p){ return (p&&p.focus&&p.focus.length)?p.focus:defaultFocus((p&&p.sex)||'nu'); }
+function toggleFocus(g){ const p=loadProfile(); let f=(p.focus&&p.focus.length)?p.focus.slice():defaultFocus(p.sex||'nu');
+  const i=f.indexOf(g); if(i>=0) f.splice(i,1); else { if(f.length>=2) f.shift(); f.push(g); }
+  p.focus=f; saveProfile(p); renderProfile(); }
 function readProfileForm(){
-  const p={ sex:pv('pf-sex'), age:+pv('pf-age')||'', height:+pv('pf-height')||'', weight:+pv('pf-weight')||'',
+  const cur=loadProfile();
+  const p={ ...cur, sex:pv('pf-sex'), age:+pv('pf-age')||'', height:+pv('pf-height')||'', weight:+pv('pf-weight')||'',
     act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu', macro:pv('pf-macro')||goalMacro(pv('pf-goal')||'giu'), equip:pv('pf-equip')||'home',
+    goalWeight:+pv('pf-goalweight')||'', goalWeeks:+pv('pf-goalweeks')||'',
     waist:+pv('pf-waist')||'', hip:+pv('pf-hip')||'', thigh:+pv('pf-thigh')||'', arm:+pv('pf-arm')||'' };
   saveProfile(p);
   return p;
@@ -1056,6 +1071,36 @@ function renderResults(p){
   const tdee=bmr*p.act;
   const gf=p.goal==='giam'?0.8:(p.goal==='tang'?1.1:1.0);
   const target=tdee*gf, mg=macroGrams(target,(MACRO_PRESETS[p.macro]||MACRO_PRESETS.canbang).r);
+  // ===== Mục tiêu cân nặng (cân khoẻ châu Á BMI 18.5–22.9; an toàn 0.5kg/tuần giảm, 0.3 tăng) =====
+  const minW=18.5*hm*hm, maxW=22.9*hm*hm;
+  let suggestT, dir;
+  if(bmi>22.9){ suggestT=21.5*hm*hm; dir='giảm'; }
+  else if(bmi<18.5){ suggestT=20*hm*hm; dir='tăng'; }
+  else { suggestT=p.weight; dir='giữ'; }
+  const rate = dir==='tăng'?0.3:0.5; // kg/tuần an toàn
+  const sDiff=Math.abs(p.weight-suggestT), sWeeks=Math.max(1,Math.round(sDiff/rate));
+  const recLine = dir==='giữ'
+    ? `Cân của cậu đang trong vùng khoẻ mạnh rồi 🎉 Giữ vững & tập để săn chắc nha!`
+    : `Gợi ý ${dir} về <b>${suggestT.toFixed(1)} kg</b> (≈ ${sDiff.toFixed(1)} kg) — an toàn ~${rate}kg/tuần → khoảng <b>${sWeeks} tuần</b> (~${Math.max(1,Math.round(sWeeks/4.3))} tháng).`;
+  // người dùng tự nhập
+  let userLine='';
+  if(p.goalWeight){
+    const ud=p.weight-p.goalWeight, udir=ud>0?'giảm':(ud<0?'tăng':'giữ'), uabs=Math.abs(ud);
+    if(udir==='giữ'){ userLine=`Bạn đặt mục tiêu giữ nguyên ${p.goalWeight} kg.`; }
+    else if(p.goalWeeks){
+      const r2=uabs/p.goalWeeks; const tooFast = udir==='giảm'?r2>1:r2>0.5;
+      userLine=`Bạn muốn ${udir} còn <b>${p.goalWeight} kg</b> trong <b>${p.goalWeeks} tuần</b> → ${r2.toFixed(2)} kg/tuần. ${tooFast?`<b style="color:#ff6b6b">⚠️ Hơi nhanh & dễ mất cơ/hại sức khoẻ</b> — nên kéo dài ≥ <b>${Math.ceil(uabs/(udir==='giảm'?1:0.5))} tuần</b>.`:`✅ Tốc độ an toàn, làm được!`}`;
+    } else {
+      const w2=Math.max(1,Math.round(uabs/(udir==='giảm'?0.5:0.3)));
+      userLine=`Bạn muốn ${udir} còn <b>${p.goalWeight} kg</b> → an toàn ~${w2} tuần (~${Math.max(1,Math.round(w2/4.3))} tháng).`;
+    }
+  }
+  const wgoalHTML=`<div class="metric" style="margin:12px 0;border-left:5px solid var(--green-d)">
+    <div style="font-weight:800;font-size:.9rem">⚖️ Mục tiêu cân nặng</div>
+    <div style="font-size:.82rem;color:var(--muted);font-weight:600;margin:6px 0 2px">Cân khoẻ mạnh (cao ${p.height}cm): <b>${minW.toFixed(1)}–${maxW.toFixed(1)} kg</b></div>
+    <div style="font-size:.84rem;line-height:1.55;margin-top:4px">🐾 ${recLine}</div>
+    ${userLine?`<div style="font-size:.84rem;line-height:1.55;margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)">🎯 ${userLine}</div>`:''}
+  </div>`;
   r.innerHTML=`
     <div class="metric" style="margin-bottom:12px">
       <div style="color:var(--muted);font-weight:700;font-size:.8rem">Chỉ số khối cơ thể (BMI)</div>
@@ -1067,6 +1112,7 @@ function renderResults(p){
       <div style="font-weight:700;font-size:.85rem;opacity:.95">🎯 Calo mục tiêu/ngày (${GOAL_LBL[p.goal]})</div>
       <div class="big" style="color:#fff">${Math.round(target)} <span style="font-size:1rem;font-weight:700">kcal</span></div>
       <div style="font-size:.82rem;opacity:.95;margin-top:3px">🍗 Đạm ${mg.p}g · 🍚 Carb ${mg.c}g · 🥑 Béo ${mg.f}g</div></div>
+    ${wgoalHTML}
     <div class="note-box">⚖️ Số liệu ước tính (công thức Mifflin-St Jeor). Theo dõi 2-3 tuần rồi tinh chỉnh theo thực tế nhé.</div>`;
 }
 function calcProfile(){ renderResults(readProfileForm()); }
@@ -1077,7 +1123,7 @@ function profileSummaryHTML(p){
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
       <div style="font-weight:800;font-size:1.05rem">${sexT} · ${p.age} tuổi</div>
       <button class="btn sec" style="width:auto;padding:8px 14px;flex:none" onclick="_pfEdit=true;renderProfile()">✏️ Cập nhật</button></div>
-    <div style="font-size:.86rem;color:var(--muted);font-weight:600;margin-top:8px;line-height:1.7">📏 ${p.height} cm · ⚖️ ${p.weight} kg · 🎯 ${goalT} · 🏠 ${eqT}${meas?`<br>📐 ${meas}`:''}</div>
+    <div style="font-size:.86rem;color:var(--muted);font-weight:600;margin-top:8px;line-height:1.7">📏 ${p.height} cm · ⚖️ ${p.weight} kg${p.goalWeight?` → 🎯 ${p.goalWeight} kg`:''} · ${goalT} · 🏠 ${eqT}<br>💪 Tập trung: ${profFocus(p).join(' · ')}${meas?`<br>📐 ${meas}`:''}</div>
   </div>`;
 }
 function renderProfile(){
@@ -1096,6 +1142,14 @@ function renderProfile(){
       <div class="field"><label>Mục tiêu</label>${sel('pf-goal',[['giam','Giảm mỡ'],['giu','Giữ dáng'],['tang','Tăng cơ']],p.goal||'giu')}</div>
       <div class="field"><label>Tỷ lệ dinh dưỡng (đạm/carb/béo)</label>${sel('pf-macro',Object.keys(MACRO_PRESETS).map(k=>[k,MACRO_PRESETS[k].n]),p.macro||goalMacro(p.goal||'giu'))}</div>
       <div class="field"><label>Bạn tập ở đâu?</label>${sel('pf-equip',[['home','🏠 Tại nhà'],['gym','🏋️ Phòng gym'],['both','🔁 Cả hai']],p.equip||'home')}</div>
+      <div class="frow">
+        <div class="field"><label>Cân mong muốn (kg)</label><input id="pf-goalweight" type="number" inputmode="decimal" value="${p.goalWeight||''}" oninput="calcProfile()" placeholder="tuỳ chọn"></div>
+        <div class="field"><label>Trong (tuần)</label><input id="pf-goalweeks" type="number" inputmode="numeric" value="${p.goalWeeks||''}" oninput="calcProfile()" placeholder="tuỳ chọn"></div>
+      </div>
+      <div class="field"><label>💪 Nhóm cơ muốn tập trung (tối đa 2)</label>
+        <div class="fchips">${FOCUS_OPTS.map(([g,e])=>`<button type="button" class="fchip ${profFocus(p).includes(g)?'on':''}" onclick="toggleFocus('${g}')">${e} ${g}</button>`).join('')}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:5px">Nhóm này sẽ được <b>+1 bài & ưu tiên</b> khi Tự xây. ${(p.sex||'nu')==='nam'?'(Nam thường nhấn ngực/lưng/vai)':'(Nữ thường nhấn mông/core)'}</div>
+      </div>
       <details><summary style="cursor:var(--paw),pointer;font-weight:700;color:var(--green-d);font-size:.85rem;margin:4px 2px 10px">📐 Số đo cơ thể (tuỳ chọn)</summary>
         <div class="frow"><div class="field"><label>Eo (cm)</label><input id="pf-waist" type="number" value="${p.waist||''}" oninput="calcProfile()"></div><div class="field"><label>Mông (cm)</label><input id="pf-hip" type="number" value="${p.hip||''}" oninput="calcProfile()"></div></div>
         <div class="frow"><div class="field"><label>Đùi (cm)</label><input id="pf-thigh" type="number" value="${p.thigh||''}" oninput="calcProfile()"></div><div class="field"><label>Bắp tay (cm)</label><input id="pf-arm" type="number" value="${p.arm||''}" oninput="calcProfile()"></div></div>
