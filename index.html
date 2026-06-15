@@ -203,6 +203,9 @@
   .lib-n{font-weight:700;font-size:.9rem}
   .lib-m{font-size:.74rem;color:var(--muted);margin-top:1px}
   .lib-vid{flex:none;text-decoration:none;font-size:1.1rem;padding:4px}
+  .tpl-row{display:flex;flex-direction:column;gap:7px}
+  .tpl-btn{text-align:left;width:100%;font-size:.85rem}
+  .bname{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:.9rem;background:var(--surface-2);color:var(--ink);box-sizing:border-box}
   .food-chips{display:flex;flex-wrap:wrap;gap:6px}
   .food-chip{border:2px solid var(--border);background:var(--card);border-radius:14px;padding:7px 10px;font-size:.76rem;font-weight:700;font-family:inherit;color:var(--green-d);cursor:var(--paw),pointer}
   .food-chip:active{transform:scale(.95)}
@@ -670,12 +673,24 @@ const EX_LIB=[
    {n:'Nhảy dây', en:'Jump rope', mi:'🪢', m:'Cardio', sets:5, reps:'100 cái', work:60, rest:30, type:'reps', tempo:'Khởi động kỹ, tiếp đất mũi chân', mp:'Tim mạch, bắp chân', ms:'Vai, cẳng tay, cơ lõi', gymName:'Máy cardio thay thế'},
  ]},
 ];
-// Gợi ý số bài/buổi mỗi nhóm theo mục tiêu (full-body cân bằng, người mới)
+// Gợi ý theo mục tiêu (full-body 3 buổi/tuần, người mới — dựa nghiên cứu: mỗi nhóm 2×/tuần, compound trước)
 const SPLIT_PRESETS={
-  giam:{label:'Giảm mỡ', note:'Nhiều compound + cardio để đốt calo.', r:{'Mông':2,'Chân':2,'Ngực':1,'Lưng':1,'Vai':1,'Core / Bụng':2,'Cardio':2}},
-  giu: {label:'Giữ dáng', note:'Cân bằng các nhóm, giữ cơ săn chắc.', r:{'Mông':2,'Chân':2,'Ngực':1,'Lưng':1,'Vai':1,'Core / Bụng':2,'Cardio':1}},
-  tang:{label:'Tăng cơ', note:'Tăng sức cản, giảm cardio, đủ các nhóm.', r:{'Mông':2,'Chân':2,'Ngực':2,'Lưng':2,'Vai':1,'Core / Bụng':1,'Cardio':1}},
+  giam:{label:'Giảm mỡ', pri:['Mông','Chân','Core / Bụng','Cardio'],
+    why:'Tập sức cản để <b>GIỮ cơ</b> (giảm mỡ chủ yếu nhờ ăn uống thâm hụt calo) + thêm cardio đốt năng lượng. Ưu tiên bài compound nhiều cơ.',
+    r:{'Mông':2,'Chân':2,'Ngực':1,'Lưng':1,'Vai':1,'Core / Bụng':2,'Cardio':2}},
+  giu: {label:'Giữ dáng', pri:['Mông','Chân','Core / Bụng'],
+    why:'Cân bằng mọi nhóm cơ để giữ vóc dáng săn chắc. Mỗi nhóm tập đều, vừa sức.',
+    r:{'Mông':2,'Chân':2,'Ngực':1,'Lưng':1,'Vai':1,'Core / Bụng':2,'Cardio':1}},
+  tang:{label:'Tăng cơ', pri:['Mông','Chân','Lưng','Ngực'],
+    why:'Ưu tiên <b>sức cản</b> (tạ/dây), tăng dần độ khó; mỗi nhóm tập <b>2×/tuần</b>; giảm cardio để dồn sức hồi phục cơ.',
+    r:{'Mông':2,'Chân':2,'Ngực':2,'Lưng':2,'Vai':1,'Core / Bụng':1,'Cardio':1}},
 };
+// 3 buổi xoay trọng tâm A/B/C (mỗi buổi vẫn toàn thân, nhấn 1 mảng) — cả tuần mỗi nhóm tập ~2 lần
+const WEEK_TEMPLATES=[
+  {name:'Buổi A · Thân dưới (Mông & Chân)', ex:['Mông::Glute Bridge','Chân::Squat','Chân::Lunges','Mông::Kick Back','Core / Bụng::Plank','Cardio::Jumping Jack']},
+  {name:'Buổi B · Thân trên (đẩy · kéo · vai)', ex:['Ngực::Knee Push Up','Lưng::Seated Band Row','Vai::Pike Push Up','Vai::Band Lateral Raise','Core / Bụng::Mountain Climber','Cardio::High Knees']},
+  {name:'Buổi C · Toàn thân + Core', ex:['Chân::Sumo Squat','Mông::Hip Thrust (1 chân)','Ngực::Push Up (chuẩn)','Lưng::Bird Dog','Core / Bụng::Bicycle Crunches','Cardio::Burpees']},
+];
 const LIB_BUCKETS=EX_LIB.map(g=>g.key);
 function libFind(bucket,n){ const g=EX_LIB.find(g=>g.key===bucket); return g&&g.items.find(x=>x.n===n); }
 
@@ -689,19 +704,18 @@ function autoWeek(sessions){
   return W;
 }
 function refreshCustomPlan(){ PLANS.custom.sessions=loadCustomSessions(); PLANS.custom.week=autoWeek(PLANS.custom.sessions); }
+function applyTemplate(i){ const t=WEEK_TEMPLATES[i]; if(!t) return; _picked=t.ex.filter(k=>{const[b,n]=k.split('::');return libFind(b,n);}); _buildName=t.name; renderBuilder(); window.scrollTo(0,0); }
 function saveCustomSession(){
-  if(!_picked.length){ alert('Chọn ít nhất 1 bài đã nhé 🐾'); return; }
-  const name=(prompt('Đặt tên buổi tập:', 'Buổi của tôi '+(loadCustomSessions().length+1))||'').trim();
-  if(!name) return;
+  if(!_picked.length){ return; } // nút đã disabled khi rỗng
+  const name=(_buildName||'').trim() || ('Buổi của tôi '+(loadCustomSessions().length+1));
   const list=loadCustomSessions();
   const id=900+ (list.reduce((m,s)=>Math.max(m,s.id),899)-899) +1;
   const ex=[WGS, ..._picked.map(k=>{const[b,n]=k.split('::');return libFind(b,n);}).filter(Boolean), PIGEON, WGS_END];
   list.push({id,name,icon:'🛠️',grad:'linear-gradient(135deg,#ff922b,#ff6b9d)',ex});
-  saveCustomSessions(list); refreshCustomPlan(); _picked=[];
+  saveCustomSessions(list); refreshCustomPlan(); _picked=[]; _buildName='';
   try{ localStorage.setItem('meofit_plan','custom'); }catch(e){}
   if(getLevel) setLevel(1);
-  alert('Đã lưu "'+name+'" vào Gói của tôi! 🎉');
-  _sessMode='plans'; renderSessList(); renderHome(); window.scrollTo(0,0);
+  _justSaved=name; _sessMode='plans'; renderSessList(); renderHome(); window.scrollTo(0,0);
 }
 function delCustomSession(id){ if(!confirm('Xoá buổi tự xây này?')) return; saveCustomSessions(loadCustomSessions().filter(s=>s.id!==id)); refreshCustomPlan(); renderSessList(); }
 
@@ -805,7 +819,7 @@ function renderWeek(){
 }
 
 /* ============ SESSIONS ============ */
-let _sessMode='plans', _picked=[], _buildGoal=null;
+let _sessMode='plans', _picked=[], _buildGoal=null, _buildName='', _justSaved='';
 function sessModeTabs(){
   const t=(m,lb)=>`<button class="${_sessMode===m?'on':''}" onclick="setSessMode('${m}')">${lb}</button>`;
   return `<div class="seg seg-mode">${t('plans','📋 Gói có sẵn')}${t('build','🛠️ Tự xây')}</div>`;
@@ -822,8 +836,11 @@ function renderSessList(){
       ${cnt?`<span class="badge-done">×${cnt}</span>`:''}<div class="arrow">›</div></div>`;
   }).join('')
    : `<div class="empty" style="padding:18px">Gói này chưa có buổi nào.<br>Sang <b>🛠️ Tự xây</b> để tạo buổi của riêng bạn nhé!</div>`;
+  const savedBanner=_justSaved?`<div class="note-box" style="background:var(--green-l);color:#14532d;border-left-color:var(--green-d)">🎉 Đã lưu <b>“${_justSaved}”</b> vào Gói của tôi! Bấm vào buổi bên dưới để bắt đầu tập nhé.</div>`:'';
+  _justSaved='';
   document.getElementById('v-sess').innerHTML=`
     ${sessModeTabs()}
+    ${savedBanner}
     <h2 class="sec-title">${pl.emoji} ${pl.name}</h2>
     <div style="font-size:.82rem;color:var(--muted);margin:0 4px 12px;font-weight:600">${pl.desc}</div>
     ${pl.levels?levelSeg('chooseLevelList'):''}
@@ -868,22 +885,32 @@ function renderBuilder(){
       <div class="ic">${s.icon}</div><div class="info" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="cursor:var(--paw),pointer"><div class="t">${s.name}</div><div class="s">${s.ex.length} bài • ~${estMinutes(s)} phút</div></div>
       <button class="hist-del" onclick="delCustomSession(${s.id})" title="Xoá">✕</button></div>`).join('')}
     <button class="btn sec" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="margin-top:4px">📋 Dùng “Gói của tôi” →</button>`:'';
+  const priChips=preset.pri.map(b=>{const g=EX_LIB.find(x=>x.key===b);return `<span class="bchip" style="color:var(--green-d);border-color:var(--green-d);background:var(--green-l)">${g.emoji} ${b}</span>`;}).join('');
+  const tplBtns=WEEK_TEMPLATES.map((t,i)=>`<button class="btn sec tpl-btn" onclick="applyTemplate(${i})">⚡ ${t.name}</button>`).join('');
+  const nameInput=`<input id="build-name" class="bname" placeholder="Đặt tên buổi…" value="${(_buildName||'').replace(/"/g,'&quot;')}" oninput="_buildName=this.value">`;
   document.getElementById('v-sess').innerHTML=`
     ${sessModeTabs()}
     <h2 class="sec-title">🛠️ Tự xây bài tập</h2>
     <div class="card" style="padding:14px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>🎯 Mục tiêu:</b> ${goalSel}</div>
-      <p style="color:var(--muted);font-size:.82rem;margin:8px 0 0">${preset.note} Chọn bài theo gợi ý mỗi nhóm; tập <b>3 buổi/tuần</b> để đủ ~10 set/nhóm — người mới bắt đầu mức thấp rồi tăng dần.</p>
+      <p style="color:var(--muted);font-size:.82rem;margin:8px 0 6px">${preset.why}</p>
+      <div style="font-size:.78rem;font-weight:800;margin-bottom:4px">⭐ Ưu tiên nhóm cơ:</div>
+      <div class="bchips">${priChips}</div>
+    </div>
+    <div class="card" style="padding:14px;border-left:5px solid var(--teal)">
+      <div style="font-weight:800">📅 Cấu trúc tuần khuyên dùng</div>
+      <p style="color:var(--muted);font-size:.82rem;margin:6px 0 10px">Tập <b>3 buổi/tuần</b> (vd Thứ 2·4·6), nghỉ xen kẽ để cơ hồi phục <b>48–72h</b>. Mỗi nhóm nên tập <b>~2 lần/tuần</b>, làm bài <b>compound</b> (nhiều cơ) trước. 3 buổi xoay trọng tâm cho cân đối — bấm để điền nhanh:</p>
+      <div class="tpl-row">${tplBtns}</div>
+      <p style="color:var(--muted);font-size:.74rem;margin:9px 0 0">Điền 1 buổi mẫu → chỉnh thêm/bớt bên dưới → lưu. Lưu cả <b>A·B·C</b> là có plan tuần hoàn chỉnh, mỗi nhóm cơ được tập đều!</p>
     </div>
     <div class="card build-tray">
       <div style="font-weight:800;margin-bottom:6px">🧺 Đã chọn ${_picked.length} bài${_picked.length?` · ~${totalMin} phút/buổi`:''}</div>
       <div class="bchips">${balance}</div>
-      <button class="btn" onclick="saveCustomSession()" style="margin-top:10px"${_picked.length?'':' disabled'}>💾 Lưu thành buổi</button>
-      ${_picked.length?`<button class="btn sec" onclick="_picked=[];renderBuilder()" style="margin-top:6px">↺ Xoá hết lựa chọn</button>`:''}
+      ${_picked.length?`${nameInput}<button class="btn" onclick="saveCustomSession()" style="margin-top:8px">💾 Lưu thành buổi</button><button class="btn sec" onclick="_picked=[];_buildName='';renderBuilder()" style="margin-top:6px">↺ Xoá hết</button>`:`<div style="color:var(--muted);font-size:.82rem">Chọn bài từ thư viện bên dưới (hoặc bấm 1 buổi mẫu ở trên) để bắt đầu 🐾</div>`}
     </div>
     ${lib}
     ${savedHTML}
-    <div class="note-box" style="margin-top:10px">💡 Mẹo: ưu tiên bài <b>compound</b> (squat, lunge, chống đẩy, row) trước, rồi thêm core & cardio. Đủ các nhóm để cơ thể cân đối nhé! 🐾</div>`;
+    <div class="note-box" style="margin-top:10px">💡 Compound (squat, lunge, chống đẩy, row) trước — rồi core & cardio. Đủ các nhóm để cơ thể cân đối nhé! 🐾</div>`;
 }
 function chooseLevelList(l){ setLevel(l); renderSessList(); }
 function chooseLevelDetail(l, sid){ setLevel(l); openSession(sid); }
