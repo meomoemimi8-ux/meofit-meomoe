@@ -206,6 +206,19 @@
   .tpl-row{display:flex;flex-direction:column;gap:7px}
   .tpl-btn{text-align:left;width:100%;font-size:.85rem}
   .bname{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:.9rem;background:var(--surface-2);color:var(--ink);box-sizing:border-box}
+  .seg-diff{margin-bottom:8px}
+  .pk-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+  .pk-row{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:12px;padding:7px 9px}
+  .pk-n{flex:1;min-width:0;font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pk-step{flex:none;display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700}
+  .pk-step button{width:24px;height:24px;border:none;border-radius:8px;background:var(--card);color:var(--green-d);font-weight:900;font-size:1rem;cursor:var(--paw),pointer;box-shadow:var(--shadow)}
+  .pk-reps{flex:none;width:78px;padding:5px 7px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.74rem;background:var(--card);color:var(--ink)}
+  .pk-x{flex:none;border:none;background:none;color:var(--muted);font-size:.9rem;cursor:var(--paw),pointer;padding:4px}
+  .g-rec{font-size:.66rem;font-weight:800;color:#1f7a52;background:var(--green-l);padding:2px 7px;border-radius:8px}
+  .g-rest{font-size:.66rem;font-weight:800;color:#8a6d1a;background:#fff3cd;padding:2px 7px;border-radius:8px}
+  .lib-grp.rest{opacity:.62}
+  .lib-row.rec .lib-n{color:var(--green-d)}
+  .lib-row.rec{background:color-mix(in srgb,var(--green-l) 12%,transparent)}
   .food-chips{display:flex;flex-wrap:wrap;gap:6px}
   .food-chip{border:2px solid var(--border);background:var(--card);border-radius:14px;padding:7px 10px;font-size:.76rem;font-weight:700;font-family:inherit;color:var(--green-d);cursor:var(--paw),pointer}
   .food-chip:active{transform:scale(.95)}
@@ -704,15 +717,17 @@ function autoWeek(sessions){
   return W;
 }
 function refreshCustomPlan(){ PLANS.custom.sessions=loadCustomSessions(); PLANS.custom.week=autoWeek(PLANS.custom.sessions); }
-function applyTemplate(i){ const t=WEEK_TEMPLATES[i]; if(!t) return; _picked=t.ex.filter(k=>{const[b,n]=k.split('::');return libFind(b,n);}); _buildName=t.name; renderBuilder(); window.scrollTo(0,0); }
+function applyTemplate(i){ const t=WEEK_TEMPLATES[i]; if(!t) return; _picked=t.ex.filter(k=>{const[b,n]=k.split('::');return libFind(b,n);}); _cfg={}; _picked.forEach(k=>cfgFor(k)); _buildName=t.name; renderBuilder(); window.scrollTo(0,0); }
 function saveCustomSession(){
   if(!_picked.length){ return; } // nút đã disabled khi rỗng
   const name=(_buildName||'').trim() || ('Buổi của tôi '+(loadCustomSessions().length+1));
   const list=loadCustomSessions();
   const id=900+ (list.reduce((m,s)=>Math.max(m,s.id),899)-899) +1;
-  const ex=[WGS, ..._picked.map(k=>{const[b,n]=k.split('::');return libFind(b,n);}).filter(Boolean), PIGEON, WGS_END];
-  list.push({id,name,icon:'🛠️',grad:'linear-gradient(135deg,#ff922b,#ff6b9d)',ex});
-  saveCustomSessions(list); refreshCustomPlan(); _picked=[]; _buildName='';
+  const rm=DIFF[_diff].restMul;
+  const ex=[WGS, ..._picked.map(k=>{const[b,n]=k.split('::');const e=libFind(b,n);if(!e)return null;const c=cfgFor(k);
+    return {...e, sets:c.sets, reps:c.reps, rest:Math.round((e.rest||30)*rm)}; }).filter(Boolean), PIGEON, WGS_END];
+  list.push({id,name,icon:'🛠️',grad:'linear-gradient(135deg,#ff922b,#ff6b9d)',diff:_diff,ex});
+  saveCustomSessions(list); refreshCustomPlan(); _picked=[]; _buildName=''; _cfg={};
   try{ localStorage.setItem('meofit_plan','custom'); }catch(e){}
   if(getLevel) setLevel(1);
   _justSaved=name; _sessMode='plans'; renderSessList(); renderHome(); window.scrollTo(0,0);
@@ -819,7 +834,13 @@ function renderWeek(){
 }
 
 /* ============ SESSIONS ============ */
-let _sessMode='plans', _picked=[], _buildGoal=null, _buildName='', _justSaved='';
+let _sessMode='plans', _picked=[], _buildGoal=null, _buildName='', _justSaved='', _diff='tb', _cfg={};
+const DIFF={de:{label:'😺 Dễ',d:-1,restMul:1.25},tb:{label:'💪 Vừa',d:0,restMul:1},kho:{label:'🔥 Khó',d:1,restMul:0.85}};
+function diffSets(e){ return Math.max(2, Math.min(6, e.sets + DIFF[_diff].d)); }
+function cfgFor(k){ if(!_cfg[k]){ const[b,n]=k.split('::'); const e=libFind(b,n); if(e) _cfg[k]={sets:diffSets(e),reps:e.reps}; } return _cfg[k]||{sets:3,reps:''}; }
+function setDiff(d){ _diff=d; _picked.forEach(k=>{ const[b,n]=k.split('::'); const e=libFind(b,n); if(e) _cfg[k]={sets:diffSets(e),reps:e.reps}; }); renderBuilder(); }
+function stepSets(k,delta){ const c=cfgFor(k); c.sets=Math.max(2,Math.min(6,c.sets+delta)); renderBuilder(); }
+function setReps(k,v){ cfgFor(k).reps=v; }
 function sessModeTabs(){
   const t=(m,lb)=>`<button class="${_sessMode===m?'on':''}" onclick="setSessMode('${m}')">${lb}</button>`;
   return `<div class="seg seg-mode">${t('plans','📋 Gói có sẵn')}${t('build','🛠️ Tự xây')}</div>`;
@@ -850,7 +871,7 @@ function renderSessList(){
 }
 /* ============ BUILDER — Tự xây bài tập ============ */
 function setBuildGoal(g){ _buildGoal=g; renderBuilder(); }
-function togglePickEx(key){ const i=_picked.indexOf(key); if(i>=0) _picked.splice(i,1); else _picked.push(key); renderBuilder(); }
+function togglePickEx(key){ const i=_picked.indexOf(key); if(i>=0){ _picked.splice(i,1); delete _cfg[key]; } else { _picked.push(key); cfgFor(key); } renderBuilder(); }
 function buildGoal(){ return _buildGoal||loadProfile().goal||'giu'; }
 function renderBuilder(){
   const goal=buildGoal(), preset=SPLIT_PRESETS[goal];
@@ -858,28 +879,34 @@ function renderBuilder(){
   const cnt={}; LIB_BUCKETS.forEach(b=>cnt[b]=0);
   _picked.forEach(k=>{ const b=k.split('::')[0]; if(b in cnt) cnt[b]++; });
   const goalSel=`<select onchange="setBuildGoal(this.value)">${Object.keys(SPLIT_PRESETS).map(g=>`<option value="${g}" ${g===goal?'selected':''}>${SPLIT_PRESETS[g].label}</option>`).join('')}</select>`;
+  // recommend theo tuần: nhóm cơ buổi đã lưu GẦN NHẤT → nên nghỉ 48h; nhóm chưa tập tuần này → nên thêm
+  const saved=loadCustomSessions();
+  const prevGroups=new Set((saved.length?saved[saved.length-1].ex:[]).map(e=>e.m).filter(m=>LIB_BUCKETS.includes(m)));
+  const covered=new Set(saved.flatMap(s=>s.ex.map(e=>e.m)).filter(m=>LIB_BUCKETS.includes(m)));
   // thanh cân bằng theo preset
   const balance=LIB_BUCKETS.map(b=>{
     const need=preset.r[b]||0, have=cnt[b], ok=have>=need;
     const col=have===0?'var(--muted)':(ok?'var(--green-d)':'var(--orange)');
     return `<span class="bchip" style="color:${col};border-color:${col}">${EX_LIB.find(g=>g.key===b).emoji} ${have}/${need}</span>`;
   }).join('');
-  const totalMin=_picked.length?Math.round(_picked.reduce((s,k)=>{const[b,n]=k.split('::');const e=libFind(b,n);return s+(e?e.sets*e.work+(e.sets-1)*(e.rest||30):0);},0)/60)+8:0;
-  // thư viện
+  const rmul=DIFF[_diff].restMul;
+  const totalMin=_picked.length?Math.round(_picked.reduce((s,k)=>{const[b,n]=k.split('::');const e=libFind(b,n);const c=cfgFor(k);return s+(e?c.sets*e.work+(c.sets-1)*Math.round((e.rest||30)*rmul):0);},0)/60)+8:0;
+  // thư viện (có gợi ý theo tuần)
   const lib=EX_LIB.map(g=>{
+    const isPrev=prevGroups.has(g.key), isRec=!isPrev && !covered.has(g.key);
     const rows=g.items.map(e=>{
-      const key=g.key+'::'+e.n, on=_picked.includes(key);
-      return `<div class="lib-row ${on?'on':''}" onclick="togglePickEx('${g.key}::${e.n.replace(/'/g,"\\'")}')">
+      const key=g.key+'::'+e.n, on=_picked.includes(key), recRow=isRec&&!on;
+      return `<div class="lib-row ${on?'on':''} ${recRow?'rec':''}" onclick="togglePickEx('${g.key}::${e.n.replace(/'/g,"\\'")}')">
         <div class="lib-pick">${on?'✓':'＋'}</div>
-        <div class="lib-info"><div class="lib-n">${e.mi} ${e.n}</div><div class="lib-m">${e.sets} hiệp × ${e.reps} · ${e.mp}</div></div>
+        <div class="lib-info"><div class="lib-n">${recRow?'⭐ ':''}${e.mi} ${e.n}</div><div class="lib-m">${e.sets} hiệp × ${e.reps} · ${e.mp}</div></div>
         <a class="lib-vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶️</a></div>`;
     }).join('');
     const need=preset.r[g.key]||0;
-    return `<details class="lib-grp" style="border-left:5px solid ${tagColor(g.key)}"${cnt[g.key]<need?' open':''}>
-      <summary>${g.emoji} ${g.key} <span class="lib-need">gợi ý ${need} bài · đã chọn ${cnt[g.key]}</span></summary>${rows}</details>`;
+    const badge=isPrev?'<span class="g-rest">💤 hôm trước đã tập</span>':(isRec?'<span class="g-rec">⭐ nên thêm</span>':'');
+    return `<details class="lib-grp ${isPrev?'rest':''}" style="border-left:5px solid ${tagColor(g.key)}"${(isRec||cnt[g.key]<need)&&!isPrev?' open':''}>
+      <summary>${g.emoji} ${g.key} ${badge} <span class="lib-need">gợi ý ${need} · chọn ${cnt[g.key]}</span></summary>${rows}</details>`;
   }).join('');
   // gói đã lưu
-  const saved=loadCustomSessions();
   const savedHTML=saved.length?`<h2 class="sec-title" style="margin-top:14px">🗂️ Buổi đã xây (${saved.length})</h2>
     ${saved.map(s=>`<div class="sess-card" style="background:${s.grad}">
       <div class="ic">${s.icon}</div><div class="info" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="cursor:var(--paw),pointer"><div class="t">${s.name}</div><div class="s">${s.ex.length} bài • ~${estMinutes(s)} phút</div></div>
@@ -888,6 +915,13 @@ function renderBuilder(){
   const priChips=preset.pri.map(b=>{const g=EX_LIB.find(x=>x.key===b);return `<span class="bchip" style="color:var(--green-d);border-color:var(--green-d);background:var(--green-l)">${g.emoji} ${b}</span>`;}).join('');
   const tplBtns=WEEK_TEMPLATES.map((t,i)=>`<button class="btn sec tpl-btn" onclick="applyTemplate(${i})">⚡ ${t.name}</button>`).join('');
   const nameInput=`<input id="build-name" class="bname" placeholder="Đặt tên buổi…" value="${(_buildName||'').replace(/"/g,'&quot;')}" oninput="_buildName=this.value">`;
+  const diffSel=`<div class="seg seg-diff">${Object.keys(DIFF).map(d=>`<button class="${d===_diff?'on':''}" onclick="setDiff('${d}')">${DIFF[d].label}</button>`).join('')}</div>`;
+  const pickedList=_picked.map(k=>{const[b,n]=k.split('::');const e=libFind(b,n);if(!e)return'';const c=cfgFor(k);const ek=k.replace(/'/g,"\\'");
+    return `<div class="pk-row">
+      <span class="pk-n">${e.mi} ${e.n}</span>
+      <span class="pk-step"><button onclick="stepSets('${ek}',-1)">−</button><b>${c.sets}</b><button onclick="stepSets('${ek}',1)">＋</button></span>
+      <input class="pk-reps" value="${(c.reps||'').replace(/"/g,'&quot;')}" oninput="setReps('${ek}',this.value)" title="reps / thời gian">
+      <button class="pk-x" onclick="togglePickEx('${ek}')" title="Bỏ">✕</button></div>`;}).join('');
   document.getElementById('v-sess').innerHTML=`
     ${sessModeTabs()}
     <h2 class="sec-title">🛠️ Tự xây bài tập</h2>
@@ -906,7 +940,15 @@ function renderBuilder(){
     <div class="card build-tray">
       <div style="font-weight:800;margin-bottom:6px">🧺 Đã chọn ${_picked.length} bài${_picked.length?` · ~${totalMin} phút/buổi`:''}</div>
       <div class="bchips">${balance}</div>
-      ${_picked.length?`${nameInput}<button class="btn" onclick="saveCustomSession()" style="margin-top:8px">💾 Lưu thành buổi</button><button class="btn sec" onclick="_picked=[];_buildName='';renderBuilder()" style="margin-top:6px">↺ Xoá hết</button>`:`<div style="color:var(--muted);font-size:.82rem">Chọn bài từ thư viện bên dưới (hoặc bấm 1 buổi mẫu ở trên) để bắt đầu 🐾</div>`}
+      ${_picked.length?`
+        <div style="font-size:.76rem;font-weight:800;margin:10px 0 4px">⚙️ Độ khó (số hiệp & thời gian nghỉ):</div>
+        ${diffSel}
+        <div class="pk-list">${pickedList}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin:2px 2px 8px">Chỉnh tay số hiệp (−/＋) & reps/thời gian từng bài nếu muốn.</div>
+        ${nameInput}
+        <button class="btn" onclick="saveCustomSession()" style="margin-top:8px">💾 Lưu thành buổi</button>
+        <button class="btn sec" onclick="_picked=[];_buildName='';_cfg={};renderBuilder()" style="margin-top:6px">↺ Xoá hết</button>`
+      :`<div style="color:var(--muted);font-size:.82rem">Chọn bài từ thư viện bên dưới (hoặc bấm 1 buổi mẫu ở trên) để bắt đầu 🐾</div>`}
     </div>
     ${lib}
     ${savedHTML}
