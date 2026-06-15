@@ -302,6 +302,21 @@
   .hero{display:flex;align-items:center;gap:6px;overflow:visible}
   .hero-txt{flex:1;min-width:0}
   .hero-mascot{flex:none;width:96px;height:101px;pointer-events:none;filter:drop-shadow(0 4px 7px rgba(0,0,0,.18))}
+  /* ===== Mascot bánh bao + lấp lánh động ===== */
+  .mfx{position:relative;display:inline-block;line-height:0}
+  .mfx>img{display:block;width:100%;height:100%;object-fit:contain}
+  .mfx .spk{position:absolute;background:#ffd84d;
+    clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
+    filter:drop-shadow(0 0 3px rgba(255,221,77,.9));opacity:0;pointer-events:none;
+    animation:mfTwk 1.8s ease-in-out infinite}
+  @keyframes mfTwk{0%,100%{opacity:0;transform:scale(.3) rotate(0deg)}
+    45%{opacity:1;transform:scale(1) rotate(120deg)}
+    70%{opacity:.5;transform:scale(.7) rotate(200deg)}}
+  /* ===== Mèo nâng tạ 4 frame (sprite) ===== */
+  .mf-lift{background-image:url(lift-sprite.png);background-repeat:no-repeat;
+    image-rendering:auto;animation:mfLiftSeq 1.5s steps(4) infinite}
+  @keyframes mfLiftSeq{from{background-position-x:0}to{background-position-x:var(--liftw)}}
+  @media(prefers-reduced-motion:reduce){.mfx .spk{animation:none;opacity:.85}.mf-lift{animation:none}}
   @media(prefers-reduced-motion:reduce){.mf-bob,.mf-tail,.mf-lift,.mf-eye,.mf-spark,.mf-spark2{animation:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -621,7 +636,7 @@ function renderHome(){
         <div class="sub">${sess.ex.length} bài • ~${estMinutes(sess)} phút • ${w.extra}</div>
         <div class="extra"><span class="chip">${done?'✅ Đã tập hôm nay':'🐾 Sẵn sàng nào!'}</span></div>
       </div>
-      <div class="hero-mascot"><img src="mascot_sq.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></div>
+      <div class="hero-mascot" style="display:flex;align-items:flex-end;justify-content:center">${mfLift(104)}</div>
     </div>`;
   } else {
     hero=`<div class="hero" style="background:linear-gradient(135deg,#b197fc,#9775fa)">
@@ -630,7 +645,7 @@ function renderHome(){
         <div class="title">😺 Hôm nay nghỉ ngơi</div>
         <div class="sub">Thư giãn, dãn cơ nhẹ hoặc đi bộ tuỳ thích nha!</div>
       </div>
-      <div class="hero-mascot"><img src="mascot_sq.png" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></div>
+      <div class="hero-mascot">${mfBun(true)}</div>
     </div>`;
   }
   const startBtn=sess
@@ -730,7 +745,7 @@ function renderProgress(){
   const h=loadHist(), streak=calcStreak(), total=h.length;
   const weekAgo=Date.now()-7*864e5, wkCount=h.filter(e=>e.ts>=weekAgo).length;
   let list;
-  if(!h.length){ list=`<div class="empty">🐾 Chưa có buổi tập nào.<br>Bắt đầu buổi đầu tiên thôi nào!</div>`; }
+  if(!h.length){ list=`<div class="empty"><div style="width:120px;height:120px;margin:0 auto 6px">${mfBun(true)}</div>Chưa có buổi tập nào.<br>Bắt đầu buổi đầu tiên thôi nào!</div>`; }
   else{
     list=h.slice(0,40).map(e=>{
       const s=sessById(e.sid), d=new Date(e.ts);
@@ -1387,8 +1402,8 @@ function finishWorkout(){
   const streak=calcStreak();
   document.getElementById('p-center').innerHTML=`
     <div class="done-screen">
-      <div class="big-emoji">🎉</div>
-      <div class="ex-name" style="color:var(--green-d)">Hoàn thành ${P.sess.name}!</div>
+      <div style="display:flex;justify-content:center;margin:0 auto 2px">${mfLift(150)}</div>
+      <div class="ex-name" style="color:var(--green-d)">🎉 Hoàn thành ${P.sess.name}!</div>
       <p style="color:var(--muted);font-weight:600;margin:6px 0 4px">Giỏi quá đi 🐾 Đừng quên dãn cơ kỹ nhé!</p>
       <div class="chip" style="background:var(--green-l);color:#fff;display:inline-block;margin:10px 0 20px">🔥 Chuỗi ${streak} ngày</div>
       <div class="controls"><button class="btn" onclick="closePlayer();go('prog')">📊 Xem tiến độ</button></div>
@@ -1396,8 +1411,27 @@ function finishWorkout(){
     </div>`;
 }
 
-/* ============ MASCOT: 🐾 Mèo Lực Sĩ (hệ catFace của Meomoe Multiverse) ============ */
-// Mặt mèo cam lông dài (header) — Mèo Lực Sĩ
+/* ============ MASCOT: 🐾 Mèo Lực Sĩ (ảnh AI) ============ */
+// Lấp lánh động quanh mèo (vị trí % cố định, lệch pha)
+function mfSparkles(){
+  const s=[[6,10,14,0],[84,6,17,.5],[70,26,11,1.1],[10,52,10,.8],[90,50,13,1.4],[44,-6,12,.3],[30,80,9,1.7]];
+  return s.map(([l,t,sz,d])=>`<span class="spk" style="left:${l}%;top:${t}%;width:${sz}px;height:${sz}px;animation-delay:${d}s"></span>`).join('');
+}
+// Mèo bánh bao + lấp lánh (lấp đầy khung cha)
+function mfBun(sparkle){
+  return `<span class="mfx" style="width:100%;height:100%"><img src="mascot_sq.png" alt="Mèo Lực Sĩ">${sparkle!==false?mfSparkles():''}</span>`;
+}
+// Logo mặt mèo nền xanh (header) — đồng bộ icon app, kèm lấp lánh
+function mfLogo(){
+  return `<span class="mfx" style="width:100%;height:100%;border-radius:24%;overflow:visible">`
+    +`<img src="logo.png" alt="MèoFit" style="border-radius:24%">${mfSparkles()}</span>`;
+}
+// Mèo nâng tạ — animation 4 frame (sprite 1104x320, frame 276)
+function mfLift(h){
+  h=h||96; const sc=h/320, fw=Math.round(291*sc), sw=fw*4;
+  return `<div class="mf-lift" style="width:${fw}px;height:${h}px;background-size:${sw}px ${h}px;--liftw:-${sw}px"></div>`;
+}
+// Mặt mèo cam lông dài (header) — Mèo Lực Sĩ (legacy SVG, không còn dùng)
 function meoFitCat(){
   const fur='#ff9d4d', ruff='#ffb874', whisk='rgba(120,80,40,.45)';
   return `<svg viewBox="0 0 100 100" class="catface" aria-hidden="true">
@@ -1485,7 +1519,7 @@ function cycleTheme(){ let t='light'; try{ t=localStorage.getItem('meo:theme')||
   initTheme();
   loadAudioPrefs(); updateAudioBtns();
   const tb=document.getElementById('themeBtn'); if(tb) tb.onclick=cycleTheme;
-  document.getElementById('mascot').innerHTML = '<img src="mascot_sq.png" alt="Mèo Lực Sĩ" style="width:100%;height:100%;object-fit:contain;display:block">';
+  document.getElementById('mascot').innerHTML = mfLogo();
   // hoa lá rơi
   const f=document.getElementById('flowers'), em=['🌸','🌼','🌷','🌺','🌻','💐','🏵️','🌹','💮','🪷','🌈','💖','🍀','⭐'];
   for(let i=0;i<22;i++){ const s=document.createElement('span'); s.textContent=em[Math.floor(Math.random()*em.length)];

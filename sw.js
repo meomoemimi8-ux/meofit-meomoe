@@ -1,6 +1,6 @@
 // MèoFit service worker — chạy offline. Bump CACHE khi đổi nội dung để cập nhật.
-const CACHE = 'meofit-v14';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './mascot_sq.png', './icon-192.png', './icon-512.png', './icon-512-maskable.png', './icon-180.png'];
+const CACHE = 'meofit-v16';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './logo.png', './mascot_sq.png', './lift-sprite.png', './icon-192.png', './icon-512.png', './icon-512-maskable.png', './icon-180.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
