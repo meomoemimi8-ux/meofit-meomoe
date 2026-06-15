@@ -219,6 +219,9 @@
   .fchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
   .fchip{border:1.5px solid var(--border);background:var(--surface-2);color:var(--muted);border-radius:999px;padding:6px 11px;font-size:.78rem;font-weight:700;font-family:inherit;cursor:var(--paw),pointer}
   .fchip.on{background:var(--green-l);border-color:var(--green-d);color:#1f7a52}
+  .slog-row{display:flex;align-items:center;gap:7px;padding:6px 0;border-top:1px solid var(--border)}
+  .slog-n{flex:1;min-width:0;font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .slog-in{flex:none;width:62px;padding:7px 8px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.82rem;background:var(--surface-2);color:var(--ink);text-align:center}
   .focus-card{background:var(--card);border-radius:16px;padding:15px;box-shadow:var(--shadow);margin-bottom:11px;cursor:var(--paw),pointer;transition:transform .08s}
   .focus-card:active{transform:scale(.99)}
   .fc-h{font-weight:800;font-size:1.04rem;display:flex;align-items:center}
@@ -758,6 +761,36 @@ function getLevel(){ return parseInt(localStorage.getItem(LS_LV))||1; }
 function setLevel(l){ localStorage.setItem(LS_LV, l); }
 function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function logDone(sid,lv,kcal){ const h=loadHist(); h.unshift({date:todayStr(),ts:Date.now(),sid,lv,kcal:kcal||0}); saveHist(h); }
+/* ===== Thành tích sức mạnh (kg × reps mỗi bài) ===== */
+function loadStrength(){ try{ return JSON.parse(localStorage.getItem('meofit_strength'))||[] }catch(e){ return [] } }
+function saveStrength(a){ try{ localStorage.setItem('meofit_strength', JSON.stringify(a)); }catch(e){} }
+function e1rm(kg,reps){ return kg>0? Math.round(kg*(1+reps/30)) : 0; } // Epley
+function strengthExs(sess){ return sess?sess.ex.filter(e=>!['Khởi động','Dãn cơ','Cardio'].includes(e.m)):[]; }
+let _strEx='';
+function saveStrengthSession(){
+  if(!P||!P.sess) return;
+  const exs=strengthExs(P.sess), ts=Date.now(), date=todayStr(), log=loadStrength(); let n=0;
+  exs.forEach((e,i)=>{ const reps=+pv('slog-'+i+'-reps')||0, kg=+pv('slog-'+i+'-kg')||0;
+    if(!reps&&!kg) return; log.push({ts:ts+i,date,n:e.n,kg,reps,e1rm:e1rm(kg,reps)}); n++; });
+  if(!n){ return; }
+  saveStrength(log);
+  const el=document.getElementById('slog-wrap'); if(el) el.innerHTML=`<div class="note-box" style="margin:0">✅ Đã lưu ${n} bài! Xem biểu đồ sức mạnh ở tab Tiến độ 💪</div>`;
+}
+function strengthChartHTML(){
+  const log=loadStrength(); if(!log.length) return '';
+  const names=[...new Set(log.map(e=>e.n))];
+  const sel=(_strEx&&names.includes(_strEx))?_strEx:names[names.length-1];
+  const series=log.filter(e=>e.n===sel).sort((a,b)=>a.ts-b.ts);
+  const useKg=series.some(e=>e.kg>0);
+  const pts=series.map(e=>({weight: useKg? (e.e1rm||e.kg) : e.reps}));
+  const first=pts[0].weight, last=pts[pts.length-1].weight, diff=last-first;
+  return `<h2 class="sec-title" style="margin-top:6px">💪 Sức mạnh theo bài</h2>
+    <div class="card">
+      <select onchange="_strEx=this.value;renderProgress()" style="width:100%;margin-bottom:8px">${names.map(n=>`<option ${n===sel?'selected':''}>${n}</option>`).join('')}</select>
+      ${pts.length>1?sparkline(pts):'<div style="font-size:.82rem;color:var(--muted);text-align:center;padding:8px">Cần ≥2 lần ghi để vẽ biểu đồ.</div>'}
+      <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px">${useKg?'Sức mạnh ước tính (~1RM, kg)':'Số lần/hiệp'} · ${series.length} lần ghi · ${diff>=0?'+':''}${diff} so với đầu ${diff>0?'📈':(diff<0?'📉':'')}</div>
+    </div>`;
+}
 function doneToday(){ return loadHist().some(e=>e.date===todayStr()); }
 function calcStreak(){
   const h=loadHist(); if(!h.length) return 0;
@@ -1058,6 +1091,7 @@ function renderProgress(){
       <div class="stat"><div class="num">📆 ${wkCount}</div><div class="lbl">Tuần này</div></div>
       <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng cộng</div></div></div>
     ${overloadCard()}
+    ${strengthChartHTML()}
     ${caloCardHTML()}
     ${fastReportHTML()}
     <h2 class="sec-title">🗓️ Lịch sử tập</h2>
@@ -1748,7 +1782,13 @@ function finishWorkout(){
       <div style="width:170px;height:170px;margin:0 auto 2px">${mfBun(true)}</div>
       <div class="ex-name" style="color:var(--green-d)">🎉 Hoàn thành ${P.sess.name}!</div>
       <p style="color:var(--muted);font-weight:600;margin:6px 0 4px">Giỏi quá đi 🐾 Đừng quên dãn cơ kỹ nhé!</p>
-      <div class="chip" style="background:var(--green-l);color:#fff;display:inline-block;margin:10px 0 20px">🔥 Chuỗi ${streak} ngày</div>
+      <div class="chip" style="background:var(--green-l);color:#fff;display:inline-block;margin:10px 0 16px">🔥 Chuỗi ${streak} ngày</div>
+      <div id="slog-wrap">${(()=>{const exs=strengthExs(P.sess);return exs.length?`<details class="lib-grp" style="text-align:left;margin:0 0 16px"><summary>📝 Ghi lại tạ × lần (tuỳ chọn) — để theo dõi sức mạnh</summary>
+        <div style="padding:8px 12px 12px"><div style="font-size:.74rem;color:var(--muted);margin-bottom:8px">Ghi mức tạ (kg) & số lần thực tế. Bài tay không cứ để trống ô kg 🐾</div>
+        ${exs.map((e,i)=>`<div class="slog-row"><span class="slog-n">${e.mi} ${e.n}</span>
+          <input id="slog-${i}-kg" class="slog-in" type="number" inputmode="decimal" placeholder="kg">
+          <input id="slog-${i}-reps" class="slog-in" type="number" inputmode="numeric" placeholder="lần" value="${parseInt(e.reps)||''}"></div>`).join('')}
+        <button class="btn" onclick="saveStrengthSession()" style="margin-top:8px">💾 Lưu thành tích</button></div></details>`:''})()}</div>
       <div class="controls"><button class="btn" onclick="closePlayer();go('prog')">📊 Xem tiến độ</button></div>
       <div class="controls"><button class="btn sec" onclick="closePlayer();go('home')">🏠 Về trang chủ</button></div>
     </div>`;
