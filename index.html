@@ -1004,6 +1004,38 @@ function openSession(id){
 }
 
 /* ============ PROGRESS ============ */
+const OVERLOAD_TIPS=[
+  '➕ Thêm 1–2 reps mỗi hiệp so với tuần trước (cách dễ & an toàn nhất cho người mới).',
+  '🐢 Tập chậm lại: hạ 3 giây, giữ 1 giây ở đỉnh — cơ chịu tải lâu hơn, chắc hơn.',
+  '💪 Thêm 1 hiệp cho 1–2 bài chính (vd squat, chống đẩy).',
+  '⏱️ Giảm nghỉ ~10–15 giây để tăng cường độ buổi tập.',
+  '🏋️ Tăng sức cản: thêm tạ tay / dây kháng lực nặng hơn.',
+  '🔥 Đổi biến thể khó hơn (vd chống đẩy quỳ → chống đẩy chuẩn).',
+];
+function overloadCard(){
+  const h=loadHist(); if(h.length<2) return '';
+  const first=Math.min(...h.map(e=>e.ts));
+  const wk=Math.floor((Date.now()-first)/(7*864e5))+1;
+  if(wk>=8 && wk%8===0) return `<div class="metric" style="border-left:5px solid #9775fa">
+    <div style="font-weight:800">🌙 Tuần ${wk}: Tuần xả hơi (deload)</div>
+    <div style="font-size:.83rem;color:var(--muted);margin-top:5px;line-height:1.55">Sau ~8 tuần, hãy tập <b>nhẹ 1 tuần</b>: giảm ~40% khối lượng (ít hiệp / nhẹ hơn) để cơ – khớp – thần kinh hồi phục. Tuần sau quay lại mạnh mẽ hơn! 🐾</div></div>`;
+  return `<div class="metric" style="border-left:5px solid var(--green-d)">
+    <div style="font-weight:800">📈 Tuần tập thứ ${wk} · Nhịp tăng tải</div>
+    <div style="font-size:.83rem;margin-top:5px;line-height:1.55">${OVERLOAD_TIPS[(wk-1)%OVERLOAD_TIPS.length]}</div>
+    <div style="font-size:.76rem;color:var(--muted);margin-top:6px">💡 Mỗi 1–2 tuần nâng một chút. Hiệp cuối nên thấy <b>hơi khó, còn dư ~1–3 lần</b> là vừa — đừng tập quá nhẹ nhé!</div></div>`;
+}
+function corePrinciplesHTML(){
+  return `<details class="lib-grp" style="margin-top:14px;border-left:5px solid var(--teal)"><summary>📚 Nguyên tắc tập cốt lõi (bấm xem)</summary>
+    <div style="padding:10px 14px 14px;font-size:.83rem;line-height:1.75;color:var(--ink)">
+      <b>1. Tăng tải dần</b> — mỗi 1–2 tuần thêm reps/hiệp/tạ/độ khó.<br>
+      <b>2. Đủ cường độ</b> — hiệp cuối còn dư ~1–3 lần (RIR), đừng quá nhẹ.<br>
+      <b>3. Hồi phục</b> — mỗi nhóm nghỉ 48–72h; ngủ 7–9h; uống đủ nước.<br>
+      <b>4. Tuần xả</b> — mỗi ~8 tuần tập nhẹ 1 tuần để khoẻ lại.<br>
+      <b>5. Đều đặn</b> — tập đều quan trọng hơn tập nặng thất thường.<br>
+      <b>6. Dinh dưỡng</b> — đủ đạm (~1.6–2g/kg), ăn theo mục tiêu.<br>
+      <b>7. Kỹ thuật chuẩn</b> — xem video, đúng form trước khi tăng tải.
+    </div></details>`;
+}
 function renderProgress(){
   const h=loadHist(), streak=calcStreak(), total=h.length;
   const weekAgo=Date.now()-7*864e5, wkCount=h.filter(e=>e.ts>=weekAgo).length;
@@ -1025,11 +1057,13 @@ function renderProgress(){
       <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">Chuỗi ngày</div></div>
       <div class="stat"><div class="num">📆 ${wkCount}</div><div class="lbl">Tuần này</div></div>
       <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng cộng</div></div></div>
+    ${overloadCard()}
     ${caloCardHTML()}
     ${fastReportHTML()}
     <h2 class="sec-title">🗓️ Lịch sử tập</h2>
     ${list}
-    ${h.length?`<button class="btn sec" style="margin-top:6px" onclick="clearHist()">🗑️ Xoá lịch sử</button>`:''}`;
+    ${h.length?`<button class="btn sec" style="margin-top:6px" onclick="clearHist()">🗑️ Xoá lịch sử</button>`:''}
+    ${corePrinciplesHTML()}`;
 }
 function clearHist(){ if(confirm('Xoá toàn bộ lịch sử tập?')){ saveHist([]); renderProgress(); } }
 function delHist(ts){ if(confirm('Xoá buổi tập này?')){ saveHist(loadHist().filter(e=>e.ts!==ts)); renderProgress(); } }
