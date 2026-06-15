@@ -214,11 +214,15 @@
   .pk-step button{width:24px;height:24px;border:none;border-radius:8px;background:var(--card);color:var(--green-d);font-weight:900;font-size:1rem;cursor:var(--paw),pointer;box-shadow:var(--shadow)}
   .pk-reps{flex:none;width:78px;padding:5px 7px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.74rem;background:var(--card);color:var(--ink)}
   .pk-x{flex:none;border:none;background:none;color:var(--muted);font-size:.9rem;cursor:var(--paw),pointer;padding:4px}
-  .g-rec{font-size:.66rem;font-weight:800;color:#1f7a52;background:var(--green-l);padding:2px 7px;border-radius:8px}
-  .g-rest{font-size:.66rem;font-weight:800;color:#8a6d1a;background:#fff3cd;padding:2px 7px;border-radius:8px}
-  .lib-grp.rest{opacity:.62}
-  .lib-row.rec .lib-n{color:var(--green-d)}
-  .lib-row.rec{background:color-mix(in srgb,var(--green-l) 12%,transparent)}
+  .lib-need.ok{color:var(--green-d);font-weight:800}
+  .focus-card{background:var(--card);border-radius:16px;padding:15px;box-shadow:var(--shadow);margin-bottom:11px;cursor:var(--paw),pointer;transition:transform .08s}
+  .focus-card:active{transform:scale(.99)}
+  .fc-h{font-weight:800;font-size:1.04rem;display:flex;align-items:center}
+  .fc-h .arrow{margin-left:auto;opacity:.4;font-size:1.2rem}
+  .fc-d{font-size:.82rem;color:var(--muted);margin-top:3px;line-height:1.4}
+  .bld-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .bld-head .bld-back{width:auto;padding:9px 13px;flex:none}
+  .bld-title{font-weight:800;font-size:1.12rem}
   .food-chips{display:flex;flex-wrap:wrap;gap:6px}
   .food-chip{border:2px solid var(--border);background:var(--card);border-radius:14px;padding:7px 10px;font-size:.76rem;font-weight:700;font-family:inherit;color:var(--green-d);cursor:var(--paw),pointer}
   .food-chip:active{transform:scale(.95)}
@@ -700,9 +704,15 @@ const SPLIT_PRESETS={
 };
 // 3 buổi xoay trọng tâm A/B/C (mỗi buổi vẫn toàn thân, nhấn 1 mảng) — cả tuần mỗi nhóm tập ~2 lần
 const WEEK_TEMPLATES=[
-  {name:'Buổi A · Thân dưới (Mông & Chân)', ex:['Mông::Glute Bridge','Chân::Squat','Chân::Lunges','Mông::Kick Back','Core / Bụng::Plank','Cardio::Jumping Jack']},
-  {name:'Buổi B · Thân trên (đẩy · kéo · vai)', ex:['Ngực::Knee Push Up','Lưng::Seated Band Row','Vai::Pike Push Up','Vai::Band Lateral Raise','Core / Bụng::Mountain Climber','Cardio::High Knees']},
-  {name:'Buổi C · Toàn thân + Core', ex:['Chân::Sumo Squat','Mông::Hip Thrust (1 chân)','Ngực::Push Up (chuẩn)','Lưng::Bird Dog','Core / Bụng::Bicycle Crunches','Cardio::Burpees']},
+  {name:'Buổi A · Thân dưới', ex:['Mông::Glute Bridge','Mông::Kick Back','Chân::Squat','Chân::Lunges','Core / Bụng::Plank','Cardio::Jumping Jack']},
+  {name:'Buổi B · Thân trên', ex:['Ngực::Knee Push Up','Lưng::Seated Band Row','Lưng::Bird Dog','Vai::Pike Push Up','Core / Bụng::Mountain Climber','Cardio::High Knees']},
+  {name:'Buổi C · Toàn thân', ex:['Chân::Sumo Squat','Mông::Glute Bridge','Ngực::Push Up (chuẩn)','Lưng::Seated Band Row','Core / Bụng::Plank','Cardio::Burpees']},
+];
+// Loại buổi (focus) — chọn trước, app chỉ hiện đúng nhóm cơ của buổi đó
+const FOCUSES=[
+  {name:'Buổi A · Thân dưới', emoji:'🍑', desc:'Nhấn Mông & Chân (nhóm cơ lớn) + core & cardio.', groups:[['Mông',2],['Chân',2],['Core / Bụng',1],['Cardio',1]]},
+  {name:'Buổi B · Thân trên', emoji:'💪', desc:'Đẩy (ngực) · kéo (lưng) · vai + core & cardio.', groups:[['Ngực',1],['Lưng',2],['Vai',1],['Core / Bụng',1],['Cardio',1]]},
+  {name:'Buổi C · Toàn thân', emoji:'🔥', desc:'Mỗi nhóm 1 bài — quét toàn thân, nhẹ nhàng cân đối.', groups:[['Chân',1],['Mông',1],['Ngực',1],['Lưng',1],['Core / Bụng',1],['Cardio',1]]},
 ];
 const LIB_BUCKETS=EX_LIB.map(g=>g.key);
 function libFind(bucket,n){ const g=EX_LIB.find(g=>g.key===bucket); return g&&g.items.find(x=>x.n===n); }
@@ -727,7 +737,7 @@ function saveCustomSession(){
   const ex=[WGS, ..._picked.map(k=>{const[b,n]=k.split('::');const e=libFind(b,n);if(!e)return null;const c=cfgFor(k);
     return {...e, sets:c.sets, reps:c.reps, rest:Math.round((e.rest||30)*rm)}; }).filter(Boolean), PIGEON, WGS_END];
   list.push({id,name,icon:'🛠️',grad:'linear-gradient(135deg,#ff922b,#ff6b9d)',diff:_diff,ex});
-  saveCustomSessions(list); refreshCustomPlan(); _picked=[]; _buildName=''; _cfg={};
+  saveCustomSessions(list); refreshCustomPlan(); _picked=[]; _buildName=''; _cfg={}; _focus=null;
   try{ localStorage.setItem('meofit_plan','custom'); }catch(e){}
   if(getLevel) setLevel(1);
   _justSaved=name; _sessMode='plans'; renderSessList(); renderHome(); window.scrollTo(0,0);
@@ -834,7 +844,7 @@ function renderWeek(){
 }
 
 /* ============ SESSIONS ============ */
-let _sessMode='plans', _picked=[], _buildGoal=null, _buildName='', _justSaved='', _diff='tb', _cfg={};
+let _sessMode='plans', _picked=[], _buildGoal=null, _buildName='', _justSaved='', _diff='tb', _cfg={}, _focus=null;
 const DIFF={de:{label:'😺 Dễ',d:-1,restMul:1.25},tb:{label:'💪 Vừa',d:0,restMul:1},kho:{label:'🔥 Khó',d:1,restMul:0.85}};
 function diffSets(e){ return Math.max(2, Math.min(6, e.sets + DIFF[_diff].d)); }
 function cfgFor(k){ if(!_cfg[k]){ const[b,n]=k.split('::'); const e=libFind(b,n); if(e) _cfg[k]={sets:diffSets(e),reps:e.reps}; } return _cfg[k]||{sets:3,reps:''}; }
@@ -873,47 +883,53 @@ function renderSessList(){
 function setBuildGoal(g){ _buildGoal=g; renderBuilder(); }
 function togglePickEx(key){ const i=_picked.indexOf(key); if(i>=0){ _picked.splice(i,1); delete _cfg[key]; } else { _picked.push(key); cfgFor(key); } renderBuilder(); }
 function buildGoal(){ return _buildGoal||loadProfile().goal||'giu'; }
-function renderBuilder(){
-  const goal=buildGoal(), preset=SPLIT_PRESETS[goal];
-  // đếm số bài đã chọn theo nhóm
-  const cnt={}; LIB_BUCKETS.forEach(b=>cnt[b]=0);
-  _picked.forEach(k=>{ const b=k.split('::')[0]; if(b in cnt) cnt[b]++; });
-  const goalSel=`<select onchange="setBuildGoal(this.value)">${Object.keys(SPLIT_PRESETS).map(g=>`<option value="${g}" ${g===goal?'selected':''}>${SPLIT_PRESETS[g].label}</option>`).join('')}</select>`;
-  // recommend theo tuần: nhóm cơ buổi đã lưu GẦN NHẤT → nên nghỉ 48h; nhóm chưa tập tuần này → nên thêm
-  const saved=loadCustomSessions();
-  const prevGroups=new Set((saved.length?saved[saved.length-1].ex:[]).map(e=>e.m).filter(m=>LIB_BUCKETS.includes(m)));
-  const covered=new Set(saved.flatMap(s=>s.ex.map(e=>e.m)).filter(m=>LIB_BUCKETS.includes(m)));
-  // thanh cân bằng theo preset
-  const balance=LIB_BUCKETS.map(b=>{
-    const need=preset.r[b]||0, have=cnt[b], ok=have>=need;
-    const col=have===0?'var(--muted)':(ok?'var(--green-d)':'var(--orange)');
-    return `<span class="bchip" style="color:${col};border-color:${col}">${EX_LIB.find(g=>g.key===b).emoji} ${have}/${need}</span>`;
-  }).join('');
-  const rmul=DIFF[_diff].restMul;
-  const totalMin=_picked.length?Math.round(_picked.reduce((s,k)=>{const[b,n]=k.split('::');const e=libFind(b,n);const c=cfgFor(k);return s+(e?c.sets*e.work+(c.sets-1)*Math.round((e.rest||30)*rmul):0);},0)/60)+8:0;
-  // thư viện (có gợi ý theo tuần)
-  const lib=EX_LIB.map(g=>{
-    const isPrev=prevGroups.has(g.key), isRec=!isPrev && !covered.has(g.key);
-    const rows=g.items.map(e=>{
-      const key=g.key+'::'+e.n, on=_picked.includes(key), recRow=isRec&&!on;
-      return `<div class="lib-row ${on?'on':''} ${recRow?'rec':''}" onclick="togglePickEx('${g.key}::${e.n.replace(/'/g,"\\'")}')">
-        <div class="lib-pick">${on?'✓':'＋'}</div>
-        <div class="lib-info"><div class="lib-n">${recRow?'⭐ ':''}${e.mi} ${e.n}</div><div class="lib-m">${e.sets} hiệp × ${e.reps} · ${e.mp}</div></div>
-        <a class="lib-vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶️</a></div>`;
-    }).join('');
-    const need=preset.r[g.key]||0;
-    const badge=isPrev?'<span class="g-rest">💤 hôm trước đã tập</span>':(isRec?'<span class="g-rec">⭐ nên thêm</span>':'');
-    return `<details class="lib-grp ${isPrev?'rest':''}" style="border-left:5px solid ${tagColor(g.key)}"${(isRec||cnt[g.key]<need)&&!isPrev?' open':''}>
-      <summary>${g.emoji} ${g.key} ${badge} <span class="lib-need">gợi ý ${need} · chọn ${cnt[g.key]}</span></summary>${rows}</details>`;
-  }).join('');
-  // gói đã lưu
-  const savedHTML=saved.length?`<h2 class="sec-title" style="margin-top:14px">🗂️ Buổi đã xây (${saved.length})</h2>
+function setFocus(v){ _focus=v; _picked=[]; _cfg={}; _buildName=(v!==null&&v!=='free')?FOCUSES[v].name:''; renderBuilder(); window.scrollTo(0,0); }
+function savedSessionsHTML(saved){ return saved.length?`<h2 class="sec-title" style="margin-top:16px">🗂️ Buổi đã xây (${saved.length})</h2>
     ${saved.map(s=>`<div class="sess-card" style="background:${s.grad}">
       <div class="ic">${s.icon}</div><div class="info" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="cursor:var(--paw),pointer"><div class="t">${s.name}</div><div class="s">${s.ex.length} bài • ~${estMinutes(s)} phút</div></div>
       <button class="hist-del" onclick="delCustomSession(${s.id})" title="Xoá">✕</button></div>`).join('')}
-    <button class="btn sec" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="margin-top:4px">📋 Dùng “Gói của tôi” →</button>`:'';
-  const priChips=preset.pri.map(b=>{const g=EX_LIB.find(x=>x.key===b);return `<span class="bchip" style="color:var(--green-d);border-color:var(--green-d);background:var(--green-l)">${g.emoji} ${b}</span>`;}).join('');
-  const tplBtns=WEEK_TEMPLATES.map((t,i)=>`<button class="btn sec tpl-btn" onclick="applyTemplate(${i})">⚡ ${t.name}</button>`).join('');
+    <button class="btn sec" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="margin-top:4px">📋 Dùng “Gói của tôi” →</button>`:''; }
+function renderBuilder(){
+  const saved=loadCustomSessions();
+  // ===== Chưa chọn loại buổi → màn chọn focus =====
+  if(_focus===null){
+    const fcards=FOCUSES.map((f,i)=>`<div class="focus-card" onclick="setFocus(${i})" style="border-left:6px solid ${tagColor(f.groups[0][0])}">
+      <div class="fc-h">${f.emoji} ${f.name}<span class="arrow">›</span></div>
+      <div class="fc-d">${f.desc}</div>
+      <div class="bchips" style="margin-top:8px">${f.groups.map(([g,c])=>`<span class="bchip">${EX_LIB.find(x=>x.key===g).emoji} ${g} ×${c}</span>`).join('')}</div></div>`).join('');
+    document.getElementById('v-sess').innerHTML=`
+      ${sessModeTabs()}
+      <h2 class="sec-title">🛠️ Tự xây bài tập</h2>
+      <div class="card" style="padding:14px;border-left:5px solid var(--teal)">
+        <div style="font-weight:800">📅 Tập 3 buổi/tuần, xoay trọng tâm (vd T2·4·6)</div>
+        <p style="color:var(--muted);font-size:.82rem;margin:6px 0 0">Mỗi buổi nhấn 1 mảng cơ → nhóm cơ được nghỉ <b>48–72h</b>, cả tuần vẫn cân đối. Chọn loại buổi muốn xây — Mèo chỉ hiện đúng nhóm cơ nên tập của buổi đó 🐾</p>
+      </div>
+      <div style="font-size:.82rem;font-weight:800;margin:2px 2px 8px;color:var(--green-d)">Chọn loại buổi để xây:</div>
+      ${fcards}
+      <button class="btn sec" onclick="setFocus('free')">🎛️ Tự do chọn mọi nhóm (nâng cao)</button>
+      ${savedSessionsHTML(saved)}`;
+    return;
+  }
+  // ===== Đã chọn focus → chỉ hiện nhóm cơ của buổi đó =====
+  const free=_focus==='free';
+  const f=free?null:FOCUSES[_focus];
+  const groups=free?LIB_BUCKETS.map(b=>[b,0]):f.groups;
+  const groupKeys=groups.map(g=>g[0]);
+  const target={}; groups.forEach(([g,c])=>target[g]=c);
+  const cnt={}; groupKeys.forEach(b=>cnt[b]=0);
+  _picked.forEach(k=>{ const b=k.split('::')[0]; if(b in cnt) cnt[b]++; });
+  const rmul=DIFF[_diff].restMul;
+  const totalMin=_picked.length?Math.round(_picked.reduce((s,k)=>{const[b,n]=k.split('::');const e=libFind(b,n);const c=cfgFor(k);return s+(e?c.sets*e.work+(c.sets-1)*Math.round((e.rest||30)*rmul):0);},0)/60)+8:0;
+  const balance=groups.map(([b,need])=>{const have=cnt[b],ok=need?have>=need:have>0;const col=have===0?'var(--muted)':(ok?'var(--green-d)':'var(--orange)');return `<span class="bchip" style="color:${col};border-color:${col}">${EX_LIB.find(g=>g.key===b).emoji} ${b} ${have}${need?'/'+need:''}</span>`;}).join('');
+  const lib=EX_LIB.filter(g=>groupKeys.includes(g.key)).map(g=>{
+    const need=target[g.key]||0, done=need&&cnt[g.key]>=need;
+    const rows=g.items.map(e=>{const key=g.key+'::'+e.n,on=_picked.includes(key);
+      return `<div class="lib-row ${on?'on':''}" onclick="togglePickEx('${g.key}::${e.n.replace(/'/g,"\\'")}')">
+        <div class="lib-pick">${on?'✓':'＋'}</div>
+        <div class="lib-info"><div class="lib-n">${e.mi} ${e.n}</div><div class="lib-m">${e.sets} hiệp × ${e.reps} · ${e.mp}</div></div>
+        <a class="lib-vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶️</a></div>`;}).join('');
+    return `<details class="lib-grp" style="border-left:5px solid ${tagColor(g.key)}" open>
+      <summary>${g.emoji} ${g.key} <span class="lib-need ${done?'ok':''}">${done?'✓ đủ rồi':'nên chọn '+need+' bài'} · đã chọn ${cnt[g.key]}</span></summary>${rows}</details>`;}).join('');
   const nameInput=`<input id="build-name" class="bname" placeholder="Đặt tên buổi…" value="${(_buildName||'').replace(/"/g,'&quot;')}" oninput="_buildName=this.value">`;
   const diffSel=`<div class="seg seg-diff">${Object.keys(DIFF).map(d=>`<button class="${d===_diff?'on':''}" onclick="setDiff('${d}')">${DIFF[d].label}</button>`).join('')}</div>`;
   const pickedList=_picked.map(k=>{const[b,n]=k.split('::');const e=libFind(b,n);if(!e)return'';const c=cfgFor(k);const ek=k.replace(/'/g,"\\'");
@@ -922,37 +938,29 @@ function renderBuilder(){
       <span class="pk-step"><button onclick="stepSets('${ek}',-1)">−</button><b>${c.sets}</b><button onclick="stepSets('${ek}',1)">＋</button></span>
       <input class="pk-reps" value="${(c.reps||'').replace(/"/g,'&quot;')}" oninput="setReps('${ek}',this.value)" title="reps / thời gian">
       <button class="pk-x" onclick="togglePickEx('${ek}')" title="Bỏ">✕</button></div>`;}).join('');
+  const quickFill=free?'':`<button class="btn sec" onclick="applyTemplate(${_focus})">⚡ Điền mẫu gợi ý cho buổi này</button>`;
   document.getElementById('v-sess').innerHTML=`
     ${sessModeTabs()}
-    <h2 class="sec-title">🛠️ Tự xây bài tập</h2>
-    <div class="card" style="padding:14px">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>🎯 Mục tiêu:</b> ${goalSel}</div>
-      <p style="color:var(--muted);font-size:.82rem;margin:8px 0 6px">${preset.why}</p>
-      <div style="font-size:.78rem;font-weight:800;margin-bottom:4px">⭐ Ưu tiên nhóm cơ:</div>
-      <div class="bchips">${priChips}</div>
-    </div>
-    <div class="card" style="padding:14px;border-left:5px solid var(--teal)">
-      <div style="font-weight:800">📅 Cấu trúc tuần khuyên dùng</div>
-      <p style="color:var(--muted);font-size:.82rem;margin:6px 0 10px">Tập <b>3 buổi/tuần</b> (vd Thứ 2·4·6), nghỉ xen kẽ để cơ hồi phục <b>48–72h</b>. Mỗi nhóm nên tập <b>~2 lần/tuần</b>, làm bài <b>compound</b> (nhiều cơ) trước. 3 buổi xoay trọng tâm cho cân đối — bấm để điền nhanh:</p>
-      <div class="tpl-row">${tplBtns}</div>
-      <p style="color:var(--muted);font-size:.74rem;margin:9px 0 0">Điền 1 buổi mẫu → chỉnh thêm/bớt bên dưới → lưu. Lưu cả <b>A·B·C</b> là có plan tuần hoàn chỉnh, mỗi nhóm cơ được tập đều!</p>
-    </div>
+    <div class="bld-head"><button class="btn sec bld-back" onclick="setFocus(null)">‹ Đổi buổi</button><div class="bld-title">${free?'🎛️ Tự do chọn':f.emoji+' '+f.name}</div></div>
+    ${free?`<div class="card" style="padding:12px"><p style="color:var(--muted);font-size:.82rem;margin:0">Chế độ nâng cao — chọn bài ở mọi nhóm tuỳ ý.</p></div>`
+      :`<div class="card" style="padding:13px;border-left:5px solid ${tagColor(f.groups[0][0])}">
+        <p style="color:var(--muted);font-size:.82rem;margin:0 0 8px">${f.desc} <b>Nên chọn:</b> ${f.groups.map(([g,c])=>g+' ×'+c).join(' · ')}.</p>${quickFill}</div>`}
     <div class="card build-tray">
-      <div style="font-weight:800;margin-bottom:6px">🧺 Đã chọn ${_picked.length} bài${_picked.length?` · ~${totalMin} phút/buổi`:''}</div>
+      <div style="font-weight:800;margin-bottom:6px">🧺 Đã chọn ${_picked.length} bài${_picked.length?` · ~${totalMin} phút`:''}</div>
       <div class="bchips">${balance}</div>
       ${_picked.length?`
-        <div style="font-size:.76rem;font-weight:800;margin:10px 0 4px">⚙️ Độ khó (số hiệp & thời gian nghỉ):</div>
+        <div style="font-size:.76rem;font-weight:800;margin:10px 0 4px">⚙️ Độ khó (số hiệp & nghỉ):</div>
         ${diffSel}
         <div class="pk-list">${pickedList}</div>
         <div style="font-size:.72rem;color:var(--muted);margin:2px 2px 8px">Chỉnh tay số hiệp (−/＋) & reps/thời gian từng bài nếu muốn.</div>
         ${nameInput}
         <button class="btn" onclick="saveCustomSession()" style="margin-top:8px">💾 Lưu thành buổi</button>
-        <button class="btn sec" onclick="_picked=[];_buildName='';_cfg={};renderBuilder()" style="margin-top:6px">↺ Xoá hết</button>`
-      :`<div style="color:var(--muted);font-size:.82rem">Chọn bài từ thư viện bên dưới (hoặc bấm 1 buổi mẫu ở trên) để bắt đầu 🐾</div>`}
+        <button class="btn sec" onclick="_picked=[];_cfg={};renderBuilder()" style="margin-top:6px">↺ Xoá lựa chọn</button>`
+      :`<div style="color:var(--muted);font-size:.82rem;margin-top:4px">Chọn bài ở các nhóm bên dưới (hoặc bấm “Điền mẫu”) để bắt đầu 🐾</div>`}
     </div>
     ${lib}
-    ${savedHTML}
-    <div class="note-box" style="margin-top:10px">💡 Compound (squat, lunge, chống đẩy, row) trước — rồi core & cardio. Đủ các nhóm để cơ thể cân đối nhé! 🐾</div>`;
+    ${savedSessionsHTML(saved)}
+    <div class="note-box" style="margin-top:10px">💡 Compound trước (squat, chống đẩy, row) rồi tới core & cardio nhé! 🐾</div>`;
 }
 function chooseLevelList(l){ setLevel(l); renderSessList(); }
 function chooseLevelDetail(l, sid){ setLevel(l); openSession(sid); }
