@@ -734,7 +734,11 @@ function autoWeek(sessions){
   return W;
 }
 function refreshCustomPlan(){ PLANS.custom.sessions=loadCustomSessions(); PLANS.custom.week=autoWeek(PLANS.custom.sessions); }
-function applyTemplate(i){ const t=WEEK_TEMPLATES[i]; if(!t) return; _picked=t.ex.filter(k=>{const[b,n]=k.split('::');return libFind(b,n);}); _cfg={}; _picked.forEach(k=>cfgFor(k)); _buildName=t.name; renderBuilder(); window.scrollTo(0,0); }
+function applyTemplate(i){ const t=WEEK_TEMPLATES[i]; if(!t) return; const used=usedExNames(); const picked=[];
+  t.ex.forEach(k=>{ let[b,n]=k.split('::'); let e=libFind(b,n);
+    if(e && used.has(n)){ const g=EX_LIB.find(x=>x.key===b); const alt=g&&g.items.find(it=>!used.has(it.n)&&!picked.includes(b+'::'+it.n)); if(alt){ k=b+'::'+alt.n; e=alt; } else e=null; }
+    if(e && !picked.includes(k)) picked.push(k); });
+  _picked=picked; _cfg={}; _picked.forEach(k=>cfgFor(k)); _buildName=t.name; _libOpen=false; renderBuilder(); window.scrollTo(0,0); }
 function saveCustomSession(){
   if(!_picked.length){ return; } // nút đã disabled khi rỗng
   const name=(_buildName||'').trim() || ('Buổi của tôi '+(loadCustomSessions().length+1));
@@ -803,6 +807,28 @@ function calcStreak(){
 
 /* ============ HELPERS ============ */
 const DOW_FULL=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+// Mẹo random (tập · ăn uống · hồi phục · tinh thần)
+const TIPS=[
+  '💪 Hiệp cuối nên thấy hơi khó, còn dư ~1–3 lần là vừa — đừng tập quá nhẹ nhé!',
+  '🏋️ Bài compound (squat, chống đẩy, row) tập trước, bài phụ (core, tay) sau.',
+  '😮‍💨 Thở ra khi gắng sức, hít vào khi hạ — đừng nín thở.',
+  '📈 Mỗi 1–2 tuần tăng tải một chút: thêm reps / hiệp / tạ / độ khó.',
+  '🔥 Khởi động kỹ 5 phút trước khi tập để tránh chấn thương.',
+  '🎥 Tập đúng form quan trọng hơn tập nặng — chưa chắc thì xem video.',
+  '🍗 Mỗi bữa nên có đạm (ức gà, trứng, cá, đậu hũ) để cơ phục hồi & săn chắc.',
+  '💧 Uống đủ nước ~2 lít/ngày, hôm tập thì uống thêm nhé.',
+  '🥗 Ăn rau xanh & trái cây mỗi ngày cho đủ vi chất, no lâu.',
+  '⚖️ Giảm mỡ là nhờ ĂN (thâm hụt calo); GIỮ cơ là nhờ tập + đủ đạm.',
+  '🚫 Đừng nhịn ăn cực đoan — dễ tụt cơ, mệt mỏi & phản tác dụng.',
+  '🍌 Sau tập ăn nhẹ có đạm + tinh bột (sữa chua, chuối, trứng) giúp hồi phục.',
+  '😴 Ngủ đủ 7–9h — cơ phát triển lúc ngủ, không phải lúc tập!',
+  '🛌 Mỗi nhóm cơ cần nghỉ 48–72h mới tập lại — đừng tập cùng nhóm 2 ngày liền.',
+  '🌙 Mỗi ~8 tuần nên có 1 tuần tập nhẹ (deload) để cơ–khớp hồi phục.',
+  '🐢 Đau nhẹ sau tập là bình thường; đau nhói ở khớp thì nên nghỉ & xem lại form.',
+  '🌸 Đều đặn thắng hoàn hảo — tập 20 phút còn hơn bỏ buổi!',
+  '🧘 Dãn cơ cuối buổi giúp đỡ đau & linh hoạt hơn; tối trước ngủ dãn nhẹ ngủ ngon.',
+];
+function tipBox(){ return `<div class="note-box">🐾 <b>Mẹo hôm nay:</b> ${TIPS[Math.floor(Math.random()*TIPS.length)]}</div>`; }
 function estMinutes(s){
   let sec=0; s.ex.forEach(e=>{ sec += e.sets*e.work + (e.sets-1)*(e.rest||30) + e.sets*3; });
   return Math.round(sec/60);
@@ -855,7 +881,7 @@ function renderHome(){
     <div style="height:14px"></div>
     ${ifCardHTML()}
     ${w.rope?`<div class="note-box rope">${ROPE_NOTE}</div>`:''}
-    <div class="note-box">🌸 <b>Mẹo:</b> Dãn cơ luôn là bài cuối buổi. Trước khi dãn nên làm ấm cơ thể (đi bộ, tắm nước ấm) thì mới hiệu quả. Ai bận có thể dãn cuối ngày trước khi ngủ — ngủ ngon hơn nhiều đó!</div>`;
+    ${tipBox()}`;
   clearInterval(_ifTimer);
   if(loadIF().start){ updateIfClock(); _ifTimer=setInterval(updateIfClock,1000); }
 }
@@ -881,7 +907,9 @@ function renderWeek(){
 }
 
 /* ============ SESSIONS ============ */
-let _sessMode='plans', _picked=[], _buildGoal=null, _buildName='', _justSaved='', _diff='tb', _cfg={}, _focus=null;
+let _sessMode='plans', _picked=[], _buildGoal=null, _buildName='', _justSaved='', _diff='tb', _cfg={}, _focus=null, _libOpen=true;
+// Tên bài đã dùng ở các buổi đã lưu (để không gợi ý lại → đa dạng)
+function usedExNames(){ const s=new Set(); loadCustomSessions().forEach(se=>se.ex.forEach(e=>{ if(!['Khởi động','Dãn cơ'].includes(e.m)) s.add(e.n); })); return s; }
 const DIFF={de:{label:'😺 Dễ',d:-1,restMul:1.25},tb:{label:'💪 Vừa',d:0,restMul:1},kho:{label:'🔥 Khó',d:1,restMul:0.85}};
 function diffSets(e){ return Math.max(2, Math.min(6, e.sets + DIFF[_diff].d)); }
 function cfgFor(k){ if(!_cfg[k]){ const[b,n]=k.split('::'); const e=libFind(b,n); if(e) _cfg[k]={sets:diffSets(e),reps:e.reps}; } return _cfg[k]||{sets:3,reps:''}; }
@@ -920,7 +948,7 @@ function renderSessList(){
 function setBuildGoal(g){ _buildGoal=g; renderBuilder(); }
 function togglePickEx(key){ const i=_picked.indexOf(key); if(i>=0){ _picked.splice(i,1); delete _cfg[key]; } else { _picked.push(key); cfgFor(key); } renderBuilder(); }
 function buildGoal(){ return _buildGoal||loadProfile().goal||'giu'; }
-function setFocus(v){ _focus=v; _picked=[]; _cfg={}; _buildName=(v!==null&&v!=='free')?FOCUSES[v].name:''; renderBuilder(); window.scrollTo(0,0); }
+function setFocus(v){ _focus=v; _picked=[]; _cfg={}; _libOpen=true; _buildName=(v!==null&&v!=='free')?FOCUSES[v].name:''; renderBuilder(); window.scrollTo(0,0); }
 function savedSessionsHTML(saved){ return saved.length?`<h2 class="sec-title" style="margin-top:16px">🗂️ Buổi đã xây (${saved.length})</h2>
     ${saved.map(s=>`<div class="sess-card" style="background:${s.grad}">
       <div class="ic">${s.icon}</div><div class="info" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="cursor:var(--paw),pointer"><div class="t">${s.name}</div><div class="s">${s.ex.length} bài • ~${estMinutes(s)} phút</div></div>
@@ -960,15 +988,19 @@ function renderBuilder(){
   const rmul=DIFF[_diff].restMul;
   const totalMin=_picked.length?Math.round(_picked.reduce((s,k)=>{const[b,n]=k.split('::');const e=libFind(b,n);const c=cfgFor(k);return s+(e?c.sets*e.work+(c.sets-1)*Math.round((e.rest||30)*rmul):0);},0)/60)+8:0;
   const balance=groups.map(([b,need])=>{const have=cnt[b],ok=need?have>=need:have>0;const col=have===0?'var(--muted)':(ok?'var(--green-d)':'var(--orange)');return `<span class="bchip" style="color:${col};border-color:${col}">${EX_LIB.find(g=>g.key===b).emoji} ${b} ${have}${need?'/'+need:''}</span>`;}).join('');
+  const used=usedExNames(); // bài đã dùng ở buổi khác → ẩn để đa dạng (vẫn hiện nếu đang chọn)
   const lib=groupKeys.map(gk=>EX_LIB.find(g=>g.key===gk)).filter(Boolean).map(g=>{
     const need=target[g.key]||0, done=need&&cnt[g.key]>=need, fav=userFocus.includes(g.key);
-    const rows=g.items.map(e=>{const key=g.key+'::'+e.n,on=_picked.includes(key);
+    const items=g.items.filter(e=>!used.has(e.n)||_picked.includes(g.key+'::'+e.n));
+    const rows=items.length?items.map(e=>{const key=g.key+'::'+e.n,on=_picked.includes(key);
       return `<div class="lib-row ${on?'on':''}" onclick="togglePickEx('${g.key}::${e.n.replace(/'/g,"\\'")}')">
         <div class="lib-pick">${on?'✓':'＋'}</div>
         <div class="lib-info"><div class="lib-n">${e.mi} ${e.n}</div><div class="lib-m">${e.sets} hiệp × ${e.reps} · ${e.mp}</div></div>
-        <a class="lib-vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶️</a></div>`;}).join('');
+        <a class="lib-vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶️</a></div>`;}).join('')
+      :`<div style="padding:10px 14px;font-size:.78rem;color:var(--muted)">Đã dùng hết bài nhóm này ở buổi khác — đổi buổi hoặc xoá bớt nhé 🐾</div>`;
     return `<details class="lib-grp" style="border-left:5px solid ${tagColor(g.key)}" open>
       <summary>${g.emoji} ${g.key} ${fav?'<span class="g-rec">⭐ ưu tiên</span>':''} <span class="lib-need ${done?'ok':''}">${done?'✓ đủ rồi':'nên chọn '+need+' bài'} · đã chọn ${cnt[g.key]}</span></summary>${rows}</details>`;}).join('');
+  const libToggle=`<button class="btn sec" onclick="_libOpen=!_libOpen;renderBuilder()" style="margin:6px 0 10px">${_libOpen?'🔼 Thu gọn thư viện':'🔽 Mở thư viện chọn thêm bài'}</button>`;
   const nameInput=`<input id="build-name" class="bname" placeholder="Đặt tên buổi…" value="${(_buildName||'').replace(/"/g,'&quot;')}" oninput="_buildName=this.value">`;
   const diffSel=`<div class="seg seg-diff">${Object.keys(DIFF).map(d=>`<button class="${d===_diff?'on':''}" onclick="setDiff('${d}')">${DIFF[d].label}</button>`).join('')}</div>`;
   const pickedList=_picked.map(k=>{const[b,n]=k.split('::');const e=libFind(b,n);if(!e)return'';const c=cfgFor(k);const ek=k.replace(/'/g,"\\'");
@@ -997,7 +1029,8 @@ function renderBuilder(){
         <button class="btn sec" onclick="_picked=[];_cfg={};renderBuilder()" style="margin-top:6px">↺ Xoá lựa chọn</button>`
       :`<div style="color:var(--muted);font-size:.82rem;margin-top:4px">Chọn bài ở các nhóm bên dưới (hoặc bấm “Điền mẫu”) để bắt đầu 🐾</div>`}
     </div>
-    ${lib}
+    ${libToggle}
+    ${_libOpen?lib:''}
     ${savedSessionsHTML(saved)}
     <div class="note-box" style="margin-top:10px">💡 Compound trước (squat, chống đẩy, row) rồi tới core & cardio nhé! 🐾</div>`;
 }
