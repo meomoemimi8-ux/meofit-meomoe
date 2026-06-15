@@ -1402,7 +1402,7 @@ function finishWorkout(){
   const streak=calcStreak();
   document.getElementById('p-center').innerHTML=`
     <div class="done-screen">
-      <div style="display:flex;justify-content:center;margin:0 auto 2px">${mfLift(150)}</div>
+      <div style="width:170px;height:170px;margin:0 auto 2px">${mfBun(true)}</div>
       <div class="ex-name" style="color:var(--green-d)">🎉 Hoàn thành ${P.sess.name}!</div>
       <p style="color:var(--muted);font-weight:600;margin:6px 0 4px">Giỏi quá đi 🐾 Đừng quên dãn cơ kỹ nhé!</p>
       <div class="chip" style="background:var(--green-l);color:#fff;display:inline-block;margin:10px 0 20px">🔥 Chuỗi ${streak} ngày</div>
