@@ -184,6 +184,25 @@
   .plan-d{font-size:.82rem;color:var(--muted);margin:6px 0 10px;line-height:1.45}
   .rec-badge{font-size:.66rem;background:var(--yellow);color:#6a5413;padding:2px 8px;border-radius:10px;font-weight:800}
   .plan-using{color:var(--green-d);font-weight:800;font-size:.92rem}
+  /* ===== Builder (Tự xây) ===== */
+  .seg-mode{margin-bottom:14px}
+  .plan-switch{margin:6px 0 14px;background:var(--surface-2);border-radius:16px;padding:4px 12px}
+  .plan-switch summary{cursor:var(--paw),pointer;font-weight:800;color:var(--green-d);font-size:.86rem;padding:8px 2px}
+  .build-tray{position:sticky;top:8px;z-index:5;padding:14px;border:2px solid var(--green-l)}
+  .bchips{display:flex;flex-wrap:wrap;gap:6px}
+  .bchip{font-size:.74rem;font-weight:800;border:1.5px solid;border-radius:999px;padding:3px 9px;background:var(--card)}
+  .lib-grp{background:var(--card);border-radius:14px;box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+  .lib-grp summary{cursor:var(--paw),pointer;font-weight:800;padding:12px 14px;font-size:.95rem}
+  .lib-need{font-size:.7rem;color:var(--muted);font-weight:600;margin-left:4px}
+  .lib-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--border);cursor:var(--paw),pointer;transition:background .1s}
+  .lib-row:hover{background:var(--surface-2)}
+  .lib-row.on{background:color-mix(in srgb,var(--green-l) 22%,transparent)}
+  .lib-pick{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;background:var(--surface-2);color:var(--muted)}
+  .lib-row.on .lib-pick{background:var(--green);color:#fff}
+  .lib-info{flex:1;min-width:0}
+  .lib-n{font-weight:700;font-size:.9rem}
+  .lib-m{font-size:.74rem;color:var(--muted);margin-top:1px}
+  .lib-vid{flex:none;text-decoration:none;font-size:1.1rem;padding:4px}
   .food-chips{display:flex;flex-wrap:wrap;gap:6px}
   .food-chip{border:2px solid var(--border);background:var(--card);border-radius:14px;padding:7px 10px;font-size:.76rem;font-weight:700;font-family:inherit;color:var(--green-d);cursor:var(--paw),pointer}
   .food-chip:active{transform:scale(.95)}
@@ -561,17 +580,19 @@ const PLANS={
   home:{id:'home',name:'Người mới · tại nhà',emoji:'🌱',grad:'linear-gradient(135deg,#3fa34d,#7bd389)',equip:'home',levels:true,sessions:SESSIONS,week:WEEK,
         desc:'Không cần dụng cụ · 4 buổi/tuần · làm quen kỹ thuật. Lộ trình cơ bản nhất cho người mới.'},
   gym:{id:'gym',name:'Tập gym có máy · toàn thân',emoji:'🏋️',grad:'linear-gradient(135deg,#4dabf7,#3b82c4)',equip:'gym',levels:false,sessions:GYM_SESSIONS,week:GYM_WEEK,
-        desc:'Dùng máy phòng gym · 3 buổi toàn thân/tuần · tăng cơ & giảm mỡ. Cho người đã quen kỹ thuật.'}
+        desc:'Dùng máy phòng gym · 3 buổi toàn thân/tuần · tăng cơ & giảm mỡ. Cho người đã quen kỹ thuật.'},
+  custom:{id:'custom',name:'Gói của tôi',emoji:'🛠️',grad:'linear-gradient(135deg,#ff922b,#ff6b9d)',equip:'both',levels:false,sessions:[],week:[],custom:true,
+        desc:'Các buổi bạn tự xây từ thư viện bài tập — chọn bài theo nhóm cơ & mục tiêu của mình.'}
 };
 function curPlanId(){ try{ return localStorage.getItem('meofit_plan')||'home' }catch(e){ return 'home' } }
 function curPlan(){ return PLANS[curPlanId()]||PLANS.home; }
-function setPlan(id){ if(!PLANS[id]) return; try{ localStorage.setItem('meofit_plan',id); }catch(e){} if(getLevel) setLevel(1); renderProfile(); }
+function setPlan(id){ if(!PLANS[id]) return; try{ localStorage.setItem('meofit_plan',id); }catch(e){} if(getLevel) setLevel(1); _sessMode='plans'; renderSessList(); renderHome(); }
 function recommendPlan(){ const p=loadProfile(); return p.equip==='gym'?'gym':'home'; }
 function planPickerHTML(){
   const p=loadProfile(), cur=curPlanId(), rec=recommendPlan();
   const goalTxt={giam:'giảm mỡ',giu:'giữ dáng',tang:'tăng cơ'}[p.goal||'giu'];
   const equipTxt={home:'tại nhà',gym:'ở phòng gym',both:'linh hoạt'}[p.equip||'home'];
-  const cards=Object.values(PLANS).map(pl=>{
+  const cards=Object.values(PLANS).filter(pl=>pl.id!=='custom'||pl.sessions.length).map(pl=>{
     const active=pl.id===cur, isRec=pl.id===rec;
     return `<div class="plan-card ${active?'on':''}" style="border-left:6px solid ${pl.grad.match(/#\w+/)[0]}">
       <div class="plan-h">${pl.emoji} ${pl.name} ${isRec?'<span class="rec-badge">Mèo gợi ý ⭐</span>':''}</div>
@@ -588,6 +609,101 @@ function planPickerHTML(){
 }
 const weekByDay = d => curPlan().week.find(w=>w.day===d);
 const sessById = id => Object.values(PLANS).flatMap(p=>p.sessions).find(s=>s.id===id);
+
+/* ============ THƯ VIỆN BÀI TẬP (Tự xây) ============ */
+// Gom theo nhóm cơ (key khớp SPLIT_PRESETS & MUSCLE_COLORS). Mỗi bài đúng shape SESSIONS.
+const EX_LIB=[
+ {key:'Mông', emoji:'🍑', items:[
+   {n:'Glute Bridge', en:'Glute bridge', mi:'🍑', m:'Mông', sets:3, reps:'12 lần', work:30, rest:30, type:'reps', tempo:'Siết mông 1s ở trên', mp:'Cơ mông lớn', ms:'Gân kheo, cơ lõi', gymName:'Máy Hip Thrust / cầu mông tạ đòn'},
+   {n:'Hip Thrust (1 chân)', en:'Single leg hip thrust', mi:'🍑', m:'Mông', sets:3, reps:'10 lần/chân', work:40, rest:35, type:'reps', perSide:true, tempo:'Đẩy hông cao, siết mông', mp:'Cơ mông lớn', ms:'Gân kheo', gymName:'Máy Hip Thrust'},
+   {n:'Kick Back', en:'Glute kickback', mi:'🦶', m:'Mông', sets:3, reps:'12–15 lần', work:45, rest:30, type:'reps', tempo:'Đá gót lên, siết mông 1s', mp:'Cơ mông lớn', ms:'Gân kheo', gymName:'Máy Glute / Cable Kickback'},
+   {n:'Fire Hydrants', en:'Fire hydrant exercise', mi:'🚒', m:'Mông', sets:3, reps:'20 lần', work:60, rest:30, type:'reps', tempo:'Nâng đùi ngang, giữ lưng thẳng', mp:'Cơ mông nhỡ', ms:'Cơ mông lớn, hông ngoài', gymName:'Máy Hip Abduction'},
+   {n:'Lying Clam Shells', en:'Clamshell exercise', mi:'🐚', m:'Mông', sets:3, reps:'15 lần', work:45, rest:30, type:'reps', tempo:'Mở gối như vỏ sò, hông cố định', mp:'Cơ mông nhỡ', ms:'Cơ hông ngoài', gymName:'Máy Hip Abduction / Cable'},
+   {n:'Monster Walk (dây)', en:'Monster walk resistance band', mi:'👾', m:'Mông', sets:3, reps:'15 lần/chân', work:60, rest:35, type:'reps', perSide:true, tempo:'Giữ căng dây, bước ngang', mp:'Cơ mông nhỡ', ms:'Cơ mông lớn, hông', gymName:'Máy Hip Abduction / Cable'},
+   {n:'Sumo Deadlift (dây)', en:'Sumo deadlift with band', mi:'🍑', m:'Mông', sets:4, reps:'12 lần', work:48, rest:40, type:'reps', tempo:'Đẩy gót, siết mông', mp:'Cơ mông, đùi trong', ms:'Gân kheo, lưng dưới', gymName:'Máy Hip Adduction / Sumo Deadlift'},
+ ]},
+ {key:'Chân', emoji:'🦵', items:[
+   {n:'Squat', en:'Bodyweight squat', mi:'🦵', m:'Chân', sets:4, reps:'15 lần', work:60, rest:40, type:'reps', tempo:'Xuống 2s, gót bám sàn', mp:'Cơ đùi trước (quads), cơ mông', ms:'Gân kheo, cơ lõi', gymName:'Leg Press / Hack Squat / Smith'},
+   {n:'Sumo Squat', en:'Sumo squat', mi:'🍑', m:'Chân', sets:4, reps:'12 lần', work:48, rest:40, type:'reps', tempo:'Chân rộng, mũi mở 45°', mp:'Cơ mông, đùi trong', ms:'Cơ đùi trước', gymName:'Leg Press (chân rộng)'},
+   {n:'Lunges', en:'Forward lunge', mi:'🚶', m:'Chân', sets:4, reps:'12 lần', work:48, rest:35, type:'reps', tempo:'Bước dài, gối sau gần chạm sàn', mp:'Cơ đùi trước, cơ mông', ms:'Gân kheo, bắp chân', gymName:'Walking Lunge tạ đơn'},
+   {n:'Side Lunges', en:'Side lunge', mi:'🦵', m:'Chân', sets:4, reps:'12 lần', work:48, rest:35, type:'reps', tempo:'Bước rộng, gối không vượt mũi chân', mp:'Đùi trong (adductor), đùi trước', ms:'Cơ mông', gymName:'Máy Adductor'},
+   {n:'Wall Sit', en:'Wall sit', mi:'🧱', m:'Chân', sets:3, reps:'giữ 45 giây', work:45, rest:30, type:'time', tempo:'Đùi song song sàn, giữ yên', mp:'Cơ đùi trước (quads)', ms:'Cơ mông, bắp chân', gymName:'Leg Press (giữ tĩnh)'},
+   {n:'Romanian Deadlift (RDL)', en:'Romanian deadlift', mi:'🦵', m:'Chân', sets:4, reps:'12 lần', work:48, rest:40, type:'reps', tempo:'Hạ chậm 3s, lưng thẳng', mp:'Gân kheo (đùi sau), cơ mông', ms:'Lưng dưới, cơ lõi', gymName:'RDL tạ / Máy Leg Curl'},
+   {n:'Calf Raise', en:'Standing calf raise', mi:'🦶', m:'Chân', sets:3, reps:'20 lần', work:40, rest:25, type:'reps', tempo:'Nhón cao, giữ 1s, hạ chậm', mp:'Bắp chân (calves)', ms:'Cơ ổn định cổ chân', gymName:'Máy Calf Raise'},
+   {n:'Jumping Squat', en:'Jump squat', mi:'⚡', m:'Chân', sets:4, reps:'20 giây', work:20, rest:15, type:'time', tempo:'Bật nhanh, tiếp đất gối mềm', mp:'Cơ đùi trước, cơ mông', ms:'Bắp chân, tim mạch', gymName:'Box Jump'},
+ ]},
+ {key:'Ngực', emoji:'💪', items:[
+   {n:'Wall Push Up', en:'Wall push up', mi:'🧱', m:'Ngực', sets:3, reps:'12 lần', work:36, rest:25, type:'reps', tempo:'Đẩy người khỏi tường, thân thẳng', mp:'Cơ ngực', ms:'Vai trước, tay sau', gymName:'Máy Chest Press (nhẹ)'},
+   {n:'Incline Push Up', en:'Incline push up', mi:'💪', m:'Ngực', sets:3, reps:'8–10 lần', work:30, rest:30, type:'reps', tempo:'Hạ 2s, đẩy 1s, thân thẳng', mp:'Cơ ngực trên', ms:'Vai trước, tay sau', gymName:'Máy Incline Chest Press'},
+   {n:'Knee Push Up', en:'Knee push up', mi:'💪', m:'Ngực', sets:3, reps:'8 lần', work:24, rest:30, type:'reps', tempo:'Hạ 2s, đẩy 1s', mp:'Cơ ngực', ms:'Tay sau (triceps), vai trước', gymName:'Máy Chest Press'},
+   {n:'Push Up (chuẩn)', en:'Push up', mi:'💪', m:'Ngực', sets:3, reps:'8–12 lần', work:36, rest:35, type:'reps', tempo:'Thân thẳng, hạ ngực gần sàn', mp:'Cơ ngực', ms:'Tay sau, vai trước, cơ lõi', gymName:'Máy Chest Press / Bench'},
+   {n:'Diamond Push Up', en:'Diamond push up', mi:'💎', m:'Ngực', sets:3, reps:'6–10 lần', work:30, rest:35, type:'reps', tempo:'Hai tay chụm, khuỷu sát thân', mp:'Cơ ngực trong, tay sau', ms:'Vai trước', gymName:'Close-grip Bench Press'},
+ ]},
+ {key:'Lưng', emoji:'🚣', items:[
+   {n:'Seated Band Row', en:'Seated resistance band row', mi:'🚣', m:'Lưng', sets:3, reps:'15 lần', work:45, rest:30, type:'reps', tempo:'Kéo siết bả vai 1s', mp:'Lưng giữa (rhomboid), xô (lats)', ms:'Tay trước (biceps), vai sau', gymName:'Máy Seated Cable Row'},
+   {n:'Superman', en:'Superman exercise', mi:'🦸', m:'Lưng', sets:3, reps:'12 lần', work:36, rest:30, type:'reps', tempo:'Nâng tay-chân, siết lưng 1s', mp:'Cơ lưng dưới (erector)', ms:'Cơ mông, vai sau', gymName:'Máy Back Extension'},
+   {n:'Bird Dog', en:'Bird dog exercise', mi:'🐦', m:'Lưng', sets:3, reps:'12 lần/bên', work:48, rest:30, type:'reps', perSide:true, tempo:'Duỗi tay-chân chéo, giữ 1s', mp:'Lưng dưới, cơ lõi', ms:'Cơ mông, vai', gymName:'—'},
+   {n:'Band Pull Apart', en:'Band pull apart', mi:'🎀', m:'Lưng', sets:3, reps:'15 lần', work:40, rest:25, type:'reps', tempo:'Kéo dây ngang ngực, siết bả vai', mp:'Lưng trên, vai sau', ms:'Cơ thang (traps)', gymName:'Máy Reverse Pec Deck'},
+   {n:'Doorway Row', en:'Doorway row bodyweight', mi:'🚪', m:'Lưng', sets:3, reps:'10–12 lần', work:36, rest:35, type:'reps', tempo:'Ngả người, kéo ngực tới khung cửa', mp:'Xô (lats), lưng giữa', ms:'Tay trước, vai sau', gymName:'Máy Lat Pulldown / Row'},
+   {n:'Reverse Snow Angel', en:'Reverse snow angel', mi:'😇', m:'Lưng', sets:3, reps:'12 lần', work:40, rest:30, type:'reps', tempo:'Nằm sấp, quét tay cung tròn', mp:'Lưng trên, vai sau', ms:'Cơ thang', gymName:'Máy Reverse Fly'},
+ ]},
+ {key:'Vai', emoji:'🦅', items:[
+   {n:'Pike Push Up', en:'Pike push up', mi:'🔺', m:'Vai', sets:3, reps:'8 lần', work:30, rest:35, type:'reps', tempo:'Hông cao, hạ đầu xuống sàn', mp:'Vai trước & giữa (delts)', ms:'Tay sau, cơ ngực trên', gymName:'Máy Shoulder Press'},
+   {n:'Scapular Band Fly', en:'Resistance band rear delt fly', mi:'🦅', m:'Vai', sets:3, reps:'15 lần', work:45, rest:30, type:'reps', tempo:'Mở tay siết bả vai 1s', mp:'Vai sau (rear delt), lưng trên', ms:'Cơ thang', gymName:'Máy Reverse Pec Deck'},
+   {n:'Band Lateral Raise', en:'Resistance band lateral raise', mi:'🪽', m:'Vai', sets:3, reps:'15 lần', work:40, rest:30, type:'reps', tempo:'Nâng tay ngang vai, giữ 1s', mp:'Vai giữa (lateral delt)', ms:'Cơ thang, vai trước', gymName:'Máy Lateral Raise / Cable'},
+   {n:'Band Overhead Press', en:'Resistance band shoulder press', mi:'🙆', m:'Vai', sets:3, reps:'12 lần', work:40, rest:30, type:'reps', tempo:'Đẩy thẳng lên đầu, hạ chậm', mp:'Vai trước & giữa', ms:'Tay sau, cơ lõi', gymName:'Máy Shoulder Press'},
+ ]},
+ {key:'Core / Bụng', emoji:'🪵', items:[
+   {n:'Plank', en:'Plank hold', mi:'🪵', m:'Core / Bụng', sets:3, reps:'giữ 45 giây', work:45, rest:30, type:'time', tempo:'Thẳng người, siết bụng & mông', mp:'Cơ lõi (toàn bộ core)', ms:'Vai, mông, lưng', gymName:'Ab Wheel / plank đặt tạ'},
+   {n:'Side Plank', en:'Side plank', mi:'📐', m:'Core / Bụng', sets:3, reps:'giữ 30 giây/bên', work:30, rest:25, type:'time', perSide:true, tempo:'Hông cao, thân thẳng', mp:'Cơ bụng chéo (obliques)', ms:'Cơ lõi, vai', gymName:'Cable Side Bend'},
+   {n:'Dead Bug', en:'Dead bug exercise', mi:'🐛', m:'Core / Bụng', sets:3, reps:'12 lần/bên', work:48, rest:30, type:'reps', perSide:true, tempo:'Hạ tay-chân chéo, ép lưng xuống', mp:'Cơ lõi sâu (transverse)', ms:'Cơ gập hông', gymName:'—'},
+   {n:'Bicycle Crunches', en:'Bicycle crunch', mi:'🚲', m:'Core / Bụng', sets:3, reps:'20 giây', work:20, rest:15, type:'time', tempo:'Xoay người chạm khuỷu – gối', mp:'Cơ bụng thẳng & chéo', ms:'Cơ gập hông', gymName:'Máy Ab / Cable Woodchop'},
+   {n:'Leg Raise', en:'Lying leg raise', mi:'🦵', m:'Core / Bụng', sets:3, reps:'10 lần', work:30, rest:30, type:'reps', tempo:'Hạ chân chậm, ép lưng xuống sàn', mp:'Cơ bụng dưới', ms:'Cơ gập hông', gymName:"Captain's Chair / Hanging Leg Raise"},
+   {n:'Flutter Kick', en:'Flutter kicks abs', mi:'🦵', m:'Core / Bụng', sets:3, reps:'30 giây', work:30, rest:25, type:'time', tempo:'Đá chân luân phiên, ép lưng xuống', mp:'Cơ bụng dưới', ms:'Cơ gập hông', gymName:"Captain's Chair"},
+   {n:'Mountain Climber', en:'Mountain climbers', mi:'⛰️', m:'Core / Bụng', sets:3, reps:'30 giây', work:30, rest:20, type:'time', tempo:'Kéo gối nhanh, giữ thân thẳng', mp:'Cơ lõi + tim mạch', ms:'Vai, gập hông, chân', gymName:'Máy Ab + cardio'},
+ ]},
+ {key:'Cardio', emoji:'⭐', items:[
+   {n:'Jumping Jack', en:'Jumping jacks', mi:'⭐', m:'Cardio', sets:3, reps:'30 giây', work:30, rest:15, type:'time', tempo:'Nhịp đều, tiếp đất nhẹ', mp:'Tim mạch toàn thân', ms:'Vai, bắp chân', gymName:'Máy cardio'},
+   {n:'High Knees', en:'High knees', mi:'🏃', m:'Cardio', sets:3, reps:'30 giây', work:30, rest:15, type:'time', tempo:'Nâng gối cao ngang hông', mp:'Tim mạch + bụng dưới', ms:'Cơ gập hông, chân', gymName:'Máy cardio / leo cầu thang'},
+   {n:'Burpees', en:'Burpees', mi:'🔥', m:'Cardio', sets:4, reps:'12 lần', work:50, rest:20, type:'reps', tempo:'Đều nhịp, tiếp đất nhẹ', mp:'Toàn thân + tim mạch', ms:'Chân, ngực, vai, lõi', gymName:'Box Jump'},
+   {n:'Plank Jack', en:'Plank jacks', mi:'🤸', m:'Cardio', sets:3, reps:'20 giây', work:20, rest:15, type:'time', tempo:'Giữ thân thẳng khi bật chân', mp:'Cơ lõi + tim mạch', ms:'Vai, mông, chân', gymName:'Mountain Climber máy trượt'},
+   {n:'Nhảy dây', en:'Jump rope', mi:'🪢', m:'Cardio', sets:5, reps:'100 cái', work:60, rest:30, type:'reps', tempo:'Khởi động kỹ, tiếp đất mũi chân', mp:'Tim mạch, bắp chân', ms:'Vai, cẳng tay, cơ lõi', gymName:'Máy cardio thay thế'},
+ ]},
+];
+// Gợi ý số bài/buổi mỗi nhóm theo mục tiêu (full-body cân bằng, người mới)
+const SPLIT_PRESETS={
+  giam:{label:'Giảm mỡ', note:'Nhiều compound + cardio để đốt calo.', r:{'Mông':2,'Chân':2,'Ngực':1,'Lưng':1,'Vai':1,'Core / Bụng':2,'Cardio':2}},
+  giu: {label:'Giữ dáng', note:'Cân bằng các nhóm, giữ cơ săn chắc.', r:{'Mông':2,'Chân':2,'Ngực':1,'Lưng':1,'Vai':1,'Core / Bụng':2,'Cardio':1}},
+  tang:{label:'Tăng cơ', note:'Tăng sức cản, giảm cardio, đủ các nhóm.', r:{'Mông':2,'Chân':2,'Ngực':2,'Lưng':2,'Vai':1,'Core / Bụng':1,'Cardio':1}},
+};
+const LIB_BUCKETS=EX_LIB.map(g=>g.key);
+function libFind(bucket,n){ const g=EX_LIB.find(g=>g.key===bucket); return g&&g.items.find(x=>x.n===n); }
+
+/* ============ GÓI CỦA TÔI (custom) ============ */
+function loadCustomSessions(){ try{ return JSON.parse(localStorage.getItem('meofit_customsessions'))||[] }catch(e){ return [] } }
+function saveCustomSessions(a){ try{ localStorage.setItem('meofit_customsessions', JSON.stringify(a)); }catch(e){} }
+function autoWeek(sessions){
+  // rải buổi vào T2/T4/T6 (xen kẽ nghỉ); nếu >3 buổi thì thêm T7
+  const slots=[1,3,5,6,2,4]; const W=[0,1,2,3,4,5,6].map(d=>({day:d,dow:['CN','T2','T3','T4','T5','T6','T7'][d],sid:null,extra:''}));
+  sessions.forEach((s,i)=>{ if(i<slots.length){ const row=W.find(w=>w.day===slots[i]); if(row){ row.sid=s.id; row.extra=s.ex.length+' bài'; } } });
+  return W;
+}
+function refreshCustomPlan(){ PLANS.custom.sessions=loadCustomSessions(); PLANS.custom.week=autoWeek(PLANS.custom.sessions); }
+function saveCustomSession(){
+  if(!_picked.length){ alert('Chọn ít nhất 1 bài đã nhé 🐾'); return; }
+  const name=(prompt('Đặt tên buổi tập:', 'Buổi của tôi '+(loadCustomSessions().length+1))||'').trim();
+  if(!name) return;
+  const list=loadCustomSessions();
+  const id=900+ (list.reduce((m,s)=>Math.max(m,s.id),899)-899) +1;
+  const ex=[WGS, ..._picked.map(k=>{const[b,n]=k.split('::');return libFind(b,n);}).filter(Boolean), PIGEON, WGS_END];
+  list.push({id,name,icon:'🛠️',grad:'linear-gradient(135deg,#ff922b,#ff6b9d)',ex});
+  saveCustomSessions(list); refreshCustomPlan(); _picked=[];
+  try{ localStorage.setItem('meofit_plan','custom'); }catch(e){}
+  if(getLevel) setLevel(1);
+  alert('Đã lưu "'+name+'" vào Gói của tôi! 🎉');
+  _sessMode='plans'; renderSessList(); renderHome(); window.scrollTo(0,0);
+}
+function delCustomSession(id){ if(!confirm('Xoá buổi tự xây này?')) return; saveCustomSessions(loadCustomSessions().filter(s=>s.id!==id)); refreshCustomPlan(); renderSessList(); }
 
 const ROPE_NOTE = `🪢 <b>Nhảy dây (Thứ 3 & Thứ 6):</b> mỗi buổi <b>5 hiệp × 100 cái</b>. <b>BẮT BUỘC khởi động kỹ</b> trước khi nhảy — nếu không dễ to bắp chuối, hại khớp gối, phản tác dụng. Người mới sức yếu: nhảy nhanh & nhiều cái nhất có thể rồi nghỉ vài giây, tập đều đặn cơ thể sẽ khỏe dần lên.`;
 
@@ -689,21 +805,85 @@ function renderWeek(){
 }
 
 /* ============ SESSIONS ============ */
+let _sessMode='plans', _picked=[], _buildGoal=null;
+function sessModeTabs(){
+  const t=(m,lb)=>`<button class="${_sessMode===m?'on':''}" onclick="setSessMode('${m}')">${lb}</button>`;
+  return `<div class="seg seg-mode">${t('plans','📋 Gói có sẵn')}${t('build','🛠️ Tự xây')}</div>`;
+}
+function setSessMode(m){ _sessMode=m; renderSessList(); window.scrollTo(0,0); }
 function renderSessList(){
+  if(_sessMode==='build'){ renderBuilder(); return; }
   const h=loadHist(), lv=getLevel(), pl=curPlan();
-  const cards=pl.sessions.map(s=>{
+  const cards=pl.sessions.length? pl.sessions.map(s=>{
     const cnt=h.filter(e=>e.sid===s.id).length;
     return `<div class="sess-card" style="background:${s.grad}" onclick="openSession(${s.id})">
       <div class="ic">${s.icon}</div>
       <div class="info"><div class="t">${s.name}</div><div class="s">${s.ex.length} bài • ~${estMinutes(s)} phút</div></div>
       ${cnt?`<span class="badge-done">×${cnt}</span>`:''}<div class="arrow">›</div></div>`;
-  }).join('');
+  }).join('')
+   : `<div class="empty" style="padding:18px">Gói này chưa có buổi nào.<br>Sang <b>🛠️ Tự xây</b> để tạo buổi của riêng bạn nhé!</div>`;
   document.getElementById('v-sess').innerHTML=`
-    <h2 class="sec-title">🏋️ ${pl.emoji} ${pl.name}</h2>
-    <div style="font-size:.82rem;color:var(--muted);margin:0 4px 12px;font-weight:600">${pl.desc} <a onclick="go('prof')" style="color:var(--green-d);font-weight:800">Đổi gói ›</a></div>
+    ${sessModeTabs()}
+    <h2 class="sec-title">${pl.emoji} ${pl.name}</h2>
+    <div style="font-size:.82rem;color:var(--muted);margin:0 4px 12px;font-weight:600">${pl.desc}</div>
     ${pl.levels?levelSeg('chooseLevelList'):''}
     ${cards}
+    <details class="plan-switch"><summary>🔄 Đổi lộ trình / gói tập</summary>${planPickerHTML()}</details>
     <div class="note-box">📺 Nên kết hợp <b>PLAN + xem video</b> để tập chuẩn kỹ thuật, hiệu quả cao & tránh chấn thương nhé!</div>`;
+}
+/* ============ BUILDER — Tự xây bài tập ============ */
+function setBuildGoal(g){ _buildGoal=g; renderBuilder(); }
+function togglePickEx(key){ const i=_picked.indexOf(key); if(i>=0) _picked.splice(i,1); else _picked.push(key); renderBuilder(); }
+function buildGoal(){ return _buildGoal||loadProfile().goal||'giu'; }
+function renderBuilder(){
+  const goal=buildGoal(), preset=SPLIT_PRESETS[goal];
+  // đếm số bài đã chọn theo nhóm
+  const cnt={}; LIB_BUCKETS.forEach(b=>cnt[b]=0);
+  _picked.forEach(k=>{ const b=k.split('::')[0]; if(b in cnt) cnt[b]++; });
+  const goalSel=`<select onchange="setBuildGoal(this.value)">${Object.keys(SPLIT_PRESETS).map(g=>`<option value="${g}" ${g===goal?'selected':''}>${SPLIT_PRESETS[g].label}</option>`).join('')}</select>`;
+  // thanh cân bằng theo preset
+  const balance=LIB_BUCKETS.map(b=>{
+    const need=preset.r[b]||0, have=cnt[b], ok=have>=need;
+    const col=have===0?'var(--muted)':(ok?'var(--green-d)':'var(--orange)');
+    return `<span class="bchip" style="color:${col};border-color:${col}">${EX_LIB.find(g=>g.key===b).emoji} ${have}/${need}</span>`;
+  }).join('');
+  const totalMin=_picked.length?Math.round(_picked.reduce((s,k)=>{const[b,n]=k.split('::');const e=libFind(b,n);return s+(e?e.sets*e.work+(e.sets-1)*(e.rest||30):0);},0)/60)+8:0;
+  // thư viện
+  const lib=EX_LIB.map(g=>{
+    const rows=g.items.map(e=>{
+      const key=g.key+'::'+e.n, on=_picked.includes(key);
+      return `<div class="lib-row ${on?'on':''}" onclick="togglePickEx('${g.key}::${e.n.replace(/'/g,"\\'")}')">
+        <div class="lib-pick">${on?'✓':'＋'}</div>
+        <div class="lib-info"><div class="lib-n">${e.mi} ${e.n}</div><div class="lib-m">${e.sets} hiệp × ${e.reps} · ${e.mp}</div></div>
+        <a class="lib-vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶️</a></div>`;
+    }).join('');
+    const need=preset.r[g.key]||0;
+    return `<details class="lib-grp" style="border-left:5px solid ${tagColor(g.key)}"${cnt[g.key]<need?' open':''}>
+      <summary>${g.emoji} ${g.key} <span class="lib-need">gợi ý ${need} bài · đã chọn ${cnt[g.key]}</span></summary>${rows}</details>`;
+  }).join('');
+  // gói đã lưu
+  const saved=loadCustomSessions();
+  const savedHTML=saved.length?`<h2 class="sec-title" style="margin-top:14px">🗂️ Buổi đã xây (${saved.length})</h2>
+    ${saved.map(s=>`<div class="sess-card" style="background:${s.grad}">
+      <div class="ic">${s.icon}</div><div class="info" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="cursor:var(--paw),pointer"><div class="t">${s.name}</div><div class="s">${s.ex.length} bài • ~${estMinutes(s)} phút</div></div>
+      <button class="hist-del" onclick="delCustomSession(${s.id})" title="Xoá">✕</button></div>`).join('')}
+    <button class="btn sec" onclick="localStorage.setItem('meofit_plan','custom');setSessMode('plans');renderHome()" style="margin-top:4px">📋 Dùng “Gói của tôi” →</button>`:'';
+  document.getElementById('v-sess').innerHTML=`
+    ${sessModeTabs()}
+    <h2 class="sec-title">🛠️ Tự xây bài tập</h2>
+    <div class="card" style="padding:14px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>🎯 Mục tiêu:</b> ${goalSel}</div>
+      <p style="color:var(--muted);font-size:.82rem;margin:8px 0 0">${preset.note} Chọn bài theo gợi ý mỗi nhóm; tập <b>3 buổi/tuần</b> để đủ ~10 set/nhóm — người mới bắt đầu mức thấp rồi tăng dần.</p>
+    </div>
+    <div class="card build-tray">
+      <div style="font-weight:800;margin-bottom:6px">🧺 Đã chọn ${_picked.length} bài${_picked.length?` · ~${totalMin} phút/buổi`:''}</div>
+      <div class="bchips">${balance}</div>
+      <button class="btn" onclick="saveCustomSession()" style="margin-top:10px"${_picked.length?'':' disabled'}>💾 Lưu thành buổi</button>
+      ${_picked.length?`<button class="btn sec" onclick="_picked=[];renderBuilder()" style="margin-top:6px">↺ Xoá hết lựa chọn</button>`:''}
+    </div>
+    ${lib}
+    ${savedHTML}
+    <div class="note-box" style="margin-top:10px">💡 Mẹo: ưu tiên bài <b>compound</b> (squat, lunge, chống đẩy, row) trước, rồi thêm core & cardio. Đủ các nhóm để cơ thể cân đối nhé! 🐾</div>`;
 }
 function chooseLevelList(l){ setLevel(l); renderSessList(); }
 function chooseLevelDetail(l, sid){ setLevel(l); openSession(sid); }
@@ -789,7 +969,6 @@ function readProfileForm(){
     act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu', macro:pv('pf-macro')||goalMacro(pv('pf-goal')||'giu'), equip:pv('pf-equip')||'home',
     waist:+pv('pf-waist')||'', hip:+pv('pf-hip')||'', thigh:+pv('pf-thigh')||'', arm:+pv('pf-arm')||'' };
   saveProfile(p);
-  const pp=document.getElementById('pf-plans'); if(pp) pp.innerHTML=planPickerHTML();
   return p;
 }
 function renderResults(p){
@@ -850,7 +1029,6 @@ function renderProfile(){
     <h2 class="sec-title">👤 Hồ sơ của tớ</h2>
     ${showForm?form:profileSummaryHTML(p)}
     <div id="pf-results"></div>
-    <div id="pf-plans">${planPickerHTML()}</div>
     <div id="pf-track"></div>`;
   if(showForm) calcProfile(); else renderResults(p);
   renderTrack();
@@ -1431,76 +1609,6 @@ function mfLift(h){
   h=h||96; const sc=h/320, fw=Math.round(291*sc), sw=fw*4;
   return `<div class="mf-lift" style="width:${fw}px;height:${h}px;background-size:${sw}px ${h}px;--liftw:-${sw}px"></div>`;
 }
-// Mặt mèo cam lông dài (header) — Mèo Lực Sĩ (legacy SVG, không còn dùng)
-function meoFitCat(){
-  const fur='#ff9d4d', ruff='#ffb874', whisk='rgba(120,80,40,.45)';
-  return `<svg viewBox="0 0 100 100" class="catface" aria-hidden="true">
-    <g fill="${ruff}">
-      <path d="M10 56 L30 52 L26 70 Z"/><path d="M12 72 L30 64 L31 82 Z"/>
-      <path d="M90 56 L70 52 L74 70 Z"/><path d="M88 72 L70 64 L69 82 Z"/>
-      <path d="M30 92 L40 80 L45 95 Z"/><path d="M70 92 L60 80 L55 95 Z"/><path d="M50 94 L44 82 L56 82 Z"/>
-    </g>
-    <g class="cf-ear-l"><path d="M22 44 C15 8 44 20 52 44 Z" fill="${fur}"/><path d="M30 38 C27 20 41 27 46 40 Z" fill="#ffd0b0"/></g>
-    <g class="cf-ear-r"><path d="M78 44 C85 8 56 20 48 44 Z" fill="${fur}"/><path d="M70 38 C73 20 59 27 54 40 Z" fill="#ffd0b0"/></g>
-    <circle cx="50" cy="58" r="38" fill="${fur}"/>
-    <ellipse cx="42" cy="40" rx="22" ry="13" fill="#fff" opacity=".18"/>
-    <ellipse cx="31" cy="72" rx="9" ry="5.5" fill="#ff8fb0" opacity=".5"/>
-    <ellipse cx="69" cy="72" rx="9" ry="5.5" fill="#ff8fb0" opacity=".5"/>
-    <path d="M16 41 Q50 25 84 41 L84 48 Q50 32 16 48 Z" fill="#3fa34d"/>
-    <path d="M16 44.5 Q50 28.5 84 44.5" stroke="#a8e6b0" stroke-width="2" fill="none"/>
-    <circle cx="50" cy="38.5" r="2.6" fill="#fff" opacity=".95"/>
-    <path d="M28 50 l13 4" stroke="#c9702a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    <path d="M72 50 l-13 4" stroke="#c9702a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    <g class="cf-eye"><ellipse cx="37" cy="61" rx="9.5" ry="11.5" fill="#ffce4d"/><circle cx="37" cy="62" r="5.5" fill="#3a2a16"/><circle cx="34" cy="57" r="2.6" fill="#fff"/></g>
-    <g class="cf-eye"><ellipse cx="63" cy="61" rx="9.5" ry="11.5" fill="#ffce4d"/><circle cx="63" cy="62" r="5.5" fill="#3a2a16"/><circle cx="60" cy="57" r="2.6" fill="#fff"/></g>
-    <path d="M46 73 h8 l-4 4 Z" fill="#ff8fb0"/>
-    <path d="M50 78 q-6 7 -13 2 M50 78 q6 7 13 2" stroke="${whisk}" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <g stroke="${whisk}" stroke-width="1.6" stroke-linecap="round">
-      <line x1="24" y1="67" x2="3" y2="63"/><line x1="24" y1="74" x2="4" y2="78"/>
-      <line x1="76" y1="67" x2="97" y2="63"/><line x1="76" y1="74" x2="96" y2="78"/></g>
-  </svg>`;
-}
-
-// Chibi nguyên con — Mèo Lực Sĩ cầm tạ, năng động (cho Home)
-function meoFitMascot(){
-  const fur='#ff9d4d', furD='#f0871f', ruff='#ffb874', belly='#ffd9b3';
-  return `<svg viewBox="0 0 170 180" class="mf" role="img" aria-label="Mèo Lực Sĩ cầm tạ">
-    <g class="mf-bob">
-      <path class="mf-tail" d="M40 140 C6 138 8 92 36 90 C18 102 26 130 52 130 Z" fill="${fur}"/>
-      <ellipse cx="82" cy="138" rx="44" ry="37" fill="${fur}"/>
-      <g fill="${furD}"><path d="M44 162 l8 -12 6 13 Z"/><path d="M118 162 l-8 -12 -6 13 Z"/><path d="M82 174 l-7 -13 14 0 Z"/></g>
-      <ellipse cx="82" cy="144" rx="26" ry="22" fill="${belly}"/>
-      <ellipse cx="54" cy="166" rx="13" ry="8" fill="${fur}"/><ellipse cx="54" cy="167" rx="6" ry="3.5" fill="#ff8fb0" opacity=".5"/>
-      <g class="mf-lift">
-        <path d="M108 120 C124 116 134 96 134 78" stroke="${fur}" stroke-width="15" fill="none" stroke-linecap="round"/>
-        <ellipse cx="134" cy="72" rx="11" ry="9" fill="${fur}"/>
-        <rect x="120" y="50" width="28" height="9" rx="4" fill="#5b5b6b"/>
-        <rect x="112" y="42" width="12" height="25" rx="4" fill="#3f3f4d"/><rect x="144" y="42" width="12" height="25" rx="4" fill="#3f3f4d"/>
-        <rect x="110" y="46" width="6" height="17" rx="3" fill="#2f9e44"/><rect x="152" y="46" width="6" height="17" rx="3" fill="#2f9e44"/>
-      </g>
-      <g fill="${ruff}"><path d="M30 56 L52 50 L46 74 Z"/><path d="M30 86 L52 76 L52 100 Z"/><path d="M134 56 L112 50 L118 74 Z"/><path d="M134 86 L112 76 L112 100 Z"/><path d="M62 104 L74 90 L80 106 Z"/><path d="M102 104 L90 90 L84 106 Z"/></g>
-      <path d="M46 34 C40 4 64 16 70 38 Z" fill="${fur}"/><path d="M53 31 C51 16 62 22 65 34 Z" fill="#ffd0b0"/>
-      <path d="M118 34 C124 4 100 16 94 38 Z" fill="${fur}"/><path d="M111 31 C113 16 102 22 99 34 Z" fill="#ffd0b0"/>
-      <circle cx="82" cy="62" r="44" fill="${fur}"/>
-      <ellipse cx="70" cy="42" rx="24" ry="14" fill="#fff" opacity=".16"/>
-      <ellipse cx="58" cy="78" rx="11" ry="7" fill="#ff8fb0" opacity=".55"/><ellipse cx="106" cy="78" rx="11" ry="7" fill="#ff8fb0" opacity=".55"/>
-      <path d="M44 42 Q82 22 120 42 L120 51 Q82 31 44 51 Z" fill="#3fa34d"/>
-      <path d="M44 46 Q82 26 120 46" stroke="#a8e6b0" stroke-width="2.4" fill="none"/>
-      <circle cx="82" cy="39" r="3" fill="#fff" opacity=".95"/>
-      <path d="M56 55 l15 5" stroke="#c9702a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      <path d="M108 55 l-15 5" stroke="#c9702a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      <g class="mf-eye"><ellipse cx="66" cy="66" rx="10" ry="12.5" fill="#ffce4d"/><circle cx="66" cy="67" r="6" fill="#3a2a16"/><circle cx="63" cy="62" r="2.8" fill="#fff"/></g>
-      <g class="mf-eye"><ellipse cx="98" cy="66" rx="10" ry="12.5" fill="#ffce4d"/><circle cx="98" cy="67" r="6" fill="#3a2a16"/><circle cx="95" cy="62" r="2.8" fill="#fff"/></g>
-      <path d="M77 79 h10 l-5 5 Z" fill="#ff8fb0"/>
-      <path d="M82 84 Q74 94 67 86 Q74 91 82 88 Q90 91 97 86 Q90 94 82 84 Z" fill="#7a3b2e"/>
-      <g stroke="rgba(120,80,40,.45)" stroke-width="1.8" stroke-linecap="round">
-        <line x1="52" y1="74" x2="28" y2="70"/><line x1="52" y1="81" x2="29" y2="86"/>
-        <line x1="112" y1="74" x2="136" y2="70"/><line x1="112" y1="81" x2="135" y2="86"/></g>
-      <g class="mf-spark" fill="#ffd43b"><path d="M150 34 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 Z"/></g>
-      <g class="mf-spark2" fill="#ff8fb0"><path d="M152 98 l1.5 4 4 1.5 -4 1.5 -1.5 4 -1.5 -4 -4 -1.5 4 -1.5 Z"/></g>
-    </g>
-  </svg>`;
-}
 
 /* ============ THEME (đồng bộ Meomoe: light / dark / sakura, khoá meo:theme) ============ */
 const THEMES=['light','dark','sakura'];
@@ -1548,6 +1656,8 @@ function cycleTheme(){ let t='light'; try{ t=localStorage.getItem('meo:theme')||
     trail.appendChild(p); setTimeout(()=>p.remove(),800);
   }, {passive:true});
 })();
+refreshCustomPlan();
+if(curPlanId()==='custom' && !PLANS.custom.sessions.length){ try{ localStorage.setItem('meofit_plan','home'); }catch(e){} }
 renderHome();
 try{ const _t=location.hash.slice(1); if(_t && document.getElementById('v-'+_t)) go(_t); }catch(e){}
 
