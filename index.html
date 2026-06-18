@@ -348,7 +348,14 @@
   @keyframes mfSpark{0%,100%{opacity:.3;transform:scale(.6)}50%{opacity:1;transform:scale(1.15)}}
   .hero{display:flex;align-items:center;gap:10px;overflow:visible}
   .hero-txt{flex:1;min-width:0}
-  .hero-mascot{flex:none;width:128px;height:128px;pointer-events:none;filter:drop-shadow(0 5px 9px rgba(0,0,0,.22))}
+  /* khung mèo + vầng sáng (halo) kiểu thẻ tarot */
+  .hero-mascot{flex:none;position:relative;height:150px;width:136px;pointer-events:none;display:grid;place-items:center;filter:drop-shadow(0 6px 11px rgba(0,0,0,.24))}
+  .hero-mascot::before{content:"";position:absolute;left:50%;top:50%;width:130%;height:130%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle,rgba(255,255,255,.6),transparent 64%);filter:blur(7px);opacity:.7;z-index:0;
+    animation:heroHalo 4.6s ease-in-out infinite;pointer-events:none}
+  .hero-mascot>*{position:relative;z-index:1;width:100%;height:100%}
+  @keyframes heroHalo{0%,100%{transform:translate(-50%,-50%) scale(.95);opacity:.5}50%{transform:translate(-50%,-50%) scale(1.12);opacity:.82}}
+  .home-grid{display:block}
   /* ===== Mascot bánh bao + lấp lánh động ===== */
   .mfx{position:relative;display:inline-block;line-height:0}
   .mfx>img{display:block;width:100%;height:100%;object-fit:contain}
@@ -359,20 +366,26 @@
   @keyframes mfTwk{0%,100%{opacity:0;transform:scale(.3) rotate(0deg)}
     45%{opacity:1;transform:scale(1) rotate(120deg)}
     70%{opacity:.5;transform:scale(.7) rotate(200deg)}}
-  /* ===== Mèo nâng tạ 4 frame (sprite) ===== */
-  .mf-lift{background-image:url(lift-sprite.png);background-repeat:no-repeat;
-    image-rendering:auto;animation:mfLiftSeq 1.5s steps(4) infinite}
-  @keyframes mfLiftSeq{from{background-position-x:0}to{background-position-x:var(--liftw)}}
+  /* ===== Mèo nâng tạ 4 frame (sprite, co giãn theo khung) ===== */
+  .mf-lift{background-image:url(lift-sprite.png);background-repeat:no-repeat;background-size:400% 100%;
+    width:100%;height:100%;image-rendering:auto;animation:mfLiftSeq 1.5s steps(4,jump-none) infinite}
+  @keyframes mfLiftSeq{from{background-position-x:0%}to{background-position-x:100%}}
   @media(prefers-reduced-motion:reduce){.mfx .spk{animation:none;opacity:.85}.mf-lift{animation:none}}
   @media(prefers-reduced-motion:reduce){.mf-bob,.mf-tail,.mf-lift,.mf-eye,.mf-spark,.mf-spark2{animation:none}}
   /* ===== Màn hình lớn (máy tính/tablet): rộng & cân hơn, mèo to hơn ===== */
   @media(min-width:680px){
-    .app{max-width:760px;padding-left:24px;padding-right:24px}
-    nav.tabbar{max-width:760px}
-    .hero{padding:26px 28px}
-    .hero .title{font-size:1.95rem}
-    .hero .sub{font-size:1.02rem}
-    .hero-mascot{width:184px;height:184px}
+    .app{max-width:880px;padding-left:24px;padding-right:24px}
+    nav.tabbar{max-width:880px}
+    /* 2 cột: cột chính (hero + chỉ số + nút) | cột phụ (nhịn ăn + mẹo) */
+    .home-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:18px;align-items:start}
+    .hcol{display:flex;flex-direction:column;min-width:0}
+    /* hero kiểu thẻ tarot: mèo to ở giữa, chữ căn giữa */
+    .hero{flex-direction:column;text-align:center;gap:4px;padding:24px 22px 22px}
+    .hero-txt{width:100%}
+    .hero .extra{justify-content:center}
+    .hero .title{font-size:1.85rem}
+    .hero .sub{font-size:1.0rem}
+    .hero-mascot{height:208px;width:189px;margin-bottom:6px}
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -864,7 +877,7 @@ function renderHome(){
         <div class="sub">${sess.ex.length} bài • ~${estMinutes(sess)} phút • ${w.extra}</div>
         <div class="extra"><span class="chip">${done?'✅ Đã tập hôm nay':'🐾 Sẵn sàng nào!'}</span></div>
       </div>
-      <div class="hero-mascot" style="display:flex;align-items:flex-end;justify-content:center">${mfLift(128)}</div>
+      <div class="hero-mascot"><div class="mf-lift"></div></div>
     </div>`;
   } else {
     hero=`<div class="hero" style="background:linear-gradient(135deg,#b197fc,#9775fa)">
@@ -873,25 +886,30 @@ function renderHome(){
         <div class="title">😺 Hôm nay nghỉ ngơi</div>
         <div class="sub">Thư giãn, dãn cơ nhẹ hoặc đi bộ tuỳ thích nha!</div>
       </div>
-      <div class="hero-mascot">${mfBun(true)}</div>
+      <div class="hero-mascot"><div class="mf-lift"></div></div>
     </div>`;
   }
   const startBtn=sess
     ?`<button class="btn" onclick="startWorkout(${sess.id})">▶️ Bắt đầu ${sess.name}</button>`
     :`<button class="btn rest-day" onclick="go('week')">📅 Xem lịch tuần</button>`;
   document.getElementById('v-home').innerHTML=`
-    ${hero}
-    <div class="stats">
-      <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">Chuỗi ngày</div></div>
-      <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng buổi tập</div></div>
-      <div class="stat"><div class="num">${done?'✅':'⭕'}</div><div class="lbl">Hôm nay</div></div>
-    </div>
-    ${curPlan().levels?levelSeg('chooseLevelHome'):''}
-    ${startBtn}
-    <div style="height:14px"></div>
-    ${ifCardHTML()}
-    ${w.rope?`<div class="note-box rope">${ROPE_NOTE}</div>`:''}
-    ${tipBox()}`;
+    <div class="home-grid">
+      <div class="hcol hcol-main">
+        ${hero}
+        <div class="stats">
+          <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">Chuỗi ngày</div></div>
+          <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng buổi tập</div></div>
+          <div class="stat"><div class="num">${done?'✅':'⭕'}</div><div class="lbl">Hôm nay</div></div>
+        </div>
+        ${curPlan().levels?levelSeg('chooseLevelHome'):''}
+        ${startBtn}
+      </div>
+      <div class="hcol hcol-side">
+        ${ifCardHTML()}
+        ${w.rope?`<div class="note-box rope">${ROPE_NOTE}</div>`:''}
+        ${tipBox()}
+      </div>
+    </div>`;
   clearInterval(_ifTimer);
   if(loadIF().start){ updateIfClock(); _ifTimer=setInterval(updateIfClock,1000); }
 }
