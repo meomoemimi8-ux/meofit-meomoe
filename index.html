@@ -49,6 +49,7 @@
       var(--bg);
     color:var(--ink);
     min-height:100vh;
+    min-height:100dvh;
     padding-bottom:84px;
     overflow-x:hidden;
     transition:background .5s,color .5s;
@@ -62,7 +63,7 @@
   .burst{position:fixed;pointer-events:none;z-index:999;transform:translate(-50%,-50%);will-change:transform,opacity;animation:burstFly .76s ease-out forwards}
   @keyframes burstFly{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}100%{transform:translate(calc(-50% + var(--dx,0px)),calc(-50% + var(--dy,0px))) scale(1.15) rotate(45deg);opacity:0}}
 
-  .app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:14px 14px 0}
+  .app{position:relative;z-index:1;width:100%;max-width:600px;margin:0 auto;padding:14px 16px 0}
 
   header.top{position:relative;display:flex;align-items:center;gap:10px;justify-content:center;padding:8px 4px 14px}
   header.top .logo{font-size:30px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.12))}
@@ -140,7 +141,7 @@
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
 
-  nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;background:var(--card);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
+  nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;background:var(--card);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom));max-width:600px;margin:0 auto}
   nav.tabbar button{background:none;border:none;flex:1;padding:7px 2px;cursor:var(--paw),pointer;color:var(--muted);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.68rem;font-weight:700;transition:color .15s}
   nav.tabbar button .i{font-size:1.35rem;transition:transform .15s}
   nav.tabbar button.active{color:var(--green-d)}
@@ -345,9 +346,9 @@
   .mf-spark{animation:mfSpark 1.6s ease-in-out infinite;transform-origin:153px 40px}
   .mf-spark2{animation:mfSpark 1.9s ease-in-out infinite .4s;transform-origin:153px 102px}
   @keyframes mfSpark{0%,100%{opacity:.3;transform:scale(.6)}50%{opacity:1;transform:scale(1.15)}}
-  .hero{display:flex;align-items:center;gap:6px;overflow:visible}
+  .hero{display:flex;align-items:center;gap:10px;overflow:visible}
   .hero-txt{flex:1;min-width:0}
-  .hero-mascot{flex:none;width:96px;height:101px;pointer-events:none;filter:drop-shadow(0 4px 7px rgba(0,0,0,.18))}
+  .hero-mascot{flex:none;width:128px;height:128px;pointer-events:none;filter:drop-shadow(0 5px 9px rgba(0,0,0,.22))}
   /* ===== Mascot bánh bao + lấp lánh động ===== */
   .mfx{position:relative;display:inline-block;line-height:0}
   .mfx>img{display:block;width:100%;height:100%;object-fit:contain}
@@ -364,6 +365,15 @@
   @keyframes mfLiftSeq{from{background-position-x:0}to{background-position-x:var(--liftw)}}
   @media(prefers-reduced-motion:reduce){.mfx .spk{animation:none;opacity:.85}.mf-lift{animation:none}}
   @media(prefers-reduced-motion:reduce){.mf-bob,.mf-tail,.mf-lift,.mf-eye,.mf-spark,.mf-spark2{animation:none}}
+  /* ===== Màn hình lớn (máy tính/tablet): rộng & cân hơn, mèo to hơn ===== */
+  @media(min-width:680px){
+    .app{max-width:760px;padding-left:24px;padding-right:24px}
+    nav.tabbar{max-width:760px}
+    .hero{padding:26px 28px}
+    .hero .title{font-size:1.95rem}
+    .hero .sub{font-size:1.02rem}
+    .hero-mascot{width:184px;height:184px}
+  }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -854,7 +864,7 @@ function renderHome(){
         <div class="sub">${sess.ex.length} bài • ~${estMinutes(sess)} phút • ${w.extra}</div>
         <div class="extra"><span class="chip">${done?'✅ Đã tập hôm nay':'🐾 Sẵn sàng nào!'}</span></div>
       </div>
-      <div class="hero-mascot" style="display:flex;align-items:flex-end;justify-content:center">${mfLift(104)}</div>
+      <div class="hero-mascot" style="display:flex;align-items:flex-end;justify-content:center">${mfLift(128)}</div>
     </div>`;
   } else {
     hero=`<div class="hero" style="background:linear-gradient(135deg,#b197fc,#9775fa)">
