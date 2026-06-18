@@ -1280,8 +1280,10 @@ function sparkline(pts){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="overflow:visible">${line}${dots}</svg>`;
 }
 function logWeightToday(){
-  const w=+pv('pf-weight'); if(!w){ alert('Nhập cân nặng trước đã nhé 🐾'); return; }
-  const e={date:todayStr(),ts:Date.now(),weight:w,waist:+pv('pf-waist')||'',hip:+pv('pf-hip')||'',thigh:+pv('pf-thigh')||'',arm:+pv('pf-arm')||''};
+  const prof=loadProfile();
+  // Form có thể đang thu gọn (đã điền hồ sơ) → không có ô input, lấy theo hồ sơ đã lưu
+  const w=+pv('pf-weight')||prof.weight; if(!w){ alert('Nhập cân nặng trước đã nhé 🐾'); return; }
+  const e={date:todayStr(),ts:Date.now(),weight:w,waist:+pv('pf-waist')||prof.waist||'',hip:+pv('pf-hip')||prof.hip||'',thigh:+pv('pf-thigh')||prof.thigh||'',arm:+pv('pf-arm')||prof.arm||''};
   let log=loadWeightLog().filter(x=>x.date!==e.date); log.push(e); log.sort((a,b)=>a.ts-b.ts); saveWeightLog(log);
   renderTrack();
 }
@@ -1564,6 +1566,9 @@ function ifCardHTML(){
 }
 function updateIfClock(){
   const o=loadIF(); const el=document.getElementById('if-status'); if(!el){ clearInterval(_ifTimer); return; }
+  // Đang chỉnh ô giờ (Bắt đầu / Được ăn) → đừng vẽ lại kẻo đóng mất bộ chọn giờ
+  const a=document.activeElement;
+  if(a && a.classList && a.classList.contains('if-tin')) return;
   el.innerHTML=ifRingHTML(); if(!o.start) clearInterval(_ifTimer);
 }
 
