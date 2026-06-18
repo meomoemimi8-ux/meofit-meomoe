@@ -431,6 +431,7 @@
 </div>
 <div class="guide-sheet" id="foodSheet" onclick="if(event.target===this)closeFoodPicker()"></div>
 
+<script src="foods.js?v=35"></script>
 <script>
 /* ============ MUSCLE TAG COLORS ============ */
 const MUSCLE_COLORS = {
@@ -1366,16 +1367,7 @@ function goalMacro(g){ return g==='giam'?'giammo':(g==='tang'?'tangco':'canbang'
 function macroGrams(kcal,r){ return {p:Math.round(kcal*r[0]/100/4), c:Math.round(kcal*r[1]/100/4), f:Math.round(kcal*r[2]/100/9)}; }
 function profileMacroRatio(){ const p=loadProfile(); return (MACRO_PRESETS[p.macro||goalMacro(p.goal||'giu')]||MACRO_PRESETS.canbang).r; }
 
-// Danh sách món ăn Việt (calo/khẩu phần; món "(100g)" tính theo 100g — ước tính). mac = tỉ lệ đạm/carb/béo (%kcal) của nhóm.
-const FOODS=[
-  {cat:'🍚 Cơm & tinh bột', mac:[10,78,12], items:[['Cơm trắng (1 chén)',180],['Cơm gạo lứt (1 chén)',170],['Cơm tấm sườn',600],['Cơm gà',550],['Cơm chiên',560],['Cơm sườn nướng',650],['Xôi (1 chén)',300],['Xôi mặn',500],['Bánh mì thịt',450],['Bánh mì trứng',330],['Bánh mì chảo',550],['Bánh cuốn (1 phần)',350],['Bánh chưng (1 miếng)',250],['Bánh giò (1 cái)',350],['Bánh bao (1 cái)',250],['Khoai lang luộc (100g)',86],['Khoai tây luộc (100g)',87],['Bắp/ngô luộc (1 trái)',100],['Yến mạch (100g khô)',380]]},
-  {cat:'🍜 Bún · Phở · Mì', mac:[20,55,25], items:[['Phở bò (1 tô)',480],['Phở gà (1 tô)',400],['Bún bò Huế',480],['Bún chả',500],['Bún riêu',400],['Bún thịt nướng',450],['Bún đậu mắm tôm',600],['Bún mọc',400],['Hủ tiếu',400],['Mì Quảng',500],['Bánh canh',400],['Miến gà',350],['Mì gói',350],['Mì xào',450],['Phở xào',500],['Nui xào',420],['Cháo (1 tô)',250],['Cháo lòng',400]]},
-  {cat:'🍗 Món mặn (đạm)', mac:[45,8,47], items:[['Ức gà (100g)',165],['Đùi gà (100g)',209],['Cánh gà chiên (100g)',290],['Gà rán (1 miếng)',280],['Thịt heo nạc (100g)',145],['Thịt ba chỉ (100g)',290],['Thịt kho tàu (100g)',280],['Sườn xào chua ngọt (100g)',250],['Thịt bò (100g)',180],['Bò bít tết (100g)',270],['Cá hồi (100g)',208],['Cá thu (100g)',190],['Cá nạc (100g)',110],['Cá kho (100g)',150],['Tôm (100g)',99],['Mực (100g)',92],['Trứng luộc (1 quả)',78],['Trứng chiên (1 quả)',110],['Đậu hũ (100g)',76],['Chả lụa (100g)',230],['Nem rán (1 cái)',100],['Xúc xích (1 cái)',150]]},
-  {cat:'🥬 Rau & canh', mac:[20,60,20], items:[['Rau luộc (1 chén)',35],['Rau xào (1 đĩa)',120],['Salad (1 phần)',80],['Canh rau',60],['Canh chua',120],['Canh bí',70],['Súp (1 chén)',100],['Gỏi cuốn (1 cuốn)',60],['Dưa leo (100g)',16],['Cà chua (100g)',18],['Bông cải (100g)',34],['Rong biển (100g)',45]]},
-  {cat:'🍌 Trái cây', mac:[5,92,3], items:[['Chuối (1 quả)',90],['Táo (1 quả)',80],['Cam (1 quả)',60],['Xoài (1/2 quả)',100],['Dưa hấu (1 lát)',45],['Bơ (1/2 quả)',160],['Nho (100g)',69],['Ổi (1 quả)',70],['Đu đủ (100g)',43],['Thanh long (100g)',60],['Dứa/thơm (100g)',50],['Nhãn (100g)',60],['Vải (100g)',66],['Sầu riêng (100g)',147],['Mít (100g)',95],['Dâu tây (100g)',32]]},
-  {cat:'🥤 Đồ uống', mac:[8,84,8], items:[['Nước lọc',0],['Cà phê đen',5],['Cà phê sữa',120],['Bạc xỉu',150],['Trà sữa (1 ly)',350],['Trà đào',180],['Nước ngọt (1 lon)',140],['Nước cam (1 ly)',110],['Nước mía (1 ly)',240],['Nước dừa (1 quả)',120],['Sinh tố',200],['Sữa tươi (1 hộp)',130],['Sữa đặc (1 thìa)',60],['Sữa chua uống',90],['Sữa chua (1 hũ)',105],['Bia (1 lon)',150],['Rượu vang (1 ly)',125]]},
-  {cat:'🍰 Ăn vặt · tráng miệng', mac:[8,55,37], items:[['Chè (1 ly)',250],['Bánh ngọt (1 cái)',250],['Bánh flan (1 cái)',150],['Kem (1 cây)',200],['Snack (1 gói)',280],['Bánh quy (3 cái)',150],['Sô-cô-la (thanh nhỏ)',230],['Khoai tây chiên (1 phần)',320],['Bỏng ngô (1 phần)',150],['Hạt điều (30g)',170],['Hạnh nhân (30g)',174],['Bánh tráng trộn (1 phần)',330],['Trứng vịt lộn (1 quả)',130]]}
-];
+// FOODS được nạp từ foods.js (CSDL ~2500 món VN + quốc tế)
 // "Món của tôi" — user tự nhập, lưu lại tái dùng. {name, base(kcal/đơn vị), gram(bool: base theo 100g), p,c,f (g/đơn vị)}
 function loadMyFoods(){ try{ return JSON.parse(localStorage.getItem('meofit_myfoods'))||[] }catch(e){ return [] } }
 function saveMyFoods(a){ try{ localStorage.setItem('meofit_myfoods', JSON.stringify(a)); }catch(e){} }
@@ -1495,7 +1487,7 @@ function caloCardHTML(){
       ? `<div class="metric" style="background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;padding:13px"><div style="font-size:.82rem;opacity:.95">Mục tiêu ${target} kcal/ngày · ${remain>=0?'còn có thể nạp':'đã vượt'}</div><div class="big" style="color:#fff;font-size:1.7rem">${Math.abs(remain)} kcal</div></div>`
       : `<div class="note-box">Vào tab 👤 <b>Cá nhân</b> nhập hồ sơ để có <b>mục tiêu calo & macro</b> nhé!</div>`}
     ${bars}
-    <button class="btn sec" onclick="openFoodPicker()" style="margin:12px 0 8px">🍱 Chọn từ danh sách món ăn Việt</button>
+    <button class="btn sec" onclick="openFoodPicker()" style="margin:12px 0 8px">🍱 Chọn món ăn (Việt + quốc tế)</button>
     <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:6px 2px 6px">⚡ Thêm nhanh:</div>
     <div class="food-chips">${chips}</div>
     <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">✏️ Tự nhập (theo 100g · gõ từ nhãn dinh dưỡng nếu có):</div>
