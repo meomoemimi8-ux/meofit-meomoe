@@ -249,6 +249,9 @@
   #fp-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px}
   .fp-tab{flex:none;border:2px solid var(--border);background:var(--card);border-radius:12px;padding:7px 12px;font-size:1.15rem;line-height:1;cursor:var(--paw),pointer}
   .fp-tab.on{border-color:var(--green);background:var(--surface-2)}
+  #fp-regions{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
+  .fp-reg{flex:none;border:2px solid var(--border);background:var(--card);border-radius:999px;padding:6px 13px;font-size:.82rem;font-weight:800;color:var(--muted);cursor:var(--paw),pointer;white-space:nowrap}
+  .fp-reg.on{border-color:var(--green);background:var(--green);color:#fff}
   .fp-del{flex:none;color:var(--muted);padding:0 4px;font-size:.85rem}
   .macro-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:.78rem}
   .macro-row .ml{width:42px;font-weight:800;color:var(--ink);flex:none}
@@ -431,7 +434,7 @@
 </div>
 <div class="guide-sheet" id="foodSheet" onclick="if(event.target===this)closeFoodPicker()"></div>
 
-<script src="foods.js?v=36"></script>
+<script src="foods.js?v=37"></script>
 <script>
 /* ============ MUSCLE TAG COLORS ============ */
 const MUSCLE_COLORS = {
@@ -1371,7 +1374,7 @@ function profileMacroRatio(){ const p=loadProfile(); return (MACRO_PRESETS[p.mac
 // "Món của tôi" — user tự nhập, lưu lại tái dùng. {name, base(kcal/đơn vị), gram(bool: base theo 100g), p,c,f (g/đơn vị)}
 function loadMyFoods(){ try{ return JSON.parse(localStorage.getItem('meofit_myfoods'))||[] }catch(e){ return [] } }
 function saveMyFoods(a){ try{ localStorage.setItem('meofit_myfoods', JSON.stringify(a)); }catch(e){} }
-let _pendingPhoto='', _sel=null, _fpTab=0;
+let _pendingPhoto='', _sel=null, _fpTab=0, _fpReg='vn';
 function addFood(name,kcal,p,c,f,photo){ kcal=+kcal; if(!kcal&&!(+p||+c||+f)) return;
   const fd=loadFood(); fd.push({date:todayStr(),ts:Date.now(),name:name||'Bữa ăn',kcal:Math.round(kcal),p:Math.round(+p||0),c:Math.round(+c||0),f:Math.round(+f||0),photo:photo||''});
   saveFood(fd); _pendingPhoto=''; renderProgress(); }
@@ -1432,36 +1435,49 @@ function openFoodPicker(){
   sh.innerHTML=`<div class="guide-card">
     <div class="guide-h">🍱 Chọn món ăn <span style="float:right;font-size:.8rem;color:var(--green-d)">Hôm nay <span id="fp-total">${todayKcalIn()}</span> kcal</span></div>
     <input id="fp-search" placeholder="🔍 Tìm món…" oninput="renderFoodList(this.value)" style="width:100%;box-sizing:border-box;border:2px solid var(--border);border-radius:14px;padding:10px 13px;font-size:1rem;font-family:inherit;margin:8px 0 8px;background:var(--card);color:var(--ink)">
+    <div id="fp-regions"></div>
     <div id="fp-tabs"></div>
     <div id="fp-list"></div>
     <div id="fp-amount" style="display:none;border-top:2px solid var(--border);margin-top:10px;padding-top:10px"></div>
     <button class="btn" onclick="closeFoodPicker()" style="margin-top:12px">✓ Xong</button>
     <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:8px">Chọn món → nhập gram/số phần. Calo là <b>ước tính tham khảo</b> (USDA · Viện Dinh dưỡng · số liệu hãng) 🐾</div>
   </div>`;
-  _fpTab=0; sh.classList.add('show'); renderFoodList('');
+  _fpReg='vn'; _fpTab=0; sh.classList.add('show'); renderFoodList('');
 }
 function closeFoodPicker(){ _sel=null; document.getElementById('foodSheet').classList.remove('show'); }
+const FP_REGIONS=[['vn','🇻🇳 Việt'],['kr','🇰🇷 Hàn'],['th','🇹🇭 Thái'],['cn','🇨🇳 Trung'],['jp','🇯🇵 Nhật'],['in','🇮🇳 Ấn'],['eu','🌍 Âu-Mỹ'],['etc','🍫 Khác']];
+function fpReg(r){ _fpReg=r; if(r!=='my'){ const f=FOODS.findIndex(c=>c.r===r); _fpTab=f>=0?f:0; } const s=document.getElementById('fp-search'); if(s) s.value=''; renderFoodList(''); }
 function fpTab(t){ _fpTab=t; const s=document.getElementById('fp-search'); if(s) s.value=''; renderFoodList(''); }
 function renderFoodList(q){
-  const el=document.getElementById('fp-list'), tb=document.getElementById('fp-tabs'); if(!el) return;
+  const el=document.getElementById('fp-list'), tb=document.getElementById('fp-tabs'), rb=document.getElementById('fp-regions'); if(!el) return;
   q=(q||'').trim().toLowerCase();
   const my=loadMyFoods();
   const bi=(n,k,ci)=>`<button class="food-pick" onclick="selectFood('${n.replace(/'/g,"\\'")}',${k},${ci})"><span>${n}</span><b>${k} kcal${/100g/i.test(n)?'/100g':''}</b></button>`;
   const myItem=(m,i)=>`<button class="food-pick" onclick="selectMyFood(${i})"><span>⭐ ${m.name}</span><b>${m.base} kcal${m.gram?'/100g':''}</b><span class="fp-del" onclick="event.stopPropagation();delMyFood(${i})">✕</span></button>`;
   if(q){
-    if(tb) tb.innerHTML='';
+    if(rb) rb.innerHTML=''; if(tb) tb.innerHTML='';
     let html=my.map((m,i)=>[m,i]).filter(a=>a[0].name.toLowerCase().includes(q)).map(a=>myItem(a[0],a[1])).join('');
     FOODS.forEach((c,ci)=>c.items.forEach(x=>{ if(x[0].toLowerCase().includes(q)) html+=bi(x[0],x[1],ci); }));
     el.innerHTML=html||'<div class="empty" style="padding:12px">Không thấy — dùng “Tự nhập” bên dưới nhé 🐾</div>';
     return;
   }
-  // tab bar
-  const tabs=[]; if(my.length) tabs.push(['my','⭐']);
-  FOODS.forEach((c,ci)=>tabs.push([''+ci, c.cat.split(' ')[0]]));
-  if(tb) tb.innerHTML=tabs.map(t=>`<button class="fp-tab ${(''+_fpTab)===t[0]?'on':''}" onclick="fpTab('${t[0]}')">${t[1]}</button>`).join('');
-  // items of active tab
-  if(_fpTab==='my'){ el.innerHTML=my.length?my.map((m,i)=>myItem(m,i)).join(''):'<div class="empty" style="padding:12px">Chưa có món của bạn</div>'; }
-  else { const ci=+_fpTab||0; const c=FOODS[ci]||FOODS[0]; el.innerHTML=`<div class="fp-cat">${c.cat}</div>`+c.items.map(x=>bi(x[0],x[1],ci)).join(''); }
+  // hàng VÙNG (theo quốc gia)
+  const regs=FP_REGIONS.filter(([r])=>FOODS.some(c=>c.r===r));
+  if(my.length) regs.push(['my','⭐ Của tôi']);
+  if(!regs.some(([r])=>r===_fpReg)) _fpReg='vn';
+  if(rb) rb.innerHTML=regs.map(([r,lb])=>`<button class="fp-reg ${r===_fpReg?'on':''}" onclick="fpReg('${r}')">${lb}</button>`).join('');
+  // vùng "Của tôi"
+  if(_fpReg==='my'){
+    if(tb) tb.innerHTML='';
+    el.innerHTML=my.length?my.map((m,i)=>myItem(m,i)).join(''):'<div class="empty" style="padding:12px">Chưa có món của bạn</div>';
+    return;
+  }
+  // hàng NHÓM của vùng đang chọn
+  const cats=[]; FOODS.forEach((c,ci)=>{ if(c.r===_fpReg) cats.push([ci,c]); });
+  if(!cats.some(([ci])=>(''+ci)===(''+_fpTab))) _fpTab=cats.length?cats[0][0]:0;
+  if(tb) tb.innerHTML=cats.map(([ci,c])=>`<button class="fp-tab ${(''+_fpTab)===(''+ci)?'on':''}" onclick="fpTab('${ci}')" title="${c.cat.replace(/"/g,'')}">${c.cat.split(' ')[0]}</button>`).join('');
+  const ci=+_fpTab||0; const c=FOODS[ci]||(cats[0]&&cats[0][1])||FOODS[0];
+  el.innerHTML=`<div class="fp-cat">${c.cat}</div>`+c.items.map(x=>bi(x[0],x[1],ci)).join('');
 }
 function manualPrev(){ const el=document.getElementById('food-prev'); if(!el) return; const k=+pv('food-kcal')||0,g=+pv('food-gram')||0; el.textContent=(k&&g)?`≈ ${Math.round(k*g/100)} kcal tổng (cho ${g}g)`:''; }
 function caloCardHTML(){
