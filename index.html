@@ -462,7 +462,7 @@
 <div class="guide-sheet" id="foodSheet" onclick="if(event.target===this)closeFoodPicker()"></div>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="foods.js?v=38"></script>
+<script src="foods.js?v=39"></script>
 <script>
 /* ============ MUSCLE TAG COLORS ============ */
 const MUSCLE_COLORS = {
@@ -1288,7 +1288,7 @@ function profileSummaryHTML(p){
   </div>`;
 }
 /* ====== Đăng nhập Google (xinh xinh, client-side, không cần server riêng) ====== */
-const GOOGLE_CLIENT_ID=''; // 👉 DÁN Google OAuth Client ID vào đây: "....apps.googleusercontent.com"
+const GOOGLE_CLIENT_ID='1010993280792-0vmtu735snfcpjf20dvdt7qbe5501nn7.apps.googleusercontent.com';
 function loadUser(){ try{ return JSON.parse(localStorage.getItem('meofit_user'))||null }catch(e){ return null } }
 function saveUser(u){ try{ u?localStorage.setItem('meofit_user',JSON.stringify(u)):localStorage.removeItem('meofit_user'); }catch(e){} }
 let _gTok=null;
