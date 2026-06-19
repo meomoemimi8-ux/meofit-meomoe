@@ -465,7 +465,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="foods.js?v=41"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="foods.js?v=42"></script>
 <script>
 /* ============ MUSCLE TAG COLORS ============ */
 const MUSCLE_COLORS = {
@@ -1312,9 +1313,11 @@ function initFirebase(){
   try{
     if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     _fbAuth=firebase.auth();
+    try{ _fbStore.db=firebase.firestore(); }catch(e){ _fbStore.db=null; }
     _fbAuth.onAuthStateChanged(u=>{
       saveUser(u?{name:u.displayName||'Bạn', email:u.email||'', picture:u.photoURL||''}:null);
       afterAuthRefresh();
+      if(u) cloudSync(); // đăng nhập xong → kéo + gộp + đẩy tiến độ
     });
     _fbReady=true; return true;
   }catch(e){ console.warn('Firebase init lỗi', e); return false; }
@@ -1328,6 +1331,46 @@ function googleLogin(){
   });
 }
 function googleLogout(){ if(_fbAuth){ try{ _fbAuth.signOut(); }catch(e){} } saveUser(null); afterAuthRefresh(); }
+
+/* ====== Đồng bộ tiến độ qua Firestore (điện thoại ↔ máy tính) ====== */
+const _fbStore={db:null};
+// Các "ngăn" dữ liệu sẽ đồng bộ (KHÔNG sync meofit_user)
+const SYNC_KEYS=['meofit_profile','meofit_weightlog','meofit_fastlog','meofit_food','meofit_myfoods','meofit_history_v1','meofit_customsessions','meofit_if','meofit_plan','meofit_level','meofit_strength','meo:theme','meofit_snd','meofit_voice'];
+// Log dạng mảng → gộp (union) theo khoá, không mất dữ liệu
+const LOG_KEYS={meofit_weightlog:'ts',meofit_fastlog:'ts',meofit_food:'ts',meofit_history_v1:'ts',meofit_myfoods:'name',meofit_customsessions:'id'};
+let _applyingCloud=false,_pushTimer=null;
+// Bắt mọi lần ghi dữ liệu → tự đẩy lên cloud (debounce)
+(function(){ const orig=localStorage.setItem.bind(localStorage);
+  localStorage.setItem=function(k,v){ orig(k,v); if(!_applyingCloud && _fbStore.db && _fbAuth && _fbAuth.currentUser && SYNC_KEYS.indexOf(k)>=0) scheduleCloudPush(); };
+})();
+function scheduleCloudPush(){ clearTimeout(_pushTimer); _pushTimer=setTimeout(cloudPush,1600); }
+function gatherLocal(){ const o={}; SYNC_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) o[k]=v; }); return o; }
+function cloudPush(){ const u=_fbAuth&&_fbAuth.currentUser; if(!u||!_fbStore.db) return;
+  const data=gatherLocal(); data.updatedAt=Date.now();
+  _fbStore.db.collection('users').doc(u.uid).set(data,{merge:true})
+    .then(()=>{ try{ localStorage.setItem('meofit_sync_ts',''+data.updatedAt); }catch(e){} })
+    .catch(e=>console.warn('Đẩy tiến độ lỗi',e)); }
+function mergeArr(localStr,cloudStr,idField){ let a=[],b=[];
+  try{a=JSON.parse(localStr)||[]}catch(e){} try{b=JSON.parse(cloudStr)||[]}catch(e){}
+  if(!Array.isArray(a))a=[]; if(!Array.isArray(b))b=[];
+  const seen=new Set(),out=[];
+  a.concat(b).forEach(it=>{ const key=(it&&idField&&it[idField]!=null)?String(it[idField]):JSON.stringify(it); if(seen.has(key))return; seen.add(key); out.push(it); });
+  return JSON.stringify(out); }
+function cloudSync(){ const u=_fbAuth&&_fbAuth.currentUser; if(!u||!_fbStore.db) return;
+  _fbStore.db.collection('users').doc(u.uid).get().then(snap=>{
+    const cloud=snap.exists?(snap.data()||{}):{};
+    const localTs=parseInt(localStorage.getItem('meofit_sync_ts'))||0;
+    const cloudNewer=(cloud.updatedAt||0)>localTs;
+    _applyingCloud=true;
+    try{ SYNC_KEYS.forEach(k=>{ const cv=cloud[k]; const cvStr=(cv==null)?null:(typeof cv==='string'?cv:JSON.stringify(cv));
+      if(LOG_KEYS[k]){ localStorage.setItem(k, mergeArr(localStorage.getItem(k), cvStr||'[]', LOG_KEYS[k])); }
+      else if(cloudNewer && cvStr!=null && cvStr!==''){ localStorage.setItem(k, cvStr); }
+    }); }finally{ _applyingCloud=false; }
+    try{ initTheme(); refreshCustomPlan(); }catch(e){}
+    afterAuthRefresh();
+    try{ const sv=document.querySelector('.view.show'); if(sv&&sv.id==='v-home') renderHome(); else if(sv&&sv.id==='v-prog') renderProgress(); }catch(e){}
+    cloudPush(); // đẩy bản đã gộp lên
+  }).catch(e=>console.warn('Kéo tiến độ lỗi',e)); }
 // Sau khi đăng nhập/đăng xuất: cập nhật thẻ tài khoản + mở/khoá lại video buổi đang xem
 function afterAuthRefresh(){ try{ renderProfile(); }catch(e){} if(_openSess!=null && document.getElementById('v-sess') && document.getElementById('v-sess').classList.contains('show')) openSession(_openSess); }
 const GOOGLE_G_SVG='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 7.1 29.6 5 24 5 16 5 9.1 9.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36 26.7 37 24 37c-5.3 0-9.7-2.6-11.3-7l-6.5 5C9 41.4 15.9 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.6l6.2 5.2C39.8 35.4 45 30 45 24c0-1.2-.1-2.4-.4-3.5z"/></svg>';
