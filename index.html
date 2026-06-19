@@ -431,7 +431,7 @@
 </div>
 <div class="guide-sheet" id="foodSheet" onclick="if(event.target===this)closeFoodPicker()"></div>
 
-<script src="foods.js?v=35"></script>
+<script src="foods.js?v=36"></script>
 <script>
 /* ============ MUSCLE TAG COLORS ============ */
 const MUSCLE_COLORS = {
@@ -1436,7 +1436,7 @@ function openFoodPicker(){
     <div id="fp-list"></div>
     <div id="fp-amount" style="display:none;border-top:2px solid var(--border);margin-top:10px;padding-top:10px"></div>
     <button class="btn" onclick="closeFoodPicker()" style="margin-top:12px">✓ Xong</button>
-    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:8px">Chọn món → nhập gram/số phần. Calo là ước tính 🐾</div>
+    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:8px">Chọn món → nhập gram/số phần. Calo là <b>ước tính tham khảo</b> (USDA · Viện Dinh dưỡng · số liệu hãng) 🐾</div>
   </div>`;
   _fpTab=0; sh.classList.add('show'); renderFoodList('');
 }
