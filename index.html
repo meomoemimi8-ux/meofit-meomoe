@@ -317,12 +317,34 @@
   header.top .mascot{width:48px;height:48px;flex:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.12))}
   .catface{width:100%;height:100%;display:block}
 
-  /* footer đồng bộ Meomoe Multiverse */
-  .footer{position:relative;text-align:center;padding:2.6rem 1.2rem 2.1rem;margin:20px -14px 0;background:var(--surface-2);color:var(--ink);border-radius:28px 28px 0 0}
-  .footer__cat{font-size:2.2rem;margin-bottom:.4rem}
-  .footer p{margin:.25rem 0;font-size:.86rem;line-height:1.5}
-  .footer a{color:var(--green-d);font-weight:800;text-decoration:none}
-  .footer__domain{color:var(--muted);font-size:.76rem;font-weight:700}
+  /* footer kiểu hanyu — thẻ dẫn về Meomoe Multiverse */
+  .footer{position:relative;text-align:center;padding:2.2rem 1.2rem 2.1rem;margin:20px 0 0;border-top:1px solid var(--border)}
+  .mv-card{display:flex;align-items:center;gap:12px;max-width:420px;margin:1.4rem auto 0;text-align:left;text-decoration:none;color:var(--ink);
+    border:1.5px solid var(--border);background:var(--card);border-radius:20px;padding:13px 16px;box-shadow:var(--shadow);
+    transition:transform .18s,border-color .18s,box-shadow .18s}
+  .mv-card:hover{transform:translateY(-2px);border-color:var(--green-l);box-shadow:0 12px 24px rgba(63,163,77,.18)}
+  .mv-seal{width:46px;height:46px;border-radius:50%;flex:none;object-fit:cover;box-shadow:0 3px 8px rgba(0,0,0,.14)}
+  .mv-title{font-weight:800;font-size:.9rem;line-height:1.3}
+  .mv-sub{font-size:.76rem;color:var(--muted);margin-top:3px;line-height:1.35}
+  .mv-sub b{color:var(--green-d)}
+  .mv-arrow{display:inline-block;color:var(--green-d);font-weight:900;transition:transform .18s}
+  .mv-card:hover .mv-arrow{transform:translateX(3px)}
+  .footer__domain{color:var(--muted);font-size:.76rem;font-weight:700;margin:1.2rem 0 0}
+  /* thẻ tài khoản + nút đăng nhập Google xinh xinh */
+  .acct-login{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:330px;margin:0 auto 16px;
+    border:2px solid var(--border);background:var(--card);border-radius:16px;padding:12px 16px;font-family:inherit;font-size:.95rem;font-weight:800;color:var(--ink);
+    cursor:var(--paw),pointer;box-shadow:var(--shadow);transition:transform .12s,border-color .18s}
+  .acct-login:hover{transform:translateY(-2px);border-color:var(--green-l)}
+  .acct-login:active{transform:scale(.97)}
+  .acct-login svg{width:20px;height:20px;flex:none}
+  .acct-paw{margin-left:1px}
+  .acct-card{display:flex;align-items:center;gap:12px;background:var(--card);border:2px solid var(--green-l);border-radius:18px;padding:11px 14px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .acct-ava{width:44px;height:44px;border-radius:50%;flex:none;object-fit:cover;background:var(--surface-2)}
+  .acct-ava--ph{display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+  .acct-info{flex:1;min-width:0}
+  .acct-name{font-weight:800;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acct-mail{font-size:.74rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acct-out{flex:none;border:none;background:var(--surface-2);color:var(--green-d);font-weight:800;font-family:inherit;font-size:.78rem;border-radius:12px;padding:8px 12px;cursor:var(--paw),pointer}
 
   /* vệt chân mèo theo con trỏ */
   .cursor-trail{position:fixed;inset:0;pointer-events:none;z-index:998}
@@ -407,8 +429,13 @@
   <section class="view" id="v-prog"></section>
   <section class="view" id="v-prof"></section>
   <footer class="footer">
-    <div class="footer__cat">🐱🏋️</div>
-    <p>Made with 🎀 &amp; 🐾 — một vũ trụ của <a href="https://multiverse.meomoe.com">Meomoe Multiverse</a></p>
+    <a class="mv-card" href="https://multiverse.meomoe.com" target="_blank" rel="noopener">
+      <img class="mv-seal" src="logo.png" alt="Meomoe" width="46" height="46">
+      <div>
+        <div class="mv-title">🐾 MèoFit là một góc nhỏ của vũ trụ Meomoe</div>
+        <div class="mv-sub">Ghé <b>Meomoe multiverse</b> — gặp thêm những chú mèo khác <span class="mv-arrow">→</span></div>
+      </div>
+    </a>
     <p class="footer__domain">MèoFit · 🐾 Mèo Lực Sĩ · fit.meomoe.com · 2026</p>
   </footer>
 </div>
@@ -434,7 +461,8 @@
 </div>
 <div class="guide-sheet" id="foodSheet" onclick="if(event.target===this)closeFoodPicker()"></div>
 
-<script src="foods.js?v=37"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="foods.js?v=38"></script>
 <script>
 /* ============ MUSCLE TAG COLORS ============ */
 const MUSCLE_COLORS = {
@@ -1259,6 +1287,43 @@ function profileSummaryHTML(p){
     <div style="font-size:.86rem;color:var(--muted);font-weight:600;margin-top:8px;line-height:1.7">📏 ${p.height} cm · ⚖️ ${p.weight} kg${p.goalWeight?` → 🎯 ${p.goalWeight} kg`:''} · ${goalT} · 🏠 ${eqT}<br>💪 Tập trung: ${profFocus(p).join(' · ')}${meas?`<br>📐 ${meas}`:''}</div>
   </div>`;
 }
+/* ====== Đăng nhập Google (xinh xinh, client-side, không cần server riêng) ====== */
+const GOOGLE_CLIENT_ID=''; // 👉 DÁN Google OAuth Client ID vào đây: "....apps.googleusercontent.com"
+function loadUser(){ try{ return JSON.parse(localStorage.getItem('meofit_user'))||null }catch(e){ return null } }
+function saveUser(u){ try{ u?localStorage.setItem('meofit_user',JSON.stringify(u)):localStorage.removeItem('meofit_user'); }catch(e){} }
+let _gTok=null;
+function googleLogin(){
+  if(!GOOGLE_CLIENT_ID){ alert('Chưa cấu hình đăng nhập 🐾\n\nDán Google Client ID vào biến GOOGLE_CLIENT_ID trong index.html\n(xem hướng dẫn ở README-AUTH.md).'); return; }
+  if(!(window.google&&google.accounts&&google.accounts.oauth2)){ alert('Đang tải Google… đợi 1-2 giây rồi bấm lại nhé 🐾'); return; }
+  if(!_gTok){
+    _gTok=google.accounts.oauth2.initTokenClient({
+      client_id:GOOGLE_CLIENT_ID, scope:'openid profile email',
+      callback:async (resp)=>{
+        if(!resp||!resp.access_token) return;
+        try{
+          const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+resp.access_token}});
+          const d=await r.json();
+          saveUser({name:d.name||d.given_name||'Bạn', email:d.email||'', picture:d.picture||''});
+          renderProfile();
+        }catch(e){ alert('Đăng nhập gặp lỗi, thử lại nhé 🐾'); }
+      }
+    });
+  }
+  _gTok.requestAccessToken();
+}
+function googleLogout(){ saveUser(null); try{ google.accounts.id.disableAutoSelect(); }catch(e){} renderProfile(); }
+const GOOGLE_G_SVG='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 7.1 29.6 5 24 5 16 5 9.1 9.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36 26.7 37 24 37c-5.3 0-9.7-2.6-11.3-7l-6.5 5C9 41.4 15.9 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.6l6.2 5.2C39.8 35.4 45 30 45 24c0-1.2-.1-2.4-.4-3.5z"/></svg>';
+function accountCardHTML(){
+  const u=loadUser();
+  if(u){
+    return `<div class="acct-card">
+      ${u.picture?`<img class="acct-ava" src="${u.picture}" alt="" referrerpolicy="no-referrer">`:'<div class="acct-ava acct-ava--ph">🐾</div>'}
+      <div class="acct-info"><div class="acct-name">Chào, ${u.name} 👋</div><div class="acct-mail">${u.email||'Đã đăng nhập Google'}</div></div>
+      <button class="acct-out" onclick="googleLogout()">Đăng xuất</button>
+    </div>`;
+  }
+  return `<button class="acct-login" onclick="googleLogin()">${GOOGLE_G_SVG}<span>Đăng nhập với Google</span><span class="acct-paw">🐾</span></button>`;
+}
 function renderProfile(){
   const p=loadProfile(), complete=p.height&&p.weight&&p.age, showForm=_pfEdit||!complete;
   const sel=(id,opts,cur)=>`<select id="${id}" oninput="calcProfile()">${opts.map(o=>`<option value="${o[0]}" ${o[0]==cur?'selected':''}>${o[1]}</option>`).join('')}</select>`;
@@ -1290,6 +1355,7 @@ function renderProfile(){
       ${complete?`<button class="btn" style="margin-top:8px" onclick="_pfEdit=false;renderProfile()">✓ Xong</button>`:''}
     </div>`;
   document.getElementById('v-prof').innerHTML=`
+    ${accountCardHTML()}
     <h2 class="sec-title">👤 Hồ sơ của tớ</h2>
     ${showForm?form:profileSummaryHTML(p)}
     <div id="pf-results"></div>
