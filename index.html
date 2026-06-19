@@ -312,6 +312,8 @@
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
   a.vidlink{display:inline-flex;align-items:center;gap:6px;color:var(--red);font-weight:800;text-decoration:none;font-size:.9rem;margin-top:4px}
+  .vidlink--lock{display:inline-flex;align-items:center;gap:6px;border:1.5px dashed var(--border);background:var(--surface-2);color:var(--muted);font-weight:800;font-size:.88rem;font-family:inherit;border-radius:12px;padding:9px 14px;margin-top:4px;cursor:var(--paw),pointer;transition:border-color .15s,color .15s}
+  .vidlink--lock:hover{border-color:var(--green-l);color:var(--green-d)}
 
   /* mèo mascot Mèo Lực Sĩ */
   header.top .mascot{width:48px;height:48px;flex:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.12))}
@@ -462,7 +464,7 @@
 <div class="guide-sheet" id="foodSheet" onclick="if(event.target===this)closeFoodPicker()"></div>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="foods.js?v=39"></script>
+<script src="foods.js?v=40"></script>
 <script>
 /* ============ MUSCLE TAG COLORS ============ */
 const MUSCLE_COLORS = {
@@ -1097,7 +1099,9 @@ function renderBuilder(){
 function chooseLevelList(l){ setLevel(l); renderSessList(); }
 function chooseLevelDetail(l, sid){ setLevel(l); openSession(sid); }
 
+let _openSess=null;
 function openSession(id){
+  _openSess=id;
   const s=sessById(id), pl=curPlan(), lv=getLevel(), vid=(s.videos&&pl.levels)?s.videos[lv]:null;
   const exs=s.ex.map((e,i)=>{
     const links=`<div class="links">
@@ -1120,7 +1124,9 @@ function openSession(id){
     ${pl.levels?`<div class="levels"><div class="lab">🎚️ Cấp độ (đổi video & cường độ):</div><div class="seg">
       ${[1,2,3].map(l=>`<button class="${l===lv?'on':''}" onclick="chooseLevelDetail(${l},${id})">${LEVELS[l].name}<small>${LEVELS[l].desc}</small></button>`).join('')}
     </div></div>`:''}
-    ${vid?`<a class="vidlink" href="https://youtu.be/${vid}" target="_blank" rel="noopener">▶️ Video full ${s.name} — ${LEVELS[lv].name}</a>`:''}
+    ${vid?(loadUser()
+      ? `<a class="vidlink" href="https://youtu.be/${vid}" target="_blank" rel="noopener">▶️ Video full ${s.name} — ${LEVELS[lv].name}</a>`
+      : `<button class="vidlink--lock" onclick="googleLogin()">🔒 Đăng nhập để xem video tập full</button>`):''}
     ${pl.levels&&lv===3?`<div class="note-box" style="margin-top:8px">💡 <b>Level 3:</b> thêm tạ tay/tạ đòn hoặc tăng sức cản dây kháng lực cho các bài. Chỉ lên Level 3 khi đã tập chạy kỹ thuật vững.</div>`:'<div style="height:10px"></div>'}
     ${exs}
     <button class="btn" onclick="startWorkout(${s.id})">▶️ Bắt đầu tập buổi này</button>
@@ -1304,14 +1310,16 @@ function googleLogin(){
           const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+resp.access_token}});
           const d=await r.json();
           saveUser({name:d.name||d.given_name||'Bạn', email:d.email||'', picture:d.picture||''});
-          renderProfile();
+          afterAuthRefresh();
         }catch(e){ alert('Đăng nhập gặp lỗi, thử lại nhé 🐾'); }
       }
     });
   }
   _gTok.requestAccessToken();
 }
-function googleLogout(){ saveUser(null); try{ google.accounts.id.disableAutoSelect(); }catch(e){} renderProfile(); }
+function googleLogout(){ saveUser(null); try{ google.accounts.id.disableAutoSelect(); }catch(e){} afterAuthRefresh(); }
+// Sau khi đăng nhập/đăng xuất: cập nhật thẻ tài khoản + mở/khoá lại video buổi đang xem
+function afterAuthRefresh(){ try{ renderProfile(); }catch(e){} if(_openSess!=null && document.getElementById('v-sess') && document.getElementById('v-sess').classList.contains('show')) openSession(_openSess); }
 const GOOGLE_G_SVG='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 7.1 29.6 5 24 5 16 5 9.1 9.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36 26.7 37 24 37c-5.3 0-9.7-2.6-11.3-7l-6.5 5C9 41.4 15.9 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.6l6.2 5.2C39.8 35.4 45 30 45 24c0-1.2-.1-2.4-.4-3.5z"/></svg>';
 function accountCardHTML(){
   const u=loadUser();
