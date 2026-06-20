@@ -24,7 +24,7 @@
     --ink:#2b3a2e; --muted:#789078;
     --shadow:0 8px 22px rgba(63,163,77,.14);
     --r:22px; font-size:16px;
-    --paw:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='34'%20height='34'%20viewBox='0%200%2034%2034'%3E%3Cg%20transform='rotate(-25%2017%2017)'%20stroke='%23d65b86'%20stroke-width='1.5'%20stroke-linejoin='round'%3E%3Crect%20x='11'%20y='14.5'%20width='12'%20height='5'%20rx='2.5'%20fill='%23ff8fb1'/%3E%3Crect%20x='6'%20y='11'%20width='5'%20height='12'%20rx='2.5'%20fill='%23ffb3c9'/%3E%3Crect%20x='23'%20y='11'%20width='5'%20height='12'%20rx='2.5'%20fill='%23ffb3c9'/%3E%3Crect%20x='2.5'%20y='9'%20width='4.5'%20height='16'%20rx='2'%20fill='%23ff8fb1'/%3E%3Crect%20x='27'%20y='9'%20width='4.5'%20height='16'%20rx='2'%20fill='%23ff8fb1'/%3E%3C/g%3E%3C/svg%3E") 17 17;
+    --paw:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%2034%2034'%3E%3Cg%20transform='rotate(-25%2017%2017)'%20stroke='%23d65b86'%20stroke-width='1.5'%20stroke-linejoin='round'%3E%3Crect%20x='11'%20y='14.5'%20width='12'%20height='5'%20rx='2.5'%20fill='%23ff8fb1'/%3E%3Crect%20x='6'%20y='11'%20width='5'%20height='12'%20rx='2.5'%20fill='%23ffb3c9'/%3E%3Crect%20x='23'%20y='11'%20width='5'%20height='12'%20rx='2.5'%20fill='%23ffb3c9'/%3E%3Crect%20x='2.5'%20y='9'%20width='4.5'%20height='16'%20rx='2'%20fill='%23ff8fb1'/%3E%3Crect%20x='27'%20y='9'%20width='4.5'%20height='16'%20rx='2'%20fill='%23ff8fb1'/%3E%3C/g%3E%3C/svg%3E") 16 16;
     --cur-active:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='30'%20height='30'%20viewBox='0%200%2030%2030'%3E%3Ccircle%20cx='15'%20cy='15'%20r='13'%20fill='%23ff8fb1'%20stroke='%23d65b86'%20stroke-width='2.5'/%3E%3Ccircle%20cx='15'%20cy='15'%20r='4.5'%20fill='%23fff'%20stroke='%23d65b86'%20stroke-width='1.5'/%3E%3C/svg%3E") 15 15;
   }
   [data-theme='dark']{
@@ -176,6 +176,9 @@
   .field input:focus,.field select:focus{outline:none;border-color:var(--green-l)}
   .frow{display:flex;gap:10px}.frow .field{flex:1;min-width:0}
   .field input,.field select{box-sizing:border-box}
+  /* con trỏ: ô gõ chữ/số dùng vạch nháy bình thường; ô chọn (select) giữ bàn chân 🐾 */
+  input[type=text],input[type=number],input[type=search],input[type=email],input[type=tel],textarea,.bname,#fp-search{cursor:text}
+  select{cursor:var(--paw),pointer}
   .metric{background:var(--card);border-radius:18px;padding:16px;box-shadow:var(--shadow);text-align:center}
   .metric .big{font-size:2rem;font-weight:800;color:var(--green-d);line-height:1.1}
   .bmi-badge{display:inline-block;padding:3px 12px;border-radius:20px;color:#fff;font-weight:800;font-size:.8rem;margin-top:5px}
@@ -366,8 +369,6 @@
   @keyframes mfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
   .mf-tail{animation:mfTail 1.7s ease-in-out infinite;transform-origin:46px 128px}
   @keyframes mfTail{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(9deg)}}
-  .mf-lift{animation:mfLift 1.15s ease-in-out infinite;transform-origin:110px 122px}
-  @keyframes mfLift{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-15deg)}}
   .mf-eye{animation:mfBlink 4.5s infinite;transform-origin:center}
   @keyframes mfBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.12)}}
   .mf-spark{animation:mfSpark 1.6s ease-in-out infinite;transform-origin:153px 40px}
@@ -466,7 +467,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="foods.js?v=42"></script>
+<script src="foods.js?v=43"></script>
 <script>
 /* ============ MUSCLE TAG COLORS ============ */
 const MUSCLE_COLORS = {
@@ -2009,11 +2010,6 @@ function mfBun(sparkle){
 function mfLogo(){
   return `<span class="mfx" style="width:100%;height:100%;border-radius:24%;overflow:visible">`
     +`<img src="logo.png" alt="MèoFit" style="border-radius:24%">${mfSparkles()}</span>`;
-}
-// Mèo nâng tạ — animation 4 frame (sprite 1104x320, frame 276)
-function mfLift(h){
-  h=h||96; const sc=h/320, fw=Math.round(291*sc), sw=fw*4;
-  return `<div class="mf-lift" style="width:${fw}px;height:${h}px;background-size:${sw}px ${h}px;--liftw:-${sw}px"></div>`;
 }
 
 /* ============ THEME (đồng bộ Meomoe: light / dark / sakura, khoá meo:theme) ============ */
