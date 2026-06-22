@@ -140,6 +140,18 @@
   .ex .links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
+  /* danh sách bài kiểu checklist + nút tập mềm mại */
+  .ex{transition:box-shadow .2s,opacity .2s,transform .1s}
+  .ex.ex-done{opacity:.85}
+  .ex.ex-done .idx{background:var(--green-d)}
+  .ex.ex-cur{box-shadow:0 0 0 2.5px var(--pink),var(--shadow)}
+  .ex-now{display:inline-block;margin-left:7px;font-size:.58rem;font-weight:900;color:#fff;background:var(--pink);padding:2px 8px;border-radius:20px;vertical-align:middle;letter-spacing:.3px}
+  .ex-go{width:100%;margin-top:12px;border:none;border-radius:16px;padding:13px;font-family:inherit;font-weight:800;font-size:1.02rem;color:#fff;background:linear-gradient(135deg,var(--green-l),var(--green));box-shadow:0 6px 14px rgba(63,163,77,.26);cursor:var(--paw),pointer;transition:transform .08s;display:flex;align-items:center;justify-content:center;gap:7px}
+  .ex-go:active{transform:scale(.97)}
+  .ex-go.done{background:var(--surface-2);color:var(--green-d);box-shadow:none;border:2px solid var(--green-l)}
+  .sess-hint{display:flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);font-weight:700;margin:6px 2px 12px}
+  .sess-prog{height:9px;border-radius:6px;background:var(--surface-2);overflow:hidden;margin:10px 0 14px;box-shadow:inset 0 1px 2px rgba(0,0,0,.07)}
+  .sess-prog i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--green-l),var(--green));transition:width .6s cubic-bezier(.22,1,.36,1)}
 
   nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;background:var(--card);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom));max-width:600px;margin:0 auto}
   nav.tabbar button{background:none;border:none;flex:1;padding:7px 2px;cursor:var(--paw),pointer;color:var(--muted);font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.68rem;font-weight:700;transition:color .15s}
@@ -415,6 +427,82 @@
     .hero .sub{font-size:1.0rem}
     .hero-mascot{height:236px;width:214px;margin-bottom:6px}
   }
+
+  /* ============ GAME HOÁ (XP · chuỗi lửa · đường tập) ============ */
+  /* Thẻ bậc + XP */
+  .xp-card{background:var(--card);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px}
+  .xp-top{display:flex;align-items:center;gap:12px}
+  .xp-emb{width:52px;height:52px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;font-size:1.7rem;background:linear-gradient(150deg,var(--teal),var(--green));box-shadow:0 5px 12px rgba(56,217,201,.34)}
+  .xp-meta{flex:1;min-width:0}
+  .xp-rank{font-weight:800;font-size:1rem;color:var(--ink);line-height:1.15}
+  .xp-lv{font-size:.74rem;color:var(--muted);font-weight:700}
+  .xp-bar{height:13px;border-radius:10px;background:var(--surface-2);overflow:hidden;margin-top:8px;box-shadow:inset 0 1px 3px rgba(0,0,0,.08)}
+  .xp-bar i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--green-l),var(--green));transition:width .8s cubic-bezier(.22,1,.36,1)}
+  .xp-sub{font-size:.7rem;color:var(--muted);font-weight:700;margin-top:5px;text-align:right}
+
+  /* Thẻ chuỗi lửa */
+  .streak-card{display:flex;align-items:center;gap:14px;border-radius:var(--r);padding:15px 17px;margin-bottom:14px;color:#fff;background:linear-gradient(135deg,#ff9f6b,#ff7eb0);box-shadow:0 10px 24px rgba(255,126,176,.32)}
+  .streak-card.cold{background:linear-gradient(135deg,#bcd0c4,#9bb8a6);box-shadow:0 10px 22px rgba(120,144,120,.26)}
+  .streak-card.warn{background:linear-gradient(135deg,#ffc173,#ff927a);box-shadow:0 10px 22px rgba(255,146,122,.3)}
+  .flame{font-size:2.7rem;flex:none;filter:drop-shadow(0 3px 5px rgba(0,0,0,.18));animation:flameFlick 1.1s ease-in-out infinite}
+  @keyframes flameFlick{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.12) rotate(3deg)}}
+  .streak-card.cold .flame{animation:none;opacity:.85}
+  .streak-num{font-size:1.7rem;font-weight:900;line-height:1}
+  .streak-txt{flex:1;min-width:0}
+  .streak-txt .h{font-weight:900;font-size:1.05rem;line-height:1.1}
+  .streak-txt .s{font-size:.8rem;font-weight:600;opacity:.95;margin-top:3px;line-height:1.3}
+  .streak-days{display:flex;gap:5px;margin-top:8px}
+  .streak-days span{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;background:rgba(255,255,255,.25);color:#fff}
+  .streak-days span.on{background:#fff;color:var(--orange)}
+
+  /* Đường tập (lesson path) */
+  .path{position:relative;padding:14px 0 6px;margin:2px 0 8px}
+  .path::before{content:'';position:absolute;top:18px;bottom:30px;left:50%;width:0;border-left:4px dashed var(--border);transform:translateX(-2px);z-index:0}
+  .pnode{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:5px;width:100%;margin:9px 0;background:none;border:none;font-family:inherit;padding:0;cursor:var(--paw),pointer}
+  .pnode:nth-child(odd){transform:translateX(-44px)}
+  .pnode:nth-child(even){transform:translateX(44px)}
+  .disc{position:relative;width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(160deg,#fff,var(--surface-2));border:3px solid var(--border);box-shadow:0 6px 0 rgba(0,0,0,.10),0 9px 14px rgba(0,0,0,.10);transition:transform .1s,box-shadow .1s}
+  .pnode:active .disc{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.10),0 4px 8px rgba(0,0,0,.10)}
+  .pnode .plbl{font-size:.8rem;font-weight:800;color:var(--ink);max-width:150px;text-align:center;line-height:1.18}
+  .pnode .psub{font-size:.66rem;color:var(--muted);font-weight:700}
+  .pnode.done .disc{background:linear-gradient(160deg,var(--green-l),var(--green));border-color:var(--green-d);box-shadow:0 6px 0 var(--green-d),0 9px 14px rgba(47,125,58,.32)}
+  .pnode.done:active .disc{box-shadow:0 2px 0 var(--green-d)}
+  .pnode.current .disc{border-color:var(--orange);animation:nodePulse 1.7s infinite}
+  .pnode .tick{position:absolute;top:-3px;right:-3px;width:26px;height:26px;border-radius:50%;background:#fff;color:var(--green-d);border:2.5px solid var(--green-d);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:900;animation:pop .4s}
+  .pnode .now-badge{position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:var(--orange);color:#fff;font-size:.6rem;font-weight:900;padding:3px 8px;border-radius:20px;white-space:nowrap;box-shadow:0 3px 7px rgba(255,169,77,.45);animation:bob2 1.4s ease-in-out infinite}
+  @keyframes bob2{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+  @keyframes nodePulse{0%,100%{box-shadow:0 6px 0 rgba(0,0,0,.10),0 0 0 0 rgba(255,169,77,.55)}50%{box-shadow:0 6px 0 rgba(0,0,0,.10),0 0 0 13px rgba(255,169,77,0)}}
+  .path-flag{position:relative;z-index:1;text-align:center;font-size:1.9rem;margin-top:2px}
+
+  /* Bottom sheet thông tin bài (trước khi tập) */
+  .sheet{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+  .sheet.show{display:flex;animation:fade .2s}
+  .sheet-card{background:var(--bg);width:100%;max-width:560px;max-height:88%;overflow-y:auto;border-radius:24px 24px 0 0;padding:18px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.3);animation:sheetUp .25s}
+  .sheet-grab{width:42px;height:5px;border-radius:3px;background:var(--border);margin:0 auto 12px}
+
+  /* Nút gọn ở màn tập (control dock) */
+  .pdock{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;width:100%;max-width:360px}
+  .pmini{width:50px;height:54px;flex:none;border-radius:16px;border:2px solid var(--border);background:var(--card);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-family:inherit;font-size:1.25rem;cursor:var(--paw),pointer;transition:transform .08s,background .15s,border-color .15s}
+  .pmini small{font-size:.54rem;font-weight:800;color:var(--muted);letter-spacing:.2px}
+  .pmini:active{transform:scale(.9)}
+  .pmini.on{border-color:var(--green);background:var(--green-l);color:#1f5128}
+  .pmini.on small{color:#1f5128}
+  .pmini[disabled]{opacity:.32;cursor:default}
+  .pmini.warn{border-color:var(--orange)}
+  .ppause{width:66px;height:66px;flex:none;border-radius:50%;border:none;color:#fff;background:linear-gradient(135deg,#ffa94d,#f0871f);box-shadow:0 8px 16px rgba(240,135,31,.4);font-size:1.7rem;display:flex;align-items:center;justify-content:center;font-family:inherit;cursor:var(--paw),pointer;transition:transform .08s}
+  .ppause:active{transform:scale(.93)}
+
+  /* Pháo giấy ăn mừng */
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden}
+  .confetti span{position:absolute;top:-24px;font-size:1.25rem;animation:confFall linear forwards}
+  @keyframes confFall{0%{opacity:0;transform:translateY(-10px) rotate(0)}8%{opacity:1}100%{transform:translateY(108vh) rotate(680deg);opacity:.95}}
+
+  /* Màn ăn mừng — phần thưởng */
+  .reward{margin:6px 0 14px}
+  .reward .xp-pop{display:inline-block;font-size:1.5rem;font-weight:900;color:var(--green-d);animation:pop .5s;margin:2px 0}
+  .reward .lvlup{display:inline-block;margin-top:8px;padding:7px 16px;border-radius:20px;font-weight:900;color:#fff;background:linear-gradient(135deg,var(--purple),#9775fa);box-shadow:0 6px 14px rgba(151,117,250,.4);animation:pop .5s}
+  .reward .rwbar{height:12px;border-radius:8px;background:var(--surface-2);overflow:hidden;margin:12px auto 4px;max-width:280px}
+  .reward .rwbar i{display:block;height:100%;background:linear-gradient(90deg,var(--green-l),var(--green))}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -462,6 +550,8 @@
   <div class="center" id="p-center"></div>
   <div class="guide-sheet" id="guideSheet" onclick="if(event.target===this)closeGuide()"></div>
 </div>
+
+<div class="sheet" id="exSheet" onclick="if(event.target===this)closeExSheet()"></div>
 <div class="guide-sheet" id="foodSheet" onclick="if(event.target===this)closeFoodPicker()"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -864,6 +954,45 @@ function calcStreak(){
     if(days.has(s)){ streak++; d.setDate(d.getDate()-1);} else break; }
   return streak;
 }
+// 7 ngày gần nhất: ngày nào có tập → true (để vẽ chấm chuỗi)
+function last7Days(){
+  const days=new Set(loadHist().map(e=>e.date)), out=[];
+  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i);
+    const s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    out.push({dow:['CN','T2','T3','T4','T5','T6','T7'][d.getDay()], on:days.has(s)}); }
+  return out;
+}
+
+/* ============ GAME HOÁ: XP · BẬC · ĐÁNH DẤU BÀI XONG ============ */
+const XP_PER_WORKOUT=100;
+const LEVEL_TITLES=[
+  ['🐱','Mèo Con'],['🐾','Mèo Tập Sự'],['🏃','Mèo Nhanh Nhẹn'],['💪','Mèo Cơ Bắp'],
+  ['🥋','Mèo Võ Sĩ'],['🏆','Mèo Lực Sĩ'],['👑','Mèo Huyền Thoại'],['🌟','Mèo Vô Cực'],
+];
+function xpTotal(){ return loadHist().length * XP_PER_WORKOUT; }
+// Bậc: mỗi bậc cần nhiều XP hơn bậc trước (bậc 1→2 cần 300, mỗi bậc sau +150)
+function levelInfo(xp){
+  if(xp==null) xp=xpTotal();
+  let lv=1, need=300, acc=0;
+  while(xp>=acc+need){ acc+=need; lv++; need+=150; }
+  const t=LEVEL_TITLES[Math.min(lv-1, LEVEL_TITLES.length-1)];
+  return {lv, xp, cur:xp-acc, need, into:(xp-acc)/need, emoji:t[0], title:t[1]};
+}
+
+// Đánh dấu bài đã tập xong (theo ngày + buổi) — như todo list, hiện ✓ trên đường tập
+const LS_EXDONE='meofit_exdone';
+function loadExDone(){ try{ return JSON.parse(localStorage.getItem(LS_EXDONE))||{} }catch(e){ return {} } }
+function saveExDone(o){ try{ localStorage.setItem(LS_EXDONE, JSON.stringify(o)); }catch(e){} }
+function exDoneKey(sid){ return todayStr()+':'+sid; }
+function exDoneSet(sid){ const o=loadExDone(); return new Set(o[exDoneKey(sid)]||[]); }
+function markExDone(sid, idx){
+  const o=loadExDone(), k=exDoneKey(sid), arr=o[k]||[];
+  if(!arr.includes(idx)){
+    arr.push(idx); o[k]=arr;
+    const keys=Object.keys(o); if(keys.length>40){ keys.sort(); keys.slice(0,keys.length-40).forEach(kk=>delete o[kk]); }
+    saveExDone(o);
+  }
+}
 
 /* ============ HELPERS ============ */
 const DOW_FULL=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
@@ -901,6 +1030,34 @@ function levelSeg(onchangeFn){
 }
 
 /* ============ HOME ============ */
+// Thẻ chuỗi lửa + nhắc giữ chuỗi (kiểu Duolingo)
+function streakCardHTML(){
+  const streak=calcStreak(), done=doneToday(), days=last7Days();
+  let cls, h, sub;
+  if(streak<=0){ cls='cold'; h='Nhóm chuỗi lửa nào!'; sub='Tập hôm nay để bắt đầu chuỗi ngày đầu tiên 🔥'; }
+  else if(done){ cls=''; h=streak+' ngày liên tiếp!'; sub='Tuyệt vời 🐾 Giữ lửa cháy nhé — mai gặp lại!'; }
+  else { cls='warn'; h='Chuỗi '+streak+' ngày đang chờ!'; sub='⚠️ Tập hôm nay kẻo mất chuỗi nha — chỉ 1 buổi thôi là giữ được!'; }
+  const dots=days.map(d=>`<span class="${d.on?'on':''}">${d.on?'🔥':d.dow}</span>`).join('');
+  return `<div class="streak-card ${cls}">
+    <div style="text-align:center;flex:none"><div class="flame">🔥</div><div class="streak-num">${streak}</div></div>
+    <div class="streak-txt"><div class="h">${h}</div><div class="s">${sub}</div><div class="streak-days">${dots}</div></div>
+  </div>`;
+}
+// Thẻ XP + bậc người tập
+function xpCardHTML(){
+  const L=levelInfo(), next=L.lv+1<=LEVEL_TITLES.length?('bậc '+(L.lv+1)):'bậc tiếp theo';
+  return `<div class="xp-card">
+    <div class="xp-top">
+      <div class="xp-emb">${L.emoji}</div>
+      <div class="xp-meta">
+        <div class="xp-rank">${L.title} <span style="color:var(--muted);font-size:.78rem;font-weight:700">· Bậc ${L.lv}</span></div>
+        <div class="xp-lv">${L.xp} XP • ${loadHist().length} buổi tập 💪</div>
+        <div class="xp-bar"><i style="width:${Math.round(L.into*100)}%"></i></div>
+      </div>
+    </div>
+    <div class="xp-sub">Còn ${L.need-L.cur} XP nữa lên ${next} 🚀</div>
+  </div>`;
+}
 function chooseLevelHome(l){ setLevel(l); renderHome(); }
 function renderHome(){
   const today=new Date().getDay(), w=weekByDay(today), sess=w.sid?sessById(w.sid):null;
@@ -927,17 +1084,14 @@ function renderHome(){
     </div>`;
   }
   const startBtn=sess
-    ?`<button class="btn" onclick="startWorkout(${sess.id})">▶️ Bắt đầu ${sess.name}</button>`
+    ?`<button class="btn" onclick="openSession(${sess.id})">${done?'🔁 Tập lại '+sess.name:'▶️ Vào tập '+sess.name}</button>`
     :`<button class="btn rest-day" onclick="go('week')">📅 Xem lịch tuần</button>`;
   document.getElementById('v-home').innerHTML=`
     <div class="home-grid">
       <div class="hcol hcol-main">
         ${hero}
-        <div class="stats">
-          <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">Chuỗi ngày</div></div>
-          <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng buổi tập</div></div>
-          <div class="stat"><div class="num">${done?'✅':'⭕'}</div><div class="lbl">Hôm nay</div></div>
-        </div>
+        ${streakCardHTML()}
+        ${xpCardHTML()}
         ${curPlan().levels?levelSeg('chooseLevelHome'):''}
         ${startBtn}
       </div>
@@ -1106,19 +1260,23 @@ let _openSess=null;
 function openSession(id){
   _openSess=id;
   const s=sessById(id), pl=curPlan(), lv=getLevel(), vid=(s.videos&&pl.levels)?s.videos[lv]:null;
+  const done=exDoneSet(id);                      // các bài đã xong hôm nay
+  const cur=s.ex.findIndex((e,i)=>!done.has(i)); // bài "tập ngay" = bài chưa xong đầu tiên
+  const total=s.ex.length, nDone=done.size;
   const exs=s.ex.map((e,i)=>{
+    const isDone=done.has(i), isCur=(i===cur);
     const links=`<div class="links">
       <a class="vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener">▶️ Cách tập đúng</a>
       ${e.gymName?`<a href="${yt(e.gymName.split('/')[0]+' machine how to')}" target="_blank" rel="noopener">🔍 Xem máy tập</a>`:''}</div>`;
-    return `<div class="ex" style="border-left-color:${tagColor(e.m)}">
-      <div class="row1"><div class="idx">${i+1}</div><div>
-        <div class="nm">${e.mi} ${e.n}</div>
+    return `<div class="ex${isDone?' ex-done':''}${isCur?' ex-cur':''}" style="border-left-color:${tagColor(e.m)}">
+      <div class="row1"><div class="idx">${isDone?'✓':(i+1)}</div><div style="flex:1;min-width:0">
+        <div class="nm">${e.mi} ${e.n}${isCur?'<span class="ex-now">TẬP NGAY</span>':''}</div>
         <div class="meta">${e.sets} hiệp × ${e.reps} • ⏱️ ~${e.work}s/hiệp</div>
         <span class="tag" style="background:${tagColor(e.m)}">${e.m}</span></div></div>
       <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
       ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
       ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
-      <button class="btn" style="margin-top:10px;padding:11px" onclick="startWorkout(${id},${i})">▶️ Tập bài này</button>
+      <button class="ex-go${isDone?' done':''}" onclick="startWorkout(${id},${i})">${isDone?'✓ Đã xong — tập lại nhé':'▶️ Tập bài này'}</button>
     </div>`;
   }).join('');
   document.getElementById('v-sess').innerHTML=`
@@ -1131,14 +1289,41 @@ function openSession(id){
     ${vid?(loadUser()
       ? `<a class="vidlink" href="https://youtu.be/${vid}" target="_blank" rel="noopener">▶️ Video full ${s.name} — ${LEVELS[lv].name}</a>`
       : `<button class="vidlink--lock" onclick="googleLogin()">🔒 Đăng nhập để xem video tập full</button>`):''}
-    ${pl.levels&&lv===3?`<div class="note-box" style="margin-top:8px">💡 <b>Level 3:</b> thêm tạ tay/tạ đòn hoặc tăng sức cản dây kháng lực cho các bài. Chỉ lên Level 3 khi đã tập chạy kỹ thuật vững.</div>`:'<div style="height:10px"></div>'}
-    <div class="note-box" style="margin-top:4px">👆 Bấm <b>“Tập bài này”</b> ở từng bài để tự chủ động giờ giấc — tập xong bài nào, nghỉ thoải mái rồi chọn bài tiếp khi sẵn sàng nhé 🐾</div>
+    ${pl.levels&&lv===3?`<div class="note-box" style="margin-top:8px">💡 <b>Level 3:</b> thêm tạ tay/tạ đòn hoặc tăng sức cản dây kháng lực cho các bài. Chỉ lên Level 3 khi đã tập chạy kỹ thuật vững.</div>`:''}
+    <div class="sess-prog"><i style="width:${total?Math.round(nDone/total*100):0}%"></i></div>
+    <div class="sess-hint">✅ Đã xong <b style="color:var(--green-d);margin:0 3px">${nDone}/${total}</b> bài hôm nay — bấm “Tập bài này”, xong là tự đánh dấu ✓ 🐾</div>
     ${exs}
     <button class="btn sec" onclick="startWorkout(${s.id},0,true)">⏩ Hoặc: tập tự động liền mạch cả buổi</button>
     <div style="height:10px"></div>`;
   go('sess', true);
   window.scrollTo(0,0);
 }
+
+// Bottom sheet: xem thông tin 1 bài trước khi tập
+let _sheetSess=null;
+function openExSheet(sid, i){
+  _sheetSess=sid;
+  const s=sessById(sid), e=s.ex[i], isDone=exDoneSet(sid).has(i);
+  const links=`<div class="links">
+    <a class="vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener">▶️ Cách tập đúng</a>
+    ${e.gymName?`<a href="${yt(e.gymName.split('/')[0]+' machine how to')}" target="_blank" rel="noopener">🔍 Xem máy tập</a>`:''}</div>`;
+  document.getElementById('exSheet').innerHTML=`
+    <div class="sheet-card">
+      <div class="sheet-grab"></div>
+      <div class="guide-h">${e.mi} ${e.n} ${isDone?'<span style="color:var(--green-d)">✓ đã xong</span>':''}</div>
+      <span class="tag" style="background:${tagColor(e.m)}">${e.m}</span>
+      <div class="g-meta">${e.sets} hiệp × ${e.reps}${e.perSide?' (cả 2 bên)':''} • ⏱️ ~${e.work}s/hiệp • 💡 ${e.tempo}</div>
+      <div class="ex" style="box-shadow:none;background:transparent;border-left:none;padding:0;margin:4px 0 0">
+        <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
+        ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
+        ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
+      </div>
+      <button class="btn" onclick="closeExSheet();startWorkout(${sid},${i})">${isDone?'🔁 Tập lại bài này':'▶️ Tập bài này'}</button>
+      <button class="btn sec" style="margin-top:8px" onclick="closeExSheet()">Đóng</button>
+    </div>`;
+  document.getElementById('exSheet').classList.add('show');
+}
+function closeExSheet(){ document.getElementById('exSheet').classList.remove('show'); }
 
 /* ============ PROGRESS ============ */
 const OVERLOAD_TIPS=[
@@ -1338,7 +1523,7 @@ function googleLogout(){ if(_fbAuth){ try{ _fbAuth.signOut(); }catch(e){} } save
 /* ====== Đồng bộ tiến độ qua Firestore (điện thoại ↔ máy tính) ====== */
 const _fbStore={db:null};
 // Các "ngăn" dữ liệu sẽ đồng bộ (KHÔNG sync meofit_user)
-const SYNC_KEYS=['meofit_profile','meofit_weightlog','meofit_fastlog','meofit_food','meofit_myfoods','meofit_history_v1','meofit_customsessions','meofit_if','meofit_plan','meofit_level','meofit_strength','meo:theme','meofit_snd','meofit_voice'];
+const SYNC_KEYS=['meofit_profile','meofit_weightlog','meofit_fastlog','meofit_food','meofit_myfoods','meofit_history_v1','meofit_customsessions','meofit_if','meofit_plan','meofit_level','meofit_strength','meo:theme','meofit_snd','meofit_voice','meofit_slow','meofit_exdone'];
 // Log dạng mảng → gộp (union) theo khoá, không mất dữ liệu
 const LOG_KEYS={meofit_weightlog:'ts',meofit_fastlog:'ts',meofit_food:'ts',meofit_history_v1:'ts',meofit_myfoods:'name',meofit_customsessions:'id'};
 let _applyingCloud=false,_pushTimer=null;
@@ -1821,7 +2006,7 @@ function startWorkout(id, startIdx, auto){
   P.sess=sessById(id); P.exIdx=startIdx||0; P.setIdx=0; P.paused=false;
   P.auto=!!auto; P.slow=loadSlow();
   // Theo dõi bài đã tập xong — tập đủ tất cả là tự lưu buổi (dù thoát giữa chừng)
-  P.doneEx=new Array(P.sess.ex.length).fill(false); P.logged=false;
+  P.doneEx=new Array(P.sess.ex.length).fill(false); P.logged=false; P.xpBefore=null;
   document.getElementById('p-session').textContent=P.sess.icon+' '+P.sess.name+' · '+LEVELS[getLevel()].name;
   document.getElementById('player').classList.add('show');
   enterExercise();
@@ -1851,13 +2036,14 @@ function header(e){
     <div class="ex-name">${e.mi} ${e.n}</div>
     <div class="ex-tag"><span class="tag" style="background:${tagColor(e.m)}">${e.m}</span></div>`;
 }
-function pBtn(){ return `<button class="btn" style="background:linear-gradient(135deg,#ffa94d,#f0871f)" onclick="togglePause()">${P.paused?'▶️ Tiếp tục':'⏸ Tạm dừng'}</button>`; }
-// Nút quay lại bài trước + bật/tắt tập chậm
-function navBtns(){
-  return `<div class="controls">
-    <button class="btn sec" onclick="prevExercise()" ${P.exIdx<=0?'disabled style="opacity:.4"':''}>‹ Bài trước</button>
-    <button class="btn sec" onclick="toggleSlow()">${P.slow>1?'🐇 Tốc độ thường':'🐢 Tập chậm'}</button>
-  </div>`;
+// Thanh điều khiển gọn (1 hàng): bài trước · tập chậm · tạm dừng · xong sớm · bỏ bài
+function dock(o){ o=o||{};
+  const prev=`<button class="pmini" onclick="prevExercise()" ${P.exIdx<=0?'disabled':''}>‹<small>Bài trước</small></button>`;
+  const slow=`<button class="pmini ${P.slow>1?'on':''}" onclick="toggleSlow()">${P.slow>1?'🐇':'🐢'}<small>${P.slow>1?'Thường':'Chậm'}</small></button>`;
+  const pause=`<button class="ppause" onclick="togglePause()">${P.paused?'▶':'⏸'}</button>`;
+  const done=o.done?`<button class="pmini" onclick="finishSet()">✓<small>Xong sớm</small></button>`:'';
+  const skip=`<button class="pmini" onclick="skipExercise()">⏭<small>Bỏ bài</small></button>`;
+  return `<div class="pdock">${prev}${slow}${pause}${done}${skip}</div>`;
 }
 
 // đồng hồ đếm ngược có hỗ trợ Tạm dừng
@@ -1932,8 +2118,7 @@ function startPrep(then){
       <div class="target">🎯 ${e.reps}${e.perSide?' (cả 2 bên)':''}</div>
       <div class="tempo">💡 ${e.tempo}</div>
       <div class="nextup">${nextName()}</div>
-      <div class="controls">${pBtn()}<button class="btn sec" onclick="skipExercise()">⏭ Bỏ bài</button></div>
-      ${navBtns()}`;
+      ${dock({done:false})}`;
     document.getElementById('phase-lbl').textContent=P.paused?'⏸ Tạm dừng':'Chuẩn bị';
   };
   P.redraw=draw;
@@ -1952,9 +2137,7 @@ function startWork(){
       <div class="target">🎯 ${e.reps}${e.perSide?' (cả 2 bên)':''}</div>
       <div class="tempo">💡 ${e.tempo}</div>
       <div class="nextup">${nextName()}</div>
-      <div class="controls">${pBtn()}<button class="btn sec" onclick="finishSet()">✓ Xong sớm</button></div>
-      ${navBtns()}
-      <div class="controls"><button class="btn sec" onclick="skipExercise()">⏭ Bỏ bài</button></div>`;
+      ${dock({done:true})}`;
     document.getElementById('phase-lbl').textContent=P.paused?'⏸ Tạm dừng':'Thực hiện';
   };
   P.redraw=draw;
@@ -1983,10 +2166,25 @@ function finishSet(){
 function markExerciseDone(idx){
   if(!P.doneEx) return;
   P.doneEx[idx]=true;
+  markExDone(P.sess.id, idx); // lưu dấu ✓ theo ngày → hiện trên đường tập
   if(!P.logged && P.doneEx.every(Boolean)){
-    P.logged=true;
+    P.logged=true; P.xpBefore=xpTotal();
     logDone(P.sess.id, getLevel(), estKcal(P.sess,(loadProfile().weight)||60));
   }
+}
+// Pháo giấy ăn mừng (rải đều, không cần random)
+function confetti(n){
+  n=n||44;
+  const ic=['🎉','✨','🐾','💪','⭐','🔥','🌟','🎊'];
+  const wrap=document.createElement('div'); wrap.className='confetti';
+  let html='';
+  for(let i=0;i<n;i++){
+    const left=((i*97)%100), dur=(2.6+(i%6)*0.35).toFixed(2),
+      delay=((i%10)*0.13).toFixed(2), sz=(0.9+(i%4)*0.35).toFixed(2);
+    html+=`<span style="left:${left}%;font-size:${sz}rem;animation-duration:${dur}s;animation-delay:${delay}s">${ic[i%ic.length]}</span>`;
+  }
+  wrap.innerHTML=html; document.body.appendChild(wrap);
+  setTimeout(()=>wrap.remove(), 6200);
 }
 function startRest(sec,then){
   P.phase='rest'; beepRest(); say(ph('rest'));
@@ -1996,7 +2194,7 @@ function startRest(sec,then){
       <div class="ex-name" style="color:var(--blue)">😮‍💨 Hít thở sâu</div><div class="ex-tag"></div>
       <div class="ring">${ringSVG(P.remain/sec,'var(--blue)')}<div class="num"><div class="big" style="color:var(--blue)">${P.remain}</div><div class="small">giây nghỉ</div></div></div>
       <div class="nextup">${nextName()}</div>
-      <div class="controls">${pBtn()}<button class="btn sec" onclick="skipRest()">⏭ Bỏ nghỉ</button></div>`;
+      <div class="pdock"><button class="ppause" onclick="togglePause()">${P.paused?'▶':'⏸'}</button><button class="pmini" onclick="skipRest()">⏭<small>Bỏ nghỉ</small></button></div>`;
   };
   P.redraw=draw;
   runCountdown(sec, ()=>{ if(P.remain<=3 && P.remain>0){ beepReady(); sayNum(P.remain); } draw(); },
@@ -2039,16 +2237,25 @@ function exerciseDone(){
 
 function finishWorkout(){
   clearInterval(P.timer); P.timer=null; P.paused=false;
-  if(!P.logged){ P.logged=true; logDone(P.sess.id, getLevel(), estKcal(P.sess, (loadProfile().weight)||60)); }
+  if(!P.logged){ P.logged=true; P.xpBefore=xpTotal(); logDone(P.sess.id, getLevel(), estKcal(P.sess, (loadProfile().weight)||60)); }
   document.getElementById('pbar-fill').style.width='100%';
   beepDoneSet(); say(ph('done'));
   const streak=calcStreak();
+  const before=(P.xpBefore!=null?P.xpBefore:Math.max(0,xpTotal()-XP_PER_WORKOUT));
+  const Lb=levelInfo(before), La=levelInfo(); const lvlUp=La.lv>Lb.lv;
+  confetti(lvlUp?70:46);
   document.getElementById('p-center').innerHTML=`
     <div class="done-screen">
       <div style="width:170px;height:170px;margin:0 auto 2px">${mfBun(true)}</div>
       <div class="ex-name" style="color:var(--green-d)">🎉 Hoàn thành ${P.sess.name}!</div>
-      <p style="color:var(--muted);font-weight:600;margin:6px 0 4px">Giỏi quá đi 🐾 Đừng quên dãn cơ kỹ nhé!</p>
-      <div class="chip" style="background:var(--green-l);color:#fff;display:inline-block;margin:10px 0 16px">🔥 Chuỗi ${streak} ngày</div>
+      <p style="color:var(--muted);font-weight:600;margin:6px 0 2px">Giỏi quá đi 🐾 Đừng quên dãn cơ kỹ nhé!</p>
+      <div class="reward">
+        <div class="xp-pop">+${XP_PER_WORKOUT} XP 🎉</div>
+        <div class="rwbar"><i style="width:${Math.round(La.into*100)}%"></i></div>
+        <div style="font-size:.82rem;color:var(--muted);font-weight:800">${La.emoji} ${La.title} · Bậc ${La.lv} — còn ${La.need-La.cur} XP lên bậc kế</div>
+        ${lvlUp?`<div class="lvlup">⬆️ LÊN BẬC! ${La.emoji} ${La.title}</div>`:''}
+      </div>
+      <div class="chip" style="background:var(--green-l);color:#fff;display:inline-block;margin:0 0 16px">🔥 Chuỗi ${streak} ngày</div>
       <div id="slog-wrap">${(()=>{const exs=strengthExs(P.sess);return exs.length?`<details class="lib-grp" style="text-align:left;margin:0 0 16px"><summary>📝 Ghi lại tạ × lần (tuỳ chọn) — để theo dõi sức mạnh</summary>
         <div style="padding:8px 12px 12px"><div style="font-size:.74rem;color:var(--muted);margin-bottom:8px">Ghi mức tạ (kg) & số lần thực tế. Bài tay không cứ để trống ô kg 🐾</div>
         ${exs.map((e,i)=>`<div class="slog-row"><span class="slog-n">${e.mi} ${e.n}</span>
