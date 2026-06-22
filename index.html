@@ -137,6 +137,8 @@
   .ex .gym b{color:var(--ink)}
   .altbox{font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.45;background:var(--surface-2);padding:9px 11px;border-radius:12px;border-left:4px solid var(--blue)}
   .altbox b{color:var(--ink)}
+  .tipbox{font-size:.82rem;color:var(--ink);margin-top:8px;line-height:1.5;background:var(--surface-2);padding:9px 11px;border-radius:12px;border-left:4px solid var(--teal)}
+  .tipbox b{color:var(--green-d)}
   .ex .links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
@@ -619,6 +621,79 @@ const ALT={
   'Hanging Leg Raise':'Captain Chair Raise · Reverse Crunch · Leg Raise',
   'Plank':'Ab Wheel · Dead Bug · Side Plank'
 };
+// Mẹo tập đúng từng bài (cue quan trọng nhất + lỗi hay gặp) — tham khảo ACE / NASM / Mayo Clinic
+const EXTIP={
+  'Squat':'Ngồi hông ra sau & xuống, đẩy gối ra ngoài cùng hàng mũi chân, lưng thẳng. ⚠️ Tránh: gối khép vào trong hoặc cong lưng dưới.',
+  'Sumo Squat':'Đứng rộng hơn vai, mũi chân xoay 30–45°, hạ thẳng người & mở ngực. ⚠️ Tránh: gối đổ vào trong thay vì đẩy theo mũi chân.',
+  'Jumping Squat':'Tiếp đất nhẹ bằng cả bàn chân, gập gối–hông để hấp thụ lực. ⚠️ Tránh: tiếp đất gối cứng/duỗi thẳng, gối đổ vào trong.',
+  'Wall Sit':'Đùi song song sàn, gối ngay trên gót, lưng áp sát tường. ⚠️ Tránh: gối vượt quá mũi chân hoặc trượt mông cao dần.',
+  'Lunges':'Hạ thẳng người xuống, hai gối ~90°, thân giữ thẳng đứng. ⚠️ Tránh: gối trước vượt mũi chân & đổ vào trong, chúi người tới.',
+  'Side Lunges':'Đẩy hông chân trụ ra sau, gối trụ cùng hàng mũi chân, chân kia duỗi thẳng. ⚠️ Tránh: gối khép vào trong, cong lưng.',
+  'Leg Press':'Hạ tới khi gối ~90°, đẩy bằng gót, gối thẳng hàng mũi chân. ⚠️ Tránh: hạ quá sâu làm hông nhấc khỏi đệm; khóa giật gối.',
+  'Hack Squat':'Lưng & vai áp sát đệm, hạ có kiểm soát, đẩy gối ra theo mũi chân. ⚠️ Tránh: gót nhấc lên hoặc gối khép vào trong.',
+  'Leg Extension':'Duỗi chân chậm, siết đùi trước ở đỉnh, hạ có kiểm soát. ⚠️ Tránh: đá nhanh bằng đà & khóa giật đầu gối.',
+  'Calf Raise':'Nhón cao hết tầm rồi hạ gót chậm xuống dưới mức bậc. ⚠️ Tránh: nảy bằng đà, biên độ ngắn không hạ hết gót.',
+  'Glute Bridge':'Siết mông đẩy hông lên thành đường thẳng vai–hông–gối. ⚠️ Tránh: ưỡn (cong) lưng dưới thay vì dùng mông để nâng.',
+  'Glute Bridge with Powerband':'Siết mông đẩy hông lên, ép dây giữ gối mở. ⚠️ Tránh: ưỡn lưng dưới & để gối khép vào trong.',
+  'Hip Thrust (máy)':'Cằm hơi gập, khép xương sườn, siết mông đẩy hông lên ngang thân. ⚠️ Tránh: ưỡn lưng/đẩy quá cao thay vì khóa hông bằng mông.',
+  'Hip Thrust (1 chân)':'Giữ hông ngang bằng, dồn lực qua gót chân trụ. ⚠️ Tránh: hông bên chân nâng bị tụt/nghiêng, lưng bù trừ.',
+  'Kick Back':'Đá chân ra sau bằng cơ mông, giữ lưng & hông cố định. ⚠️ Tránh: cong lưng dưới & vung chân quá cao bằng đà.',
+  'Fire Hydrants':'Mở đùi sang ngang giữ gối gập 90°, thân vuông không xoay. ⚠️ Tránh: xoay/nghiêng cả thân thay vì chỉ mở hông.',
+  'Lying Clam Shells':'Khép hai gót, mở gối lên bằng cơ mông, giữ xương chậu cố định. ⚠️ Tránh: lăn hông ra sau để "ăn gian" biên độ.',
+  'Standing Abductor Lift (dây)':'Nâng thẳng chân sang ngang, mũi chân hướng trước, thân thẳng. ⚠️ Tránh: nghiêng người sang bên kia & xoay hông ra ngoài.',
+  'Monster Walk (dây quanh chân)':'Giữ tư thế nửa squat, bước ngang giữ dây luôn căng, gối đẩy ra. ⚠️ Tránh: gối khép vào trong & đứng thẳng làm chùng dây.',
+  'Monster Walk (dây)':'Giữ tư thế nửa squat, bước ngang giữ dây luôn căng, gối đẩy ra. ⚠️ Tránh: gối khép vào trong & đứng thẳng làm chùng dây.',
+  'Band Pull Through':'Gập hông đẩy mông ra sau rồi đứng dậy siết mông (động tác hông, không phải squat). ⚠️ Tránh: dùng tay/lưng kéo dây thay vì đẩy hông.',
+  'Romanian Deadlift (RDL)':'Đẩy hông ra sau, lưng phẳng, hạ tạ sát chân tới khi căng gân kheo. ⚠️ Tránh: cong lưng & gập gối nhiều biến thành squat.',
+  'Romanian Deadlift (tạ)':'Đẩy hông ra sau, lưng phẳng, hạ tạ sát chân tới khi căng gân kheo. ⚠️ Tránh: cong lưng & gập gối nhiều biến thành squat.',
+  'Sumo Deadlift (dây)':'Chân rộng mũi xoay ra, ngực mở lưng phẳng, đẩy sàn ra xa bằng chân. ⚠️ Tránh: hông nhổng lên trước/lưng cong.',
+  'Leg Curl (máy)':'Co gót về phía mông có kiểm soát, hông áp sát đệm. ⚠️ Tránh: nhấc hông/ưỡn lưng lấy đà thay vì dùng gân kheo.',
+  'Push Up (chuẩn)':'Giữ thân thẳng đầu–hông–gót, siết bụng/mông, hạ ngực, khuỷu ~45°. ⚠️ Tránh: xệ hông/cong lưng & khuỷu xòe ngang vai 90°.',
+  'Knee Push Up':'Chống gối nhưng giữ thẳng đầu–hông–gối, không gập hông. ⚠️ Tránh: chổng mông làm mất thẳng thân.',
+  'Incline Push Up':'Chống tay lên bề mặt cao, giữ thân thẳng, hạ ngực có kiểm soát. ⚠️ Tránh: chỉ cúi đầu thay vì hạ cả thân.',
+  'Wall Push Up':'Đứng cách tường, giữ thân thẳng, gập khuỷu hạ ngực vào tường. ⚠️ Tránh: cong lưng/đứng quá gần làm biên độ ngắn.',
+  'Diamond Push Up':'Hai tay chụm dưới ngực, ép khuỷu sát thân khi hạ. ⚠️ Tránh: khuỷu xòe ra ngoài & hông xệ.',
+  'Pike Push Up':'Đẩy hông cao thành chữ V, hạ đỉnh đầu xuống giữa hai tay. ⚠️ Tránh: hạ ngực thay vì đầu, hông tụt thành push-up thường.',
+  'Chest Press (máy)':'Lưng áp ghế, đẩy đều hai tay, không khóa giật khuỷu. ⚠️ Tránh: nhấc vai/lưng khỏi đệm & khóa giật khuỷu.',
+  'Incline Chest Press':'Đẩy theo hướng hơi chếch lên, ghìm vai xuống xa tai. ⚠️ Tránh: rụt vai lên tai & ưỡn lưng quá mức.',
+  'Pec Deck Fly':'Khuỷu hơi cong cố định, ép hai tay vào nhau bằng cơ ngực. ⚠️ Tránh: gập–duỗi khuỷu (thành động tác đẩy) & rụt vai.',
+  'Lat Pulldown':'Hạ vai xuống, kéo thanh về trước ngực bằng cơ lưng, ngực hơi mở. ⚠️ Tránh: ngả người lấy đà & kéo thanh ra sau gáy.',
+  'Seated Cable Row':'Lưng thẳng, kéo khuỷu về sát thân, siết bả vai. ⚠️ Tránh: tròn lưng & đung đưa thân kéo bằng đà.',
+  'Seated Row (máy)':'Ngực tựa đệm, kéo bằng khuỷu & siết bả vai về sau. ⚠️ Tránh: rụt vai lên tai, dùng tay nhiều hơn lưng.',
+  'Seated Band Row':'Ngồi thẳng, kéo dây về hông siết bả vai, giữ căng khi thả. ⚠️ Tránh: cong lưng & thả dây bật về quá nhanh.',
+  'Doorway Row':'Giữ thân thẳng nghiêng, kéo ngực về phía tay nắm, siết lưng giữa. ⚠️ Tránh: gập hông/xệ mông thay vì giữ thân thẳng.',
+  'Assisted Pull-up':'Bắt đầu bằng hạ vai, kéo bằng lưng đưa cằm qua thanh. ⚠️ Tránh: chỉ co tay/đu người mà không hạ vai trước.',
+  'Band Pull Apart':'Tay thẳng ngang ngực, kéo dây ra hai bên bằng siết bả vai. ⚠️ Tránh: rụt vai lên & cong khuỷu kéo bằng tay.',
+  'Reverse Snow Angel':'Nằm sấp, tay sát sàn quét từ hông lên đầu, siết lưng trên. ⚠️ Tránh: ưỡn lưng dưới & nhấc tay quá cao mất kiểm soát.',
+  'Superman':'Nâng tay & chân lên nhẹ bằng cơ lưng/mông, cổ giữ trung tính. ⚠️ Tránh: ngửa cổ & ưỡn căng lưng dưới quá mức.',
+  'Bird Dog':'Duỗi tay & chân đối nhau, giữ hông vuông & lưng phẳng, siết bụng. ⚠️ Tránh: xoay/nghiêng hông & võng lưng khi vươn ra.',
+  'Lateral Raise':'Nâng tay sang ngang tới ngang vai, khuỷu hơi cong, ghìm vai xuống. ⚠️ Tránh: nhún người lấy đà & nâng quá cao/rụt vai.',
+  'Band Lateral Raise':'Nâng đều sang ngang giữ dây căng, dẫn động bằng khuỷu. ⚠️ Tránh: giật dây bằng đà & rụt vai lên tai.',
+  'Shoulder Press (máy)':'Siết bụng/mông, đẩy thẳng lên trên đầu, không ưỡn lưng. ⚠️ Tránh: ưỡn lưng & đẩy ra trước mặt thay vì lên trên.',
+  'Band Overhead Press':'Đẩy thẳng lên giữ dây căng, khép xương sườn giữ lõi chắc. ⚠️ Tránh: ưỡn lưng để bù lực khi dây căng.',
+  'Scapular Band Fly':'Tay gần thẳng, kéo dây ra ngang siết vai sau & bả vai. ⚠️ Tránh: rụt vai/cong khuỷu, dùng lưng to thay vì vai sau.',
+  'Squat + Overhead Press':'Squat xuống, đứng dậy rồi đẩy tạ thẳng lên đầu, siết bụng cả động tác. ⚠️ Tránh: ưỡn lưng khi đẩy & gối đổ vào trong khi squat.',
+  'Plank':'Thân thẳng đầu–hông–gót, siết bụng & mông, khuỷu dưới vai. ⚠️ Tránh: xệ hông (võng lưng) hoặc chổng mông cao.',
+  'Side Plank':'Khuỷu dưới vai, nâng hông tạo đường thẳng, siết lõi. ⚠️ Tránh: hông tụt xuống sàn & thân đổ tới/lui.',
+  'Plank Jack':'Giữ plank ổn định, nhảy hai chân ra–vào, hông không nhấp nhô. ⚠️ Tránh: chổng mông lên mỗi lần nhảy.',
+  'Low Plank → High Plank':'Giữ hông cố định ít xoay khi chống lên/hạ xuống, siết bụng. ⚠️ Tránh: lắc hông sang hai bên khi đổi tay.',
+  'Mountain Climber':'Giữ vai trên cổ tay, kéo gối về ngực, hông giữ thấp ổn định. ⚠️ Tránh: chổng mông cao & nảy hông lên xuống.',
+  'Bicycle Crunches':'Xoay vai về gối đối diện bằng cơ bụng, lưng dưới áp sàn. ⚠️ Tránh: kéo cổ bằng tay & làm quá nhanh bằng đà.',
+  'Leg Raise':'Ép lưng dưới xuống sàn, hạ chân chậm có kiểm soát. ⚠️ Tránh: lưng dưới vênh khỏi sàn khi hạ chân.',
+  'Hanging Leg Raise':'Hơi cuộn xương chậu, nâng chân bằng bụng dưới, hạn chế đu người. ⚠️ Tránh: đu người lấy đà & chỉ gập hông.',
+  'Cable Crunch':'Cuộn người gập cột sống bằng cơ bụng, hông cố định. ⚠️ Tránh: kéo bằng tay/gập hông thay vì cuộn bụng.',
+  'Flutter Kick':'Ép lưng dưới xuống sàn, đá chân biên độ nhỏ luân phiên. ⚠️ Tránh: lưng vênh lên & đá chân quá cao/rộng.',
+  'Dead Bug':'Ép lưng dưới sát sàn, hạ tay–chân đối nhau chậm, giữ bụng siết. ⚠️ Tránh: lưng vênh khỏi sàn khi duỗi tay/chân.',
+  'Jumping Jack':'Tiếp đất nhẹ nhún gối, nhịp đều, thân giữ thẳng. ⚠️ Tránh: tiếp đất gối cứng/khóa thẳng gây sốc khớp.',
+  'High Knees':'Nâng gối ngang hông, tiếp đất bằng nửa trước bàn chân, thân thẳng. ⚠️ Tránh: ngả người ra sau & đạp bằng cả gót.',
+  'Knee Ups':'Đứng thẳng siết bụng, nâng từng gối lên cao có kiểm soát. ⚠️ Tránh: khom/cong lưng & dùng đà thay vì cơ bụng.',
+  'Burpees':'Vào plank giữ thân thẳng, tiếp đất nhảy bằng cả bàn chân nhún gối. ⚠️ Tránh: xệ lưng ở plank & tiếp đất gối cứng.',
+  'Intermediate Burpees':'Vào plank giữ thân thẳng, tiếp đất nhảy bằng cả bàn chân nhún gối. ⚠️ Tránh: xệ lưng ở plank & tiếp đất gối cứng.',
+  'Nhảy dây':'Nhảy thấp bằng nửa trước bàn chân, quay dây bằng cổ tay, khuỷu sát thân. ⚠️ Tránh: nhảy quá cao & quay dây bằng cả cánh tay.',
+  'Pigeon Stretch (dãn cơ)':'Giữ hông vuông cân, thân thẳng rồi từ từ gập tới, hít thở đều. ⚠️ Tránh: hông nghiêng dồn một bên & nín thở ép quá mạnh.',
+  "World's Greatest Stretch":'Bước lunge sâu, chống tay, xoay mở ngực lên trần có kiểm soát. ⚠️ Tránh: cong lưng & xoay giật mạnh thay vì mở từ từ.',
+  "World's Greatest Stretch (kết)":'Bước lunge sâu, chống tay, xoay mở ngực lên trần có kiểm soát. ⚠️ Tránh: cong lưng & xoay giật mạnh thay vì mở từ từ.'
+};
 function muscleArt(m){
   const img = MUSCLE_IMG[m] || MUSCLE_IMG_FULL; // Khởi động/Toàn thân/Cardio/Dãn cơ → toàn thân
   return '<div class="bodymap"><img class="m-img'+(img[2]?' gif':'')+'" src="'+img[0]+'" alt="'+img[1]+
@@ -1016,6 +1091,17 @@ const TIPS=[
   '🐢 Đau nhẹ sau tập là bình thường; đau nhói ở khớp thì nên nghỉ & xem lại form.',
   '🌸 Đều đặn thắng hoàn hảo — tập 20 phút còn hơn bỏ buổi!',
   '🧘 Dãn cơ cuối buổi giúp đỡ đau & linh hoạt hơn; tối trước ngủ dãn nhẹ ngủ ngon.',
+  // Mẹo bổ sung — tham khảo nguồn uy tín (WHO, ACSM, NASM, Mayo Clinic, Cleveland Clinic...)
+  '🏃 Mỗi tuần nên vận động vừa ~150–300 phút + tập tạ ≥2 buổi cho các nhóm cơ lớn (khuyến nghị WHO).',
+  '📈 Tăng tải từ từ — mỗi tuần thêm tối đa ~10% (reps/tạ/hiệp) để cơ thích nghi mà không quá sức (NASM).',
+  '🗓️ Người mới tiến nhanh nhất với 2–3 buổi full-body/tuần, cách ngày cho mỗi nhóm cơ kịp hồi (ACSM).',
+  '🍗 Nạp khoảng 1.4–2.0 g đạm/kg cân nặng mỗi ngày để xây & giữ cơ (ACSM/ISSN).',
+  '🥦 Ăn đủ ~25 g chất xơ/ngày (rau, củ, trái cây, ngũ cốc nguyên cám) cho no lâu & tiêu hoá tốt (Cleveland Clinic).',
+  '💧 Nữ cần ~2.7 lít nước/ngày (kể cả từ thức ăn) — tập hoặc trời nóng thì uống thêm (Mayo Clinic).',
+  '🍚 Có bữa đủ tinh bột + đạm trong vài giờ trước & sau tập để có sức và hồi phục tốt hơn (ACSM).',
+  '🎯 Đặt mục tiêu cụ thể & ghi lại tiến độ (reps, mức tạ, ảnh) giúp giữ động lực và thấy mình tiến bộ (Mayo Clinic).',
+  '🛌 Ngày nghỉ rất quan trọng: cơ khoẻ lên trong lúc hồi phục chứ không phải lúc đang tập (ACE).',
+  '⚖️ Giảm mỡ thì ăn ít hơn mức đốt, tăng cơ thì ăn nhiều hơn chút — cả hai đều cần tập tạ + đủ đạm (ACE/Mayo Clinic).',
 ];
 function tipBox(){ return `<div class="note-box">🐾 <b>Mẹo hôm nay:</b> ${TIPS[Math.floor(Math.random()*TIPS.length)]}</div>`; }
 function estMinutes(s){
@@ -1275,6 +1361,7 @@ function openSession(id){
         <span class="tag" style="background:${tagColor(e.m)}">${e.m}</span></div></div>
       <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
       ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
+      ${EXTIP[e.n]?`<div class="tipbox">💡 <b>Mẹo tập đúng:</b> ${EXTIP[e.n]}</div>`:''}
       ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
       <button class="ex-go${isDone?' done':''}" onclick="startWorkout(${id},${i})">${isDone?'✓ Đã xong — tập lại nhé':'▶️ Tập bài này'}</button>
     </div>`;
@@ -1316,6 +1403,7 @@ function openExSheet(sid, i){
       <div class="ex" style="box-shadow:none;background:transparent;border-left:none;padding:0;margin:4px 0 0">
         <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
         ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
+        ${EXTIP[e.n]?`<div class="tipbox">💡 <b>Mẹo tập đúng:</b> ${EXTIP[e.n]}</div>`:''}
         ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
       </div>
       <button class="btn" onclick="closeExSheet();startWorkout(${sid},${i})">${isDone?'🔁 Tập lại bài này':'▶️ Tập bài này'}</button>
@@ -2090,6 +2178,7 @@ function openGuide(){
       <div class="ex" style="box-shadow:none;background:transparent;border-left:none;padding:0;margin:0">
         <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
         ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
+        ${EXTIP[e.n]?`<div class="tipbox">💡 <b>Mẹo tập đúng:</b> ${EXTIP[e.n]}</div>`:''}
         ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
       </div>
       <button class="btn" onclick="closeGuide()">${_guidePaused?'▶️ Đóng & tập tiếp':'✓ Đóng'}</button>
