@@ -1118,6 +1118,7 @@ function openSession(id){
       <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
       ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
       ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
+      <button class="btn" style="margin-top:10px;padding:11px" onclick="startWorkout(${id},${i})">▶️ Tập bài này</button>
     </div>`;
   }).join('');
   document.getElementById('v-sess').innerHTML=`
@@ -1131,8 +1132,9 @@ function openSession(id){
       ? `<a class="vidlink" href="https://youtu.be/${vid}" target="_blank" rel="noopener">▶️ Video full ${s.name} — ${LEVELS[lv].name}</a>`
       : `<button class="vidlink--lock" onclick="googleLogin()">🔒 Đăng nhập để xem video tập full</button>`):''}
     ${pl.levels&&lv===3?`<div class="note-box" style="margin-top:8px">💡 <b>Level 3:</b> thêm tạ tay/tạ đòn hoặc tăng sức cản dây kháng lực cho các bài. Chỉ lên Level 3 khi đã tập chạy kỹ thuật vững.</div>`:'<div style="height:10px"></div>'}
+    <div class="note-box" style="margin-top:4px">👆 Bấm <b>“Tập bài này”</b> ở từng bài để tự chủ động giờ giấc — tập xong bài nào, nghỉ thoải mái rồi chọn bài tiếp khi sẵn sàng nhé 🐾</div>
     ${exs}
-    <button class="btn" onclick="startWorkout(${s.id})">▶️ Bắt đầu tập buổi này</button>
+    <button class="btn sec" onclick="startWorkout(${s.id},0,true)">⏩ Hoặc: tập tự động liền mạch cả buổi</button>
     <div style="height:10px"></div>`;
   go('sess', true);
   window.scrollTo(0,0);
@@ -1800,18 +1802,26 @@ function toggleSnd(){ SND=!SND; try{localStorage.setItem('meofit_snd',SND?'1':'0
 function toggleVoice(){ VOICE=!VOICE; try{localStorage.setItem('meofit_voice',VOICE?'1':'0')}catch(e){} if(!VOICE) shutUp(); updateAudioBtns(); }
 
 /* ============ WORKOUT PLAYER ============ */
-const P={sess:null,exIdx:0,setIdx:0,timer:null,remain:0,total:0,paused:false,onEnd:null,redraw:null,repN:0,spoken:0};
+const P={sess:null,exIdx:0,setIdx:0,timer:null,remain:0,total:0,paused:false,onEnd:null,redraw:null,repN:0,spoken:0,slow:1,auto:false,phase:''};
 const RING_R=100, RING_C=2*Math.PI*RING_R;
+
+// Tập chậm: nhân thời gian mỗi hiệp cho hệ số (lưu lại để lần sau giữ nguyên)
+const SLOW_MULT=1.6;
+function loadSlow(){ try{ return localStorage.getItem('meofit_slow')==='1'?SLOW_MULT:1 }catch(e){ return 1 } }
+function saveSlow(on){ try{ localStorage.setItem('meofit_slow', on?'1':'0'); }catch(e){} }
 
 function repCount(e){
   if(e.type!=='reps') return 0;
   const m=String(e.reps).match(/(\d+)(?:\s*[–-]\s*(\d+))?/);
   return m?parseInt(m[2]||m[1]):0;
 }
-function startWorkout(id){
+function startWorkout(id, startIdx, auto){
   initAudio(); loadAudioPrefs(); updateAudioBtns();
   if(VOICE) say(ph('ready')); // mở khoá giọng nói bằng cú chạm
-  P.sess=sessById(id); P.exIdx=0; P.setIdx=0; P.paused=false;
+  P.sess=sessById(id); P.exIdx=startIdx||0; P.setIdx=0; P.paused=false;
+  P.auto=!!auto; P.slow=loadSlow();
+  // Theo dõi bài đã tập xong — tập đủ tất cả là tự lưu buổi (dù thoát giữa chừng)
+  P.doneEx=new Array(P.sess.ex.length).fill(false); P.logged=false;
   document.getElementById('p-session').textContent=P.sess.icon+' '+P.sess.name+' · '+LEVELS[getLevel()].name;
   document.getElementById('player').classList.add('show');
   enterExercise();
@@ -1842,6 +1852,13 @@ function header(e){
     <div class="ex-tag"><span class="tag" style="background:${tagColor(e.m)}">${e.m}</span></div>`;
 }
 function pBtn(){ return `<button class="btn" style="background:linear-gradient(135deg,#ffa94d,#f0871f)" onclick="togglePause()">${P.paused?'▶️ Tiếp tục':'⏸ Tạm dừng'}</button>`; }
+// Nút quay lại bài trước + bật/tắt tập chậm
+function navBtns(){
+  return `<div class="controls">
+    <button class="btn sec" onclick="prevExercise()" ${P.exIdx<=0?'disabled style="opacity:.4"':''}>‹ Bài trước</button>
+    <button class="btn sec" onclick="toggleSlow()">${P.slow>1?'🐇 Tốc độ thường':'🐢 Tập chậm'}</button>
+  </div>`;
+}
 
 // đồng hồ đếm ngược có hỗ trợ Tạm dừng
 function runCountdown(total, tick, end){
@@ -1905,17 +1922,18 @@ function enterExercise(){ P.setIdx=0; updateBar(); enterSet(); }
 function enterSet(){ clearInterval(P.timer); P.timer=null; P.paused=false; updateBar(); startPrep(()=>startWork()); }
 
 function startPrep(then){
-  const e=P.sess.ex[P.exIdx];
+  const e=P.sess.ex[P.exIdx]; P.phase='prep';
   if(VOICE) say(ph('ready'));
   const draw=()=>{
     document.getElementById('p-center').innerHTML=`
       ${header(e)}
       <div class="ring">${ringSVG(P.remain/3,'var(--yellow)')}<div class="num"><div class="big">${P.remain||'🐾'}</div><div class="small">Sẵn sàng…</div></div></div>
-      <div class="setinfo">Hiệp ${P.setIdx+1}/${e.sets}</div>
+      <div class="setinfo">Hiệp ${P.setIdx+1}/${e.sets}${P.slow>1?' · 🐢 chậm':''}</div>
       <div class="target">🎯 ${e.reps}${e.perSide?' (cả 2 bên)':''}</div>
       <div class="tempo">💡 ${e.tempo}</div>
       <div class="nextup">${nextName()}</div>
-      <div class="controls">${pBtn()}<button class="btn sec" onclick="skipExercise()">⏭ Bỏ bài</button></div>`;
+      <div class="controls">${pBtn()}<button class="btn sec" onclick="skipExercise()">⏭ Bỏ bài</button></div>
+      ${navBtns()}`;
     document.getElementById('phase-lbl').textContent=P.paused?'⏸ Tạm dừng':'Chuẩn bị';
   };
   P.redraw=draw;
@@ -1923,18 +1941,19 @@ function startPrep(then){
 }
 
 function startWork(){
-  const e=P.sess.ex[P.exIdx], total=e.work; P.repN=repCount(e); P.spoken=0;
+  const e=P.sess.ex[P.exIdx], total=Math.round(e.work*(P.slow||1)); P.repN=repCount(e); P.spoken=0; P.phase='work';
   beepGo(); vibrate(120);
   if(P.repN===0) say(/giữ/i.test(e.reps)?ph('hold'):ph('go'));
   const draw=()=>{
     document.getElementById('p-center').innerHTML=`
       ${header(e)}
       <div class="ring">${ringSVG(P.remain/total,tagColor(e.m))}<div class="num"><div class="big">${P.remain}</div><div class="small">giây</div></div></div>
-      <div class="setinfo">Hiệp ${P.setIdx+1}/${e.sets}${P.repN?` · đếm ${P.spoken}/${P.repN}`:''}</div>
+      <div class="setinfo">Hiệp ${P.setIdx+1}/${e.sets}${P.repN?` · đếm ${P.spoken}/${P.repN}`:''}${P.slow>1?' · 🐢 chậm':''}</div>
       <div class="target">🎯 ${e.reps}${e.perSide?' (cả 2 bên)':''}</div>
       <div class="tempo">💡 ${e.tempo}</div>
       <div class="nextup">${nextName()}</div>
       <div class="controls">${pBtn()}<button class="btn sec" onclick="finishSet()">✓ Xong sớm</button></div>
+      ${navBtns()}
       <div class="controls"><button class="btn sec" onclick="skipExercise()">⏭ Bỏ bài</button></div>`;
     document.getElementById('phase-lbl').textContent=P.paused?'⏸ Tạm dừng':'Thực hiện';
   };
@@ -1953,10 +1972,24 @@ function finishSet(){
   clearInterval(P.timer); P.timer=null; P.paused=false;
   const e=P.sess.ex[P.exIdx];
   if(P.setIdx<e.sets-1){ beepDoneSet(); startRest(e.rest||30, ()=>{ P.setIdx++; enterSet(); }); }
-  else { say(ph('done')); nextExercise(); }
+  else {
+    markExerciseDone(P.exIdx); // xong hiệp cuối = xong bài này
+    beepDoneSet(); say(ph('done'));
+    if(P.auto || P.exIdx>=P.sess.ex.length-1) nextExercise();
+    else exerciseDone();
+  }
+}
+// Đánh dấu đã tập xong 1 bài; tập đủ tất cả thì tự lưu buổi ngay (kể cả thoát giữa chừng)
+function markExerciseDone(idx){
+  if(!P.doneEx) return;
+  P.doneEx[idx]=true;
+  if(!P.logged && P.doneEx.every(Boolean)){
+    P.logged=true;
+    logDone(P.sess.id, getLevel(), estKcal(P.sess,(loadProfile().weight)||60));
+  }
 }
 function startRest(sec,then){
-  beepRest(); say(ph('rest'));
+  P.phase='rest'; beepRest(); say(ph('rest'));
   const draw=()=>{
     document.getElementById('p-center').innerHTML=`
       <div class="phase-lbl" style="color:var(--blue)">${P.paused?'⏸ Tạm dừng':'Nghỉ giữa hiệp'}</div>
@@ -1972,10 +2005,41 @@ function startRest(sec,then){
 function skipRest(){ if(!P.onEnd) return; clearInterval(P.timer); P.timer=null; P.paused=false; const f=P.onEnd; P.onEnd=null; f(); }
 function skipExercise(){ clearInterval(P.timer); P.timer=null; P.paused=false; P.onEnd=null; shutUp(); nextExercise(); }
 function nextExercise(){ if(P.exIdx<P.sess.ex.length-1){ P.exIdx++; enterExercise(); } else finishWorkout(); }
+// Quay lại bài tập trước đó
+function prevExercise(){
+  if(P.exIdx<=0) return;
+  clearInterval(P.timer); P.timer=null; P.paused=false; P.onEnd=null; shutUp();
+  P.exIdx--; enterExercise();
+}
+// Bật/tắt tập chậm — đổi tốc độ ngay cho hiệp đang tập
+function toggleSlow(){
+  P.slow = P.slow>1 ? 1 : SLOW_MULT;
+  saveSlow(P.slow>1);
+  if(P.phase==='work'){ clearInterval(P.timer); P.timer=null; P.paused=false; startWork(); }
+  else if(P.redraw) P.redraw();
+}
+// Đã xong 1 bài (chế độ chủ động) — chờ người tập tự chọn bài tiếp
+function exerciseDone(){
+  clearInterval(P.timer); P.timer=null; P.paused=false; P.onEnd=null;
+  // Đã tập đủ tất cả các bài → hiện màn hoàn thành (buổi đã được tự lưu rồi)
+  if(P.doneEx && P.doneEx.every(Boolean)){ finishWorkout(); return; }
+  const e=P.sess.ex[P.exIdx], nxt=P.sess.ex[P.exIdx+1], sid=P.sess.id;
+  const done=P.doneEx?P.doneEx.filter(Boolean).length:0, tot=P.sess.ex.length;
+  document.getElementById('p-center').innerHTML=`
+    <div class="done-screen">
+      <div style="width:130px;height:130px;margin:0 auto 4px">${mfBun(true)}</div>
+      <div class="ex-name" style="color:var(--green-d)">✅ Xong ${e.mi} ${e.n}!</div>
+      <div class="chip" style="background:var(--green-l);color:#fff;display:inline-block;margin:6px 0 6px">Đã xong ${done}/${tot} bài</div>
+      <p style="color:var(--muted);font-weight:600;margin:6px 0 16px">Giỏi lắm 🐾 Nghỉ thoải mái, khi nào sẵn sàng thì chọn bài tiếp nhé.<br><span style="font-size:.82rem">💾 Tập đủ ${tot} bài là buổi tập <b>tự lưu</b> — không cần bấm gì thêm.</span></p>
+      ${nxt?`<div class="controls"><button class="btn" onclick="nextExercise()">▶️ Bài tiếp: ${nxt.mi} ${nxt.n}</button></div>`:''}
+      <div class="controls"><button class="btn sec" onclick="(function(){closePlayer();openSession(${sid});})()">📋 Về danh sách bài</button></div>
+      <div class="controls"><button class="btn sec" onclick="finishWorkout()">🎉 Kết thúc & lưu buổi tập</button></div>
+    </div>`;
+}
 
 function finishWorkout(){
   clearInterval(P.timer); P.timer=null; P.paused=false;
-  logDone(P.sess.id, getLevel(), estKcal(P.sess, (loadProfile().weight)||60));
+  if(!P.logged){ P.logged=true; logDone(P.sess.id, getLevel(), estKcal(P.sess, (loadProfile().weight)||60)); }
   document.getElementById('pbar-fill').style.width='100%';
   beepDoneSet(); say(ph('done'));
   const streak=calcStreak();
