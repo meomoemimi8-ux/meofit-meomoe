@@ -139,6 +139,8 @@
   .altbox b{color:var(--ink)}
   .tipbox{font-size:.82rem;color:var(--ink);margin-top:8px;line-height:1.5;background:var(--surface-2);padding:9px 11px;border-radius:12px;border-left:4px solid var(--teal)}
   .tipbox b{color:var(--green-d)}
+  .quiz-opt{text-align:left;width:100%;border:2px solid var(--border);background:var(--card);color:var(--ink);font-family:inherit;font-size:.86rem;font-weight:600;padding:11px 13px;border-radius:14px;cursor:var(--paw),pointer;transition:border-color .15s,background .15s}
+  .quiz-opt.on{border-color:var(--green);background:var(--green-l);color:#1f5128;font-weight:800}
   .ex .links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
@@ -554,6 +556,7 @@
 </div>
 
 <div class="sheet" id="exSheet" onclick="if(event.target===this)closeExSheet()"></div>
+<div class="sheet" id="bodyQuiz" onclick="if(event.target===this)closeBodyQuiz()"></div>
 <div class="guide-sheet" id="foodSheet" onclick="if(event.target===this)closeFoodPicker()"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1542,23 +1545,76 @@ function inferBodyType(p){
   }
   return {label,desc,focus,whr:Math.round(whr*100)/100,frame,frameTxt,partial:false};
 }
+// ===== Bài tự kiểm tạng người (chính xác hơn đoán từ số đo) =====
+const SOMA_Q=[
+  {q:'1. Cổ tay của cưng (quấn ngón cái + ngón trỏ quanh cổ tay, chỗ nhỏ nhất):',a:[
+    ['ecto','Hai ngón chồng lên nhau — cổ tay nhỏ'],['meso','Hai ngón vừa chạm nhau'],['endo','Không chạm tới nhau — cổ tay to']]},
+  {q:'2. Vai so với hông & dáng tổng thể:',a:[
+    ['ecto','Người mảnh, vai hẹp'],['meso','Vai rộng hơn hông, dáng thể thao'],['endo','Vai & hông đều rộng, thân giữa đầy']]},
+  {q:'3. Khi ăn nhiều / muốn tăng cân:',a:[
+    ['ecto','Khó tăng cân, vẫn gầy'],['meso','Lên cơ là chính, dễ săn chắc'],['endo','Dễ lên mỡ']]},
+  {q:'4. Khi tập, cơ bắp của cưng:',a:[
+    ['ecto','Lâu thấy cơ, cơ nhỏ'],['meso','Lên cơ nhanh & rõ'],['endo','Có cơ nhưng bị lớp mỡ phủ']]},
+  {q:'5. Chuyện giảm mỡ:',a:[
+    ['ecto','Giảm rất dễ / khó giữ cân'],['meso','Vừa phải, dễ kiểm soát'],['endo','Khó giảm mỡ']]},
+];
+const SOMA_INFO={
+  ecto:{label:'Ectomorph 🌱',desc:'Khung gọn, chuyển hoá nhanh, hơi khó lên cân — ưu tiên bài compound lớn & ăn đủ để tăng cơ.',focus:['Chân','Lưng']},
+  meso:{label:'Mesomorph 💪',desc:'Cơ thể dễ lên cơ & cân đối, đáp ứng tốt với mọi kiểu tập — giữ đều để duy trì phong độ.',focus:['Ngực','Mông']},
+  endo:{label:'Endomorph 🌰',desc:'Khung chắc khỏe, giữ mỡ dễ hơn — kết hợp sức mạnh + cardio/conditioning, chú ý đủ đạm & cân bằng calo.',focus:['Chân',CORE_G]},
+};
+let _soma={};
+function openBodyQuiz(){ _soma={}; renderBodyQuiz(); document.getElementById('bodyQuiz').classList.add('show'); }
+function closeBodyQuiz(){ document.getElementById('bodyQuiz').classList.remove('show'); }
+function pickSoma(qi,t){ _soma[qi]=t; renderBodyQuiz(); }
+function renderBodyQuiz(){
+  const total=SOMA_Q.length, done=Object.keys(_soma).length, ready=done>=total;
+  const qs=SOMA_Q.map((q,i)=>`<div style="margin-bottom:14px">
+    <div style="font-weight:800;font-size:.9rem;margin-bottom:7px">${q.q}</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${q.a.map(([t,txt])=>`<button type="button" class="quiz-opt ${_soma[i]===t?'on':''}" onclick="pickSoma(${i},'${t}')">${txt}</button>`).join('')}
+    </div></div>`).join('');
+  document.getElementById('bodyQuiz').innerHTML=`<div class="sheet-card">
+    <div class="sheet-grab"></div>
+    <div class="guide-h">🧪 Tự kiểm tạng người</div>
+    <div style="font-size:.8rem;color:var(--muted);margin:0 0 12px">Chọn đáp án đúng nhất với cưng — đã trả lời ${done}/${total} câu.</div>
+    ${qs}
+    <button class="btn" ${ready?'':'disabled style="opacity:.5"'} onclick="finishBodyQuiz()">${ready?'✨ Xem kết quả':`Còn ${total-done} câu nữa`}</button>
+    <button class="btn sec" style="margin-top:8px" onclick="closeBodyQuiz()">Đóng</button>
+  </div>`;
+}
+function finishBodyQuiz(){
+  const tally={ecto:0,meso:0,endo:0};
+  Object.values(_soma).forEach(t=>{ if(tally[t]!=null) tally[t]++; });
+  const order=Object.keys(tally).sort((a,b)=>tally[b]-tally[a]);
+  const win=order[0], blend=(tally[win]-tally[order[1]]<=1)?order[1]:null;
+  const p=loadProfile(); p.somatotype=win; p.somatotypeBlend=blend; saveProfile(p);
+  closeBodyQuiz(); renderProfile();
+}
 function bodyTypeHTML(p){
   const bt=inferBodyType(p); if(!bt) return '';
   const female=(p.sex!=='nam');
-  const cur=profFocus(p), applied=bt.focus.every(g=>cur.includes(g))&&cur.length===bt.focus.length;
-  const chips=bt.focus.map(g=>{const e=(FOCUS_OPTS.find(o=>o[0]===g)||[])[1]||'💪';return `<span class="tag" style="background:var(--green);margin-top:0">${e} ${g}</span>`;}).join(' ');
+  // Ưu tiên kết quả từ bài tự kiểm (nếu có), không thì dùng đoán từ số đo
+  const soma=p.somatotype&&SOMA_INFO[p.somatotype]?SOMA_INFO[p.somatotype]:null;
+  const label = soma?soma.label:bt.label;
+  const desc  = soma?soma.desc:bt.desc;
+  const focus = soma?soma.focus:bt.focus;
+  const blendTxt = (soma&&p.somatotypeBlend&&SOMA_INFO[p.somatotypeBlend])?` <span style="font-size:.74rem;color:var(--muted);font-weight:700">· pha ${SOMA_INFO[p.somatotypeBlend].label.replace(/[^A-Za-z]/g,'')}</span>`:'';
+  const cur=profFocus(p), applied=focus.every(g=>cur.includes(g))&&cur.length===focus.length;
+  const chips=focus.map(g=>{const e=(FOCUS_OPTS.find(o=>o[0]===g)||[])[1]||'💪';return `<span class="tag" style="background:var(--green);margin-top:0">${e} ${g}</span>`;}).join(' ');
   let whrLine='';
   if(bt.whr!=null){ const [wl,wc]=whrInfo(bt.whr,female);
-    whrLine=`<div style="font-size:.82rem;color:var(--muted);font-weight:600;margin:6px 0 2px">Tỷ lệ eo/mông (WHR): <b style="color:${wc}">${bt.whr} · ${wl}</b></div>`; }
+    whrLine=`<div style="font-size:.82rem;color:var(--muted);font-weight:600;margin:6px 0 2px">Tỷ lệ eo/mông (WHR): <b style="color:${wc}">${bt.whr} · ${wl}</b>${female&&!soma?` · dáng ${bt.label}`:''}</div>`; }
   return `<div class="metric" style="margin:12px 0;border-left:5px solid var(--teal);text-align:left">
-    <div style="font-weight:800;font-size:.9rem">🧍 Dạng tạng người của tớ</div>
-    <div style="font-weight:900;font-size:1.15rem;color:var(--green-d);margin:4px 0 2px">${bt.label}${bt.frameTxt?` <span style="font-size:.76rem;color:var(--muted);font-weight:700">· ${bt.frameTxt}</span>`:''}</div>
+    <div style="font-weight:800;font-size:.9rem">🧍 Dạng tạng người của tớ ${soma?'<span style="font-size:.7rem;color:var(--teal);font-weight:800">(từ bài tự kiểm)</span>':''}</div>
+    <div style="font-weight:900;font-size:1.15rem;color:var(--green-d);margin:4px 0 2px">${label}${blendTxt}${bt.frameTxt?` <span style="font-size:.76rem;color:var(--muted);font-weight:700">· ${bt.frameTxt}</span>`:''}</div>
     ${whrLine}
-    <div style="font-size:.85rem;line-height:1.55;margin:6px 0 8px">${bt.desc}</div>
+    <div style="font-size:.85rem;line-height:1.55;margin:6px 0 8px">${desc}</div>
     <div style="font-size:.8rem;font-weight:700;margin-bottom:6px">🎯 Gợi ý nhóm cơ nên ưu tiên: ${chips}</div>
-    <button class="btn ${applied?'sec':''}" style="padding:11px;margin-top:4px" ${applied?'disabled style="opacity:.6;padding:11px;margin-top:4px"':''} onclick="applyBodyFocus([${bt.focus.map(g=>`'${g}'`).join(',')}])">${applied?'✓ Đã áp dụng nhóm cơ này':'✨ Áp dụng nhóm cơ gợi ý'}</button>
-    ${bt.partial?`<div style="font-size:.72rem;color:var(--muted);margin-top:7px">📐 Nhập thêm <b>eo + mông</b> ở phần số đo để có gợi ý chuẩn dáng hơn nhé.</div>`:''}
-    <div style="font-size:.72rem;color:var(--muted);margin-top:7px">🐾 Đây là gợi ý vui để định hướng, không phải chẩn đoán y tế — tập đều toàn thân vẫn là tốt nhất!</div>
+    <button class="btn ${applied?'sec':''}" style="padding:11px;margin-top:4px${applied?';opacity:.6':''}" ${applied?'disabled':''} onclick="applyBodyFocus([${focus.map(g=>`'${g}'`).join(',')}])">${applied?'✓ Đã áp dụng nhóm cơ này':'✨ Áp dụng nhóm cơ gợi ý'}</button>
+    <button class="btn sec" style="padding:11px;margin-top:8px" onclick="openBodyQuiz()">🧪 ${soma?'Làm lại bài tự kiểm tạng người':'Làm bài tự kiểm tạng người (chính xác hơn)'}</button>
+    ${(!soma&&bt.partial)?`<div style="font-size:.72rem;color:var(--muted);margin-top:7px">📐 Nhập thêm <b>eo + mông</b> ở phần số đo, hoặc làm bài tự kiểm để có kết quả chuẩn hơn nhé.</div>`:''}
+    <div style="font-size:.72rem;color:var(--muted);margin-top:7px">🐾 Đây là gợi ý vui để định hướng, không phải chẩn đoán y tế — đa số là dáng pha & thay đổi được, tập đều toàn thân vẫn tốt nhất!</div>
   </div>`;
 }
 function applyBodyFocus(groups){
