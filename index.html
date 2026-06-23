@@ -1381,9 +1381,23 @@ function openSession(id){
     <div class="sess-hint">✅ Đã xong <b style="color:var(--green-d);margin:0 3px">${nDone}/${total}</b> bài hôm nay — bấm “Tập bài này”, xong là tự đánh dấu ✓ 🐾</div>
     ${exs}
     <button class="btn sec" onclick="startWorkout(${s.id},0,true)">⏩ Hoặc: tập tự động liền mạch cả buổi</button>
+    <button class="btn sec" style="margin-top:8px;border-color:var(--green);color:var(--green-d)" onclick="completeFullSession(${s.id})">✅ Đánh dấu đã tập xong cả buổi</button>
+    <div style="font-size:.74rem;color:var(--muted);text-align:center;margin-top:6px">Dùng khi cưng đã tự tập xong buổi này — sẽ lưu vào tiến độ 🐾</div>
     <div style="height:10px"></div>`;
   go('sess', true);
   window.scrollTo(0,0);
+}
+// Bấm 1 nút đánh dấu hoàn thành cả buổi (tự tập xong) → lưu + màn ăn mừng
+function completeFullSession(id){
+  const s=sessById(id);
+  if(!confirm(`Đánh dấu đã hoàn thành cả buổi “${s.name}”?\nBuổi tập sẽ được lưu vào tiến độ & cộng XP nhé.`)) return;
+  s.ex.forEach((e,i)=>markExDone(id,i));          // đánh dấu ✓ tất cả bài
+  initAudio(); loadAudioPrefs(); updateAudioBtns();
+  P.sess=s; P.exIdx=0; P.setIdx=0; P.paused=false; P.timer=null;
+  P.doneEx=new Array(s.ex.length).fill(true); P.logged=false; P.xpBefore=xpTotal();
+  document.getElementById('p-session').textContent=s.icon+' '+s.name+' · '+LEVELS[getLevel()].name;
+  document.getElementById('player').classList.add('show');
+  finishWorkout();                                 // lưu buổi + pháo giấy + khoe XP/bậc/chuỗi
 }
 
 // Bottom sheet: xem thông tin 1 bài trước khi tập
@@ -1490,6 +1504,67 @@ function bmiClass(b){
   return ['Béo phì độ II','#ff6b6b'];
 }
 const GOAL_LBL={giam:'giảm mỡ',giu:'giữ dáng',tang:'tăng cơ'};
+// ===== Dạng tạng người từ số đo (WHR theo WHO + khung xương qua cổ tay) =====
+// Tham khảo WHO, NASM, ACE — đây là gợi ý định hướng vui, không phải chẩn đoán y tế.
+const CORE_G='Core / Bụng';
+function whrInfo(whr, female){
+  // ngưỡng WHO (nữ dùng mốc châu Á 0.80)
+  if(female) return whr<0.80?['Tốt','var(--green)']:(whr<0.85?['Cần chú ý','var(--orange)']:['Cao','var(--red)']);
+  return whr<0.90?['Tốt','var(--green)']:(whr<1.0?['Cần chú ý','var(--orange)']:['Cao','var(--red)']);
+}
+function inferBodyType(p){
+  const h=+p.height, w=+p.weight, waist=+p.waist, hip=+p.hip, wrist=+p.wrist;
+  if(!h||!w) return null;
+  const bmi=w/((h/100)*(h/100)), female=(p.sex!=='nam');
+  let frame=null, frameTxt='';
+  if(wrist){
+    const r=h/wrist;
+    if(female) frame = r>11.0?'small':(r>=10.1?'medium':'large');
+    else       frame = r>10.4?'small':(r>=9.6?'medium':'large');
+    frameTxt = frame==='small'?'khung xương nhỏ':(frame==='medium'?'khung xương vừa':'khung xương lớn/chắc');
+  }
+  if(!waist||!hip){ // thiếu eo/mông → gợi ý chung theo BMI
+    if(bmi<18.5) return {label:'Khung nhẹ (thiên ectomorph)',desc:'Khung người nhẹ, hơi khó lên cân — ưu tiên bài compound nhiều khối cơ để tăng cơ.',focus:['Chân','Lưng'],whr:null,frame,frameTxt,partial:true};
+    if(bmi<25)   return {label:'Cân đối',desc:'Vóc dáng cân đối — tập đều toàn thân để giữ phong độ & sức mạnh.',focus:['Mông','Vai'],whr:null,frame,frameTxt,partial:true};
+    return {label:'Khung chắc (thiên endomorph)',desc:'Khung người chắc khỏe — kết hợp toàn thân + cardio nhẹ giúp khỏe & gọn dáng.',focus:['Chân',CORE_G],whr:null,frame,frameTxt,partial:true};
+  }
+  const whr=waist/hip, whrHigh = female ? whr>=0.80 : whr>=0.90;
+  let label,desc,focus;
+  if(female){
+    if(whrHigh){ label='Hình quả táo 🍎'; desc='Mỡ tụ quanh eo nhiều hơn — siết vùng giữa + chân khỏe, thêm chút cardio cho tim mạch.'; focus=[CORE_G,'Chân']; }
+    else if((hip-waist)>=20 && whr<=0.78){ label='Hình quả lê 🍐'; desc='Hông & chân là điểm mạnh — phát triển vai & lưng cho dáng trên–dưới cân đối.'; focus=['Vai','Lưng']; }
+    else if((hip-waist)>=12){ label='Đồng hồ cát ⏳'; desc='Bạn có đường cong tự nhiên — tập mông & lưng để giữ dáng & tăng sức mạnh tổng thể.'; focus=['Mông','Lưng']; }
+    else { label='Hình chữ nhật ▭'; desc='Vóc dáng thẳng, khỏe khoắn — tập mông & vai tạo đường cong nhẹ & làm nổi eo.'; focus=['Mông','Vai']; }
+  } else {
+    if(whrHigh||bmi>=25){ label='Thiên endomorph'; desc='Khung chắc, dễ giữ mỡ vùng bụng — toàn thân + conditioning giúp khỏe & gọn.'; focus=['Chân',CORE_G]; }
+    else if(frame==='small'||bmi<20){ label='Thiên ectomorph'; desc='Khung gọn, hơi khó lên cân — ưu tiên bài compound lớn, tập trung tăng cơ.'; focus=['Chân','Lưng']; }
+    else { label='Thiên mesomorph'; desc='Cơ thể dễ lên cơ & cân đối — tập đều ngực/mông để giữ tỉ lệ đẹp.'; focus=['Ngực','Mông']; }
+  }
+  return {label,desc,focus,whr:Math.round(whr*100)/100,frame,frameTxt,partial:false};
+}
+function bodyTypeHTML(p){
+  const bt=inferBodyType(p); if(!bt) return '';
+  const female=(p.sex!=='nam');
+  const cur=profFocus(p), applied=bt.focus.every(g=>cur.includes(g))&&cur.length===bt.focus.length;
+  const chips=bt.focus.map(g=>{const e=(FOCUS_OPTS.find(o=>o[0]===g)||[])[1]||'💪';return `<span class="tag" style="background:var(--green);margin-top:0">${e} ${g}</span>`;}).join(' ');
+  let whrLine='';
+  if(bt.whr!=null){ const [wl,wc]=whrInfo(bt.whr,female);
+    whrLine=`<div style="font-size:.82rem;color:var(--muted);font-weight:600;margin:6px 0 2px">Tỷ lệ eo/mông (WHR): <b style="color:${wc}">${bt.whr} · ${wl}</b></div>`; }
+  return `<div class="metric" style="margin:12px 0;border-left:5px solid var(--teal);text-align:left">
+    <div style="font-weight:800;font-size:.9rem">🧍 Dạng tạng người của tớ</div>
+    <div style="font-weight:900;font-size:1.15rem;color:var(--green-d);margin:4px 0 2px">${bt.label}${bt.frameTxt?` <span style="font-size:.76rem;color:var(--muted);font-weight:700">· ${bt.frameTxt}</span>`:''}</div>
+    ${whrLine}
+    <div style="font-size:.85rem;line-height:1.55;margin:6px 0 8px">${bt.desc}</div>
+    <div style="font-size:.8rem;font-weight:700;margin-bottom:6px">🎯 Gợi ý nhóm cơ nên ưu tiên: ${chips}</div>
+    <button class="btn ${applied?'sec':''}" style="padding:11px;margin-top:4px" ${applied?'disabled style="opacity:.6;padding:11px;margin-top:4px"':''} onclick="applyBodyFocus([${bt.focus.map(g=>`'${g}'`).join(',')}])">${applied?'✓ Đã áp dụng nhóm cơ này':'✨ Áp dụng nhóm cơ gợi ý'}</button>
+    ${bt.partial?`<div style="font-size:.72rem;color:var(--muted);margin-top:7px">📐 Nhập thêm <b>eo + mông</b> ở phần số đo để có gợi ý chuẩn dáng hơn nhé.</div>`:''}
+    <div style="font-size:.72rem;color:var(--muted);margin-top:7px">🐾 Đây là gợi ý vui để định hướng, không phải chẩn đoán y tế — tập đều toàn thân vẫn là tốt nhất!</div>
+  </div>`;
+}
+function applyBodyFocus(groups){
+  const p=loadProfile(); p.focus=groups.slice(0,2); saveProfile(p);
+  renderProfile();
+}
 function pv(id){ const el=document.getElementById(id); return el?el.value:''; }
 let _pfEdit=false;
 // Nhóm cơ có thể chọn tập trung (khớp LIB_BUCKETS, trừ Cardio)
@@ -1504,7 +1579,7 @@ function readProfileForm(){
   const p={ ...cur, sex:pv('pf-sex'), age:+pv('pf-age')||'', height:+pv('pf-height')||'', weight:+pv('pf-weight')||'',
     act:+pv('pf-act')||1.375, goal:pv('pf-goal')||'giu', macro:pv('pf-macro')||goalMacro(pv('pf-goal')||'giu'), equip:pv('pf-equip')||'home',
     goalWeight:+pv('pf-goalweight')||'', goalWeeks:+pv('pf-goalweeks')||'',
-    waist:+pv('pf-waist')||'', hip:+pv('pf-hip')||'', thigh:+pv('pf-thigh')||'', arm:+pv('pf-arm')||'' };
+    waist:+pv('pf-waist')||'', hip:+pv('pf-hip')||'', thigh:+pv('pf-thigh')||'', arm:+pv('pf-arm')||'', wrist:+pv('pf-wrist')||'' };
   saveProfile(p);
   return p;
 }
@@ -1558,12 +1633,13 @@ function renderResults(p){
       <div class="big" style="color:#fff">${Math.round(target)} <span style="font-size:1rem;font-weight:700">kcal</span></div>
       <div style="font-size:.82rem;opacity:.95;margin-top:3px">🍗 Đạm ${mg.p}g · 🍚 Carb ${mg.c}g · 🥑 Béo ${mg.f}g</div></div>
     ${wgoalHTML}
+    ${bodyTypeHTML(p)}
     <div class="note-box">⚖️ Số liệu ước tính (công thức Mifflin-St Jeor). Theo dõi 2-3 tuần rồi tinh chỉnh theo thực tế nhé.</div>`;
 }
 function calcProfile(){ renderResults(readProfileForm()); }
 function profileSummaryHTML(p){
   const sexT=p.sex==='nu'?'Nữ':'Nam', goalT=GOAL_LBL[p.goal]||'', eqT={home:'tại nhà',gym:'phòng gym',both:'cả hai'}[p.equip]||'tại nhà';
-  const meas=[p.waist&&'eo '+p.waist,p.hip&&'mông '+p.hip,p.thigh&&'đùi '+p.thigh,p.arm&&'tay '+p.arm].filter(Boolean).join(' · ');
+  const meas=[p.waist&&'eo '+p.waist,p.hip&&'mông '+p.hip,p.thigh&&'đùi '+p.thigh,p.arm&&'tay '+p.arm,p.wrist&&'cổ tay '+p.wrist].filter(Boolean).join(' · ');
   return `<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
       <div style="font-weight:800;font-size:1.05rem">${sexT} · ${p.age} tuổi</div>
@@ -1688,6 +1764,8 @@ function renderProfile(){
       <details><summary style="cursor:var(--paw),pointer;font-weight:700;color:var(--green-d);font-size:.85rem;margin:4px 2px 10px">📐 Số đo cơ thể (tuỳ chọn)</summary>
         <div class="frow"><div class="field"><label>Eo (cm)</label><input id="pf-waist" type="number" value="${p.waist||''}" oninput="calcProfile()"></div><div class="field"><label>Mông (cm)</label><input id="pf-hip" type="number" value="${p.hip||''}" oninput="calcProfile()"></div></div>
         <div class="frow"><div class="field"><label>Đùi (cm)</label><input id="pf-thigh" type="number" value="${p.thigh||''}" oninput="calcProfile()"></div><div class="field"><label>Bắp tay (cm)</label><input id="pf-arm" type="number" value="${p.arm||''}" oninput="calcProfile()"></div></div>
+        <div class="frow"><div class="field"><label>Cổ tay (cm)</label><input id="pf-wrist" type="number" value="${p.wrist||''}" oninput="calcProfile()" placeholder="đo quanh cổ tay"></div><div class="field"></div></div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">💡 Nhập <b>eo + mông</b> để biết dạng tạng người; thêm <b>cổ tay</b> để đoán khung xương 🐾</div>
       </details>
       ${complete?`<button class="btn" style="margin-top:8px" onclick="_pfEdit=false;renderProfile()">✓ Xong</button>`:''}
     </div>`;
