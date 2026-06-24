@@ -778,10 +778,38 @@ const SESSIONS = [
 ];
 
 const LEVELS = {
-  1:{name:'Level 1', short:'L1', desc:'Tập chậm — làm quen kỹ thuật'},
-  2:{name:'Level 2', short:'L2', desc:'Tốc độ chuẩn'},
-  3:{name:'Level 3', short:'L3', desc:'Tập với dụng cụ (tạ/dây)'},
+  1:{name:'Level 1', short:'L1', desc:'Người mới · ít reps hơn'},
+  2:{name:'Level 2', short:'L2', desc:'Tiêu chuẩn'},
+  3:{name:'Level 3', short:'L3', desc:'Nâng cao · nhiều reps + tạ/dây'},
 };
+
+// ===== Cân chỉnh reps theo Level + tempo nhanh/chậm (nguồn ACE/NSCA/ACSM) =====
+// Rep có kiểm soát của người mới nên ~4–6 giây; bài bùng nổ & cardio thì không làm chậm.
+const LEVEL_MULT={1:0.8, 2:1.0, 3:1.3};   // reps & thời gian giữ theo Level 1/2/3
+const TEMPO={normal:1.3, slow:1.85};      // kéo dài thời gian mỗi hiệp → ~4s/rep (Vừa) · ~6s/rep (Chậm)
+const PACE_LBL={normal:{e:'🐇',n:'Vừa phải'}, slow:{e:'🐢',n:'Chậm & kỹ'}};
+const EXPLOSIVE=new Set(['Burpees','Intermediate Burpees','Jumping Squat','Mountain Climber','Plank Jack','High Knees','Jumping Jack','Knee Ups','Nhảy dây']);
+function loadPace(){ try{ return localStorage.getItem('meofit_pace')==='slow'?'slow':'normal' }catch(e){ return 'normal' } }
+function savePace(p){ try{ localStorage.setItem('meofit_pace', p==='slow'?'slow':'normal'); }catch(e){} }
+function exScalable(e){ return !!e && e.m!=='Khởi động' && e.m!=='Dãn cơ'; }  // khởi động/dãn cơ giữ nguyên
+function exNoTempo(e){ return !exScalable(e) || e.type==='time' || e.m==='Cardio' || EXPLOSIVE.has(e.n); }
+function scaleRepsStr(str, mult){
+  if(mult===1) return str;
+  return String(str).replace(/(\d+)(\s*[–-]\s*)(\d+)|(\d+)/, (m,a,sep,b,single)=>
+    single!=null ? String(Math.max(1,Math.round(single*mult)))
+                 : Math.max(1,Math.round(a*mult))+sep+Math.max(1,Math.round(b*mult)) );
+}
+function exReps(e, lv){ const n=repCount(e); if(!n||!exScalable(e)) return n; return Math.max(1, Math.round(n*(LEVEL_MULT[lv]||1))); }
+function exRepsStr(e, lv){ return exScalable(e)?scaleRepsStr(e.reps, LEVEL_MULT[lv]||1):e.reps; }
+function exWork(e, lv, pace){
+  let w=e.work*(exScalable(e)?(LEVEL_MULT[lv]||1):1);
+  if(!exNoTempo(e)) w*=TEMPO[pace==='slow'?'slow':'normal'];
+  w=Math.round(w);
+  if(e.type==='time') w=Math.min(120, Math.max(8, w));  // giữ tư thế: 8–120s
+  return Math.max(4, w);
+}
+// Tiện ích lấy reps/thời gian đã cân chỉnh theo level & tốc độ hiện tại
+function exView(e){ const lv=getLevel(), pace=loadPace(); return {reps:exReps(e,lv), repsStr:exRepsStr(e,lv), work:exWork(e,lv,pace)}; }
 
 const WEEK = [
   {dow:'CN',  day:0, sid:null, extra:'', rope:false},
@@ -1023,6 +1051,44 @@ function strengthChartHTML(){
       <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px">${useKg?'Sức mạnh ước tính (~1RM, kg)':'Số lần/hiệp'} · ${series.length} lần ghi · ${diff>=0?'+':''}${diff} so với đầu ${diff>0?'📈':(diff<0?'📉':'')}</div>
     </div>`;
 }
+// ===== Ghi mức tạ từng bài + gợi ý tăng tạ (quy tắc 2-cho-2 của NSCA) =====
+function lastStrengthEntries(name,k){ return loadStrength().filter(e=>e.n===name).sort((a,b)=>b.ts-a.ts).slice(0,k||2); }
+function logExWeight(sid,i){
+  const e=sessById(sid).ex[i];
+  const kg=+pv('wlog-'+i+'-kg')||0, reps=+pv('wlog-'+i+'-reps')||0;
+  if(!kg&&!reps){ alert('Nhập mức tạ (kg) hoặc số lần đã tập nhé 🐾'); return; }
+  const log=loadStrength(); log.push({ts:Date.now(),date:todayStr(),n:e.n,kg,reps,e1rm:e1rm(kg,reps)}); saveStrength(log);
+  _openWeight=i; openSession(sid);
+}
+function progressHint(e){
+  const target=exReps(e,getLevel()), ents=lastStrengthEntries(e.n,2);
+  const inc=['Ngực','Lưng','Vai'].includes(e.m)?'+1–2.5 kg':'+2.5–5 kg';
+  if(ents.length>=2 && ents[0].kg>0 && ents[0].reps>=target+2 && ents[1].reps>=target+2)
+    return `🎉 2 buổi gần nhất đều dư ≥2 reps — buổi sau thử <b>tăng tạ (${inc})</b>!`;
+  return `💡 <b>Quy tắc 2-cho-2:</b> nếu 2 buổi liền bạn dư ≥2 reps ở set cuối → buổi sau tăng tạ (${inc}). Luôn chừa 1–3 reps "trong bình" & ưu tiên đúng form 🐾`;
+}
+function weightBox(e,i,sid){
+  if(!exScalable(e) || e.m==='Cardio') return ''; // chỉ bài sức mạnh/tạ
+  const ents=lastStrengthEntries(e.n,2); let last='Chưa có ghi chép — ghi lần đầu để theo dõi tiến bộ nhé!';
+  if(ents.length){ const a=ents[0], d=new Date(a.ts), ds=d.getDate()+'/'+(d.getMonth()+1);
+    last=`Gần nhất (${ds}): <b>${a.kg>0?a.kg+'kg':'tay không'}</b> × ${a.reps||'?'} lần`;
+    if(ents.length>1){ const diff=Math.round(((a.kg||0)-(ents[1].kg||0))*10)/10; if(diff) last+=` · ${diff>0?'📈 +'+diff:'📉 '+diff}kg`; }
+  }
+  const open=(_openWeight===i)?' open':'';
+  return `<details class="lib-grp" style="margin-top:8px;border-left:4px solid var(--purple)"${open}>
+    <summary style="cursor:var(--paw),pointer;font-weight:800;color:#7a52d6;font-size:.84rem;padding:9px 11px">🏋️ Mức tạ & tiến bộ</summary>
+    <div style="padding:2px 11px 11px">
+      <div style="font-size:.8rem;color:var(--muted);font-weight:600;margin-bottom:8px">${last}</div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <input id="wlog-${i}-kg" class="slog-in" type="number" inputmode="decimal" placeholder="kg">
+        <input id="wlog-${i}-reps" class="slog-in" type="number" inputmode="numeric" placeholder="số lần">
+        <button class="btn" style="width:auto;padding:10px 14px;flex:none" onclick="logExWeight(${sid},${i})">💾 Lưu</button>
+      </div>
+      <div class="tipbox" style="border-left-color:var(--purple);margin-top:8px">${progressHint(e)}</div>
+    </div>
+  </details>`;
+}
+let _openWeight=-1;
 function doneToday(){ return loadHist().some(e=>e.date===todayStr()); }
 function calcStreak(){
   const h=loadHist(); if(!h.length) return 0;
@@ -1108,7 +1174,8 @@ const TIPS=[
 ];
 function tipBox(){ return `<div class="note-box">🐾 <b>Mẹo hôm nay:</b> ${TIPS[Math.floor(Math.random()*TIPS.length)]}</div>`; }
 function estMinutes(s){
-  let sec=0; s.ex.forEach(e=>{ sec += e.sets*e.work + (e.sets-1)*(e.rest||30) + e.sets*3; });
+  const lv=getLevel(), pace=loadPace();
+  let sec=0; s.ex.forEach(e=>{ const w=exWork(e,lv,pace); sec += e.sets*w + (e.sets-1)*(e.rest||30) + e.sets*3; });
   return Math.round(sec/60);
 }
 function levelSeg(onchangeFn){
@@ -1344,6 +1411,7 @@ function renderBuilder(){
 }
 function chooseLevelList(l){ setLevel(l); renderSessList(); }
 function chooseLevelDetail(l, sid){ setLevel(l); openSession(sid); }
+function choosePace(pc, sid){ savePace(pc); if(sid!=null) openSession(sid); else renderHome(); }
 
 let _openSess=null;
 function openSession(id){
@@ -1351,31 +1419,36 @@ function openSession(id){
   const s=sessById(id), pl=curPlan(), lv=getLevel(), vid=(s.videos&&pl.levels)?s.videos[lv]:null;
   const done=exDoneSet(id);                      // các bài đã xong hôm nay
   const cur=s.ex.findIndex((e,i)=>!done.has(i)); // bài "tập ngay" = bài chưa xong đầu tiên
-  const total=s.ex.length, nDone=done.size;
+  const total=s.ex.length, nDone=done.size, pace=loadPace();
   const exs=s.ex.map((e,i)=>{
-    const isDone=done.has(i), isCur=(i===cur);
+    const isDone=done.has(i), isCur=(i===cur), vw=exView(e);
     const links=`<div class="links">
       <a class="vid" href="${yt(e.en+' exercise tutorial')}" target="_blank" rel="noopener">▶️ Cách tập đúng</a>
       ${e.gymName?`<a href="${yt(e.gymName.split('/')[0]+' machine how to')}" target="_blank" rel="noopener">🔍 Xem máy tập</a>`:''}</div>`;
     return `<div class="ex${isDone?' ex-done':''}${isCur?' ex-cur':''}" style="border-left-color:${tagColor(e.m)}">
       <div class="row1"><div class="idx">${isDone?'✓':(i+1)}</div><div style="flex:1;min-width:0">
         <div class="nm">${e.mi} ${e.n}${isCur?'<span class="ex-now">TẬP NGAY</span>':''}</div>
-        <div class="meta">${e.sets} hiệp × ${e.reps} • ⏱️ ~${e.work}s/hiệp</div>
+        <div class="meta">${e.sets} hiệp × ${vw.repsStr} • ⏱️ ~${vw.work}s/hiệp</div>
         <span class="tag" style="background:${tagColor(e.m)}">${e.m}</span></div></div>
       <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
       ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
       ${EXTIP[e.n]?`<div class="tipbox">💡 <b>Mẹo tập đúng:</b> ${EXTIP[e.n]}</div>`:''}
       ${ALT[e.n]?`<div class="altbox"><b>🔄 Bài thay thế:</b> ${ALT[e.n]}</div>`:''}
+      ${weightBox(e,i,id)}
       <button class="ex-go${isDone?' done':''}" onclick="startWorkout(${id},${i})">${isDone?'✓ Đã xong — tập lại nhé':'▶️ Tập bài này'}</button>
     </div>`;
   }).join('');
+  _openWeight=-1;
   document.getElementById('v-sess').innerHTML=`
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <button class="btn sec" style="width:auto;padding:10px 14px" onclick="renderSessList()">‹ Quay lại</button>
       <div style="font-weight:800;font-size:1.15rem">${s.icon} ${s.name}</div></div>
-    ${pl.levels?`<div class="levels"><div class="lab">🎚️ Cấp độ (đổi video & cường độ):</div><div class="seg">
+    ${pl.levels?`<div class="levels"><div class="lab">🎚️ Cấp độ (reps & cường độ):</div><div class="seg">
       ${[1,2,3].map(l=>`<button class="${l===lv?'on':''}" onclick="chooseLevelDetail(${l},${id})">${LEVELS[l].name}<small>${LEVELS[l].desc}</small></button>`).join('')}
     </div></div>`:''}
+    <div class="levels"><div class="lab">⏱️ Tốc độ tập (đếm nhịp mỗi lần):</div><div class="seg">
+      ${['normal','slow'].map(pc=>`<button class="${pc===pace?'on':''}" onclick="choosePace('${pc}',${id})">${PACE_LBL[pc].e} ${PACE_LBL[pc].n}<small>${pc==='normal'?'~4 giây/lần':'~6 giây/lần · kỹ form'}</small></button>`).join('')}
+    </div></div>
     ${vid?(loadUser()
       ? `<a class="vidlink" href="https://youtu.be/${vid}" target="_blank" rel="noopener">▶️ Video full ${s.name} — ${LEVELS[lv].name}</a>`
       : `<button class="vidlink--lock" onclick="googleLogin()">🔒 Đăng nhập để xem video tập full</button>`):''}
@@ -1743,7 +1816,7 @@ function googleLogout(){ if(_fbAuth){ try{ _fbAuth.signOut(); }catch(e){} } save
 /* ====== Đồng bộ tiến độ qua Firestore (điện thoại ↔ máy tính) ====== */
 const _fbStore={db:null};
 // Các "ngăn" dữ liệu sẽ đồng bộ (KHÔNG sync meofit_user)
-const SYNC_KEYS=['meofit_profile','meofit_weightlog','meofit_fastlog','meofit_food','meofit_myfoods','meofit_history_v1','meofit_customsessions','meofit_if','meofit_plan','meofit_level','meofit_strength','meo:theme','meofit_snd','meofit_voice','meofit_slow','meofit_exdone'];
+const SYNC_KEYS=['meofit_profile','meofit_weightlog','meofit_fastlog','meofit_food','meofit_myfoods','meofit_history_v1','meofit_customsessions','meofit_if','meofit_plan','meofit_level','meofit_strength','meo:theme','meofit_snd','meofit_voice','meofit_slow','meofit_pace','meofit_exdone'];
 // Log dạng mảng → gộp (union) theo khoá, không mất dữ liệu
 const LOG_KEYS={meofit_weightlog:'ts',meofit_fastlog:'ts',meofit_food:'ts',meofit_history_v1:'ts',meofit_myfoods:'name',meofit_customsessions:'id'};
 let _applyingCloud=false,_pushTimer=null;
@@ -2209,13 +2282,8 @@ function toggleSnd(){ SND=!SND; try{localStorage.setItem('meofit_snd',SND?'1':'0
 function toggleVoice(){ VOICE=!VOICE; try{localStorage.setItem('meofit_voice',VOICE?'1':'0')}catch(e){} if(!VOICE) shutUp(); updateAudioBtns(); }
 
 /* ============ WORKOUT PLAYER ============ */
-const P={sess:null,exIdx:0,setIdx:0,timer:null,remain:0,total:0,paused:false,onEnd:null,redraw:null,repN:0,spoken:0,slow:1,auto:false,phase:''};
+const P={sess:null,exIdx:0,setIdx:0,timer:null,remain:0,total:0,paused:false,onEnd:null,redraw:null,repN:0,spoken:0,pace:'normal',auto:false,phase:''};
 const RING_R=100, RING_C=2*Math.PI*RING_R;
-
-// Tập chậm: nhân thời gian mỗi hiệp cho hệ số (lưu lại để lần sau giữ nguyên)
-const SLOW_MULT=1.6;
-function loadSlow(){ try{ return localStorage.getItem('meofit_slow')==='1'?SLOW_MULT:1 }catch(e){ return 1 } }
-function saveSlow(on){ try{ localStorage.setItem('meofit_slow', on?'1':'0'); }catch(e){} }
 
 function repCount(e){
   if(e.type!=='reps') return 0;
@@ -2226,7 +2294,7 @@ function startWorkout(id, startIdx, auto){
   initAudio(); loadAudioPrefs(); updateAudioBtns();
   if(VOICE) say(ph('ready')); // mở khoá giọng nói bằng cú chạm
   P.sess=sessById(id); P.exIdx=startIdx||0; P.setIdx=0; P.paused=false;
-  P.auto=!!auto; P.slow=loadSlow();
+  P.auto=!!auto; P.pace=loadPace();
   // Theo dõi bài đã tập xong — tập đủ tất cả là tự lưu buổi (dù thoát giữa chừng)
   P.doneEx=new Array(P.sess.ex.length).fill(false); P.logged=false; P.xpBefore=null;
   document.getElementById('p-session').textContent=P.sess.icon+' '+P.sess.name+' · '+LEVELS[getLevel()].name;
@@ -2261,7 +2329,7 @@ function header(e){
 // Thanh điều khiển gọn (1 hàng): bài trước · tập chậm · tạm dừng · xong sớm · bỏ bài
 function dock(o){ o=o||{};
   const prev=`<button class="pmini" onclick="prevExercise()" ${P.exIdx<=0?'disabled':''}>‹<small>Bài trước</small></button>`;
-  const slow=`<button class="pmini ${P.slow>1?'on':''}" onclick="toggleSlow()">${P.slow>1?'🐇':'🐢'}<small>${P.slow>1?'Thường':'Chậm'}</small></button>`;
+  const slow=`<button class="pmini ${P.pace==='slow'?'on':''}" onclick="togglePace()">${P.pace==='slow'?'🐇':'🐢'}<small>${P.pace==='slow'?'Vừa':'Chậm'}</small></button>`;
   const pause=`<button class="ppause" onclick="togglePause()">${P.paused?'▶':'⏸'}</button>`;
   const done=o.done?`<button class="pmini" onclick="finishSet()">✓<small>Xong sớm</small></button>`:'';
   const skip=`<button class="pmini" onclick="skipExercise()">⏭<small>Bỏ bài</small></button>`;
@@ -2308,7 +2376,7 @@ function openGuide(){
       ${demo?`<img id="demoImg" class="demo-img" alt="Minh hoạ động tác" referrerpolicy="no-referrer" onerror="this.style.display='none'"><div class="demo-cap">🎬 Minh hoạ động tác (đầu → cuối)</div>`:''}
       <div class="guide-h">${e.mi} ${e.n}</div>
       <span class="tag" style="background:${tagColor(e.m)}">${e.m}</span>
-      <div class="g-meta">${e.sets} hiệp × ${e.reps}${e.perSide?' (cả 2 bên)':''} • 💡 ${e.tempo}</div>
+      <div class="g-meta">${e.sets} hiệp × ${exRepsStr(e,getLevel())}${e.perSide?' (cả 2 bên)':''} • 💡 ${e.tempo}</div>
       <div class="ex" style="box-shadow:none;background:transparent;border-left:none;padding:0;margin:0">
         <div class="muscle">${muscleArt(e.m)}<div class="m-txt"><b>💪 Cơ tác động:</b> Chính — ${e.mp}${e.ms?` · <span style="opacity:.85">Phụ — ${e.ms}</span>`:''}</div></div>
         ${e.gymName?`<div class="gym"><b>🏋️ Khi tập gym:</b> ${e.gymName}${links}</div>`:`<div class="gym">🧘 Không cần dụng cụ — bài khởi động/dãn cơ.${links}</div>`}
@@ -2337,8 +2405,8 @@ function startPrep(then){
     document.getElementById('p-center').innerHTML=`
       ${header(e)}
       <div class="ring">${ringSVG(P.remain/3,'var(--yellow)')}<div class="num"><div class="big">${P.remain||'🐾'}</div><div class="small">Sẵn sàng…</div></div></div>
-      <div class="setinfo">Hiệp ${P.setIdx+1}/${e.sets}${P.slow>1?' · 🐢 chậm':''}</div>
-      <div class="target">🎯 ${e.reps}${e.perSide?' (cả 2 bên)':''}</div>
+      <div class="setinfo">Hiệp ${P.setIdx+1}/${e.sets}${P.pace==='slow'?' · 🐢 chậm':''}</div>
+      <div class="target">🎯 ${exRepsStr(e,getLevel())}${e.perSide?' (cả 2 bên)':''}</div>
       <div class="tempo">💡 ${e.tempo}</div>
       <div class="nextup">${nextName()}</div>
       ${dock({done:false})}`;
@@ -2349,15 +2417,15 @@ function startPrep(then){
 }
 
 function startWork(){
-  const e=P.sess.ex[P.exIdx], total=Math.round(e.work*(P.slow||1)); P.repN=repCount(e); P.spoken=0; P.phase='work';
+  const e=P.sess.ex[P.exIdx], total=exWork(e,getLevel(),P.pace); P.repN=exReps(e,getLevel()); P.spoken=0; P.phase='work';
   beepGo(); vibrate(120);
   if(P.repN===0) say(/giữ/i.test(e.reps)?ph('hold'):ph('go'));
   const draw=()=>{
     document.getElementById('p-center').innerHTML=`
       ${header(e)}
       <div class="ring">${ringSVG(P.remain/total,tagColor(e.m))}<div class="num"><div class="big">${P.remain}</div><div class="small">giây</div></div></div>
-      <div class="setinfo">Hiệp ${P.setIdx+1}/${e.sets}${P.repN?` · đếm ${P.spoken}/${P.repN}`:''}${P.slow>1?' · 🐢 chậm':''}</div>
-      <div class="target">🎯 ${e.reps}${e.perSide?' (cả 2 bên)':''}</div>
+      <div class="setinfo">Hiệp ${P.setIdx+1}/${e.sets}${P.repN?` · đếm ${P.spoken}/${P.repN}`:''}${P.pace==='slow'?' · 🐢 chậm':''}</div>
+      <div class="target">🎯 ${exRepsStr(e,getLevel())}${e.perSide?' (cả 2 bên)':''}</div>
       <div class="tempo">💡 ${e.tempo}</div>
       <div class="nextup">${nextName()}</div>
       ${dock({done:true})}`;
@@ -2432,10 +2500,10 @@ function prevExercise(){
   clearInterval(P.timer); P.timer=null; P.paused=false; P.onEnd=null; shutUp();
   P.exIdx--; enterExercise();
 }
-// Bật/tắt tập chậm — đổi tốc độ ngay cho hiệp đang tập
-function toggleSlow(){
-  P.slow = P.slow>1 ? 1 : SLOW_MULT;
-  saveSlow(P.slow>1);
+// Đổi tốc độ nhanh/chậm ngay trong buổi (lưu lại cho lần sau)
+function togglePace(){
+  P.pace = P.pace==='slow' ? 'normal' : 'slow';
+  savePace(P.pace);
   if(P.phase==='work'){ clearInterval(P.timer); P.timer=null; P.paused=false; startWork(); }
   else if(P.redraw) P.redraw();
 }
