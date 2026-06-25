@@ -1090,20 +1090,27 @@ function weightBox(e,i,sid){
 }
 let _openWeight=-1;
 function doneToday(){ return loadHist().some(e=>e.date===todayStr()); }
+function dstr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function scheduledOn(d){ const w=weekByDay(d.getDay()); return !!(w&&w.sid); } // ngày đó lịch tuần có buổi tập?
+// Chuỗi theo LỊCH TẬP TUẦN: ngày nghỉ theo lịch KHÔNG làm đứt chuỗi;
+// chỉ đứt khi bỏ một buổi đã lên lịch. Đếm số ngày tập đã hoàn thành liên tiếp (bắc cầu qua ngày nghỉ).
 function calcStreak(){
-  const h=loadHist(); if(!h.length) return 0;
-  const days=new Set(h.map(e=>e.date)); let streak=0,d=new Date();
-  if(!days.has(todayStr())) d.setDate(d.getDate()-1);
-  for(;;){ const s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    if(days.has(s)){ streak++; d.setDate(d.getDate()-1);} else break; }
+  const days=new Set(loadHist().map(e=>e.date)); if(!days.size) return 0;
+  let streak=0, d=new Date();
+  if(!days.has(dstr(d))) d.setDate(d.getDate()-1); // hôm nay chưa tập → chưa tính là đứt, xét từ hôm qua
+  for(let guard=0; guard<400; guard++){
+    if(days.has(dstr(d))) streak++;        // có tập (đúng lịch hoặc tập thêm) → +1
+    else if(scheduledOn(d)) break;         // ngày tập theo lịch mà bỏ → đứt chuỗi
+    // ngày nghỉ theo lịch & không tập → bắc cầu (không cộng, không đứt)
+    d.setDate(d.getDate()-1);
+  }
   return streak;
 }
-// 7 ngày gần nhất: ngày nào có tập → true (để vẽ chấm chuỗi)
+// 7 ngày gần nhất: on=có tập, rest=ngày nghỉ theo lịch (để vẽ chấm chuỗi)
 function last7Days(){
   const days=new Set(loadHist().map(e=>e.date)), out=[];
   for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i);
-    const s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    out.push({dow:['CN','T2','T3','T4','T5','T6','T7'][d.getDay()], on:days.has(s)}); }
+    out.push({dow:['CN','T2','T3','T4','T5','T6','T7'][d.getDay()], on:days.has(dstr(d)), rest:!scheduledOn(d)}); }
   return out;
 }
 
@@ -1186,16 +1193,26 @@ function levelSeg(onchangeFn){
 }
 
 /* ============ HOME ============ */
-// Thẻ chuỗi lửa + nhắc giữ chuỗi (kiểu Duolingo)
+// Thẻ chuỗi lửa — theo LỊCH TẬP TUẦN, giọng Mèo ấm áp & cổ vũ healthy
 function streakCardHTML(){
-  const streak=calcStreak(), done=doneToday(), days=last7Days();
-  let cls, h, sub;
-  if(streak<=0){ cls='cold'; h='Nhóm chuỗi lửa nào!'; sub='Tập hôm nay để bắt đầu chuỗi ngày đầu tiên 🔥'; }
-  else if(done){ cls=''; h=streak+' ngày liên tiếp!'; sub='Tuyệt vời 🐾 Giữ lửa cháy nhé — mai gặp lại!'; }
-  else { cls='warn'; h='Chuỗi '+streak+' ngày đang chờ!'; sub='⚠️ Tập hôm nay kẻo mất chuỗi nha — chỉ 1 buổi thôi là giữ được!'; }
-  const dots=days.map(d=>`<span class="${d.on?'on':''}">${d.on?'🔥':d.dow}</span>`).join('');
+  const streak=calcStreak(), done=doneToday(), rest=!scheduledOn(new Date()), days=last7Days();
+  let cls='', h, sub;
+  if(done){
+    cls=''; h=(streak>0?streak+' ngày đúng lịch! 🎉':'Xong buổi hôm nay rồi! 🎉');
+    sub='Mèo tự hào về cậu lắm 🐾 Nhớ ăn đủ đạm + rau xanh & ngủ ngon để cơ thể hồi phục nha!';
+  } else if(rest){
+    cls=''; h=(streak>0?'Giữ vững '+streak+' ngày nè 🌿':'Hôm nay thư giãn nha 🌿');
+    sub='Hôm nay là ngày nghỉ theo lịch — nghỉ ngơi cũng là một phần của tập luyện đó. Uống đủ nước, ăn uống lành mạnh, mai mình lại cùng cố gắng nhé 🐾';
+  } else if(streak>0){
+    cls='warn'; h='Hôm nay có hẹn tập nè! 💪';
+    sub='Cậu đang giữ chuỗi '+streak+' ngày đúng lịch rồi — Mèo tin cậu làm tiếp được. Chỉ một buổi nhỏ thôi, mình cùng nhau nha 🐾';
+  } else {
+    cls='cold'; h='Cùng Mèo bắt đầu nhé! 🐱';
+    sub='Hôm nay có buổi tập theo lịch đó. Tập đều đặn + ăn uống healthy là cậu sẽ tiến bộ — Mèo luôn ở đây cổ vũ cậu 🐾';
+  }
+  const dots=days.map(d=>`<span class="${d.on?'on':''}" title="${d.on?'đã tập':(d.rest?'ngày nghỉ':'ngày tập theo lịch')}">${d.on?'🔥':(d.rest?'🌿':d.dow)}</span>`).join('');
   return `<div class="streak-card ${cls}">
-    <div style="text-align:center;flex:none"><div class="flame">🔥</div><div class="streak-num">${streak}</div></div>
+    <div style="text-align:center;flex:none"><div class="flame">${streak>0?'🔥':'🐱'}</div><div class="streak-num">${streak}</div></div>
     <div class="streak-txt"><div class="h">${h}</div><div class="s">${sub}</div><div class="streak-days">${dots}</div></div>
   </div>`;
 }
@@ -1234,7 +1251,7 @@ function renderHome(){
       <div class="hero-txt">
         <div class="day">${DOW_FULL[today]}</div>
         <div class="title">😺 Hôm nay nghỉ ngơi</div>
-        <div class="sub">Thư giãn, dãn cơ nhẹ hoặc đi bộ tuỳ thích nha!</div>
+        <div class="sub">Nghỉ cũng là một phần của tập luyện đó 🐾 Thư giãn, dãn cơ nhẹ hoặc đi bộ, nhớ ăn uống đủ chất & ngủ ngon nha!</div>
       </div>
       <div class="hero-mascot"><div class="mf-lift"></div></div>
     </div>`;
