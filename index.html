@@ -1258,14 +1258,13 @@ function renderHome(){
   }
   const startBtn=sess
     ?`<button class="btn" onclick="openSession(${sess.id})">${done?'🔁 Tập lại '+sess.name:'▶️ Vào tập '+sess.name}</button>`
-    :`<button class="btn rest-day" onclick="go('week')">📅 Xem lịch tuần</button>`;
+    :'';
   document.getElementById('v-home').innerHTML=`
     <div class="home-grid">
       <div class="hcol hcol-main">
         ${hero}
         ${streakCardHTML()}
         ${xpCardHTML()}
-        ${curPlan().levels?levelSeg('chooseLevelHome'):''}
         ${startBtn}
       </div>
       <div class="hcol hcol-side">
