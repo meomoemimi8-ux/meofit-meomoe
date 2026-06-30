@@ -141,6 +141,19 @@
   .tipbox b{color:var(--green-d)}
   .quiz-opt{text-align:left;width:100%;border:2px solid var(--border);background:var(--card);color:var(--ink);font-family:inherit;font-size:.86rem;font-weight:600;padding:11px 13px;border-radius:14px;cursor:var(--paw),pointer;transition:border-color .15s,background .15s}
   .quiz-opt.on{border-color:var(--green);background:var(--green-l);color:#1f5128;font-weight:800}
+  /* Lịch calo (kiểu MyFitnessPal) */
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cal-dow{text-align:center;font-size:.66rem;font-weight:800;color:var(--muted);padding:2px 0}
+  .cal-cell{aspect-ratio:1;border-radius:9px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+  .cal-cell.empty{background:transparent}
+  .cal-cell .cd{font-weight:700;color:var(--muted);font-size:.64rem;line-height:1}
+  .cal-cell .ck{font-weight:800;font-size:.58rem;color:var(--ink);line-height:1;margin-top:1px}
+  .cal-cell.good{background:rgba(63,163,77,.22)}.cal-cell.good .cd{color:var(--green-d)}
+  .cal-cell.over{background:rgba(255,107,107,.22)}.cal-cell.over .cd{color:var(--red)}
+  .cal-cell.low{background:rgba(255,169,77,.20)}
+  .cal-cell.today{outline:2px solid var(--green);outline-offset:-2px}
+  .cal-dot{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:3px}
+  .cal-dot.good{background:rgba(63,163,77,.5)}.cal-dot.over{background:rgba(255,107,107,.55)}.cal-dot.low{background:rgba(255,169,77,.5)}
   .ex .links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
@@ -539,7 +552,7 @@
   <button data-tab="home" class="active"><span class="i">🏠</span>Hôm nay</button>
   <button data-tab="week"><span class="i">📅</span>Lịch tuần</button>
   <button data-tab="sess"><span class="i">🏋️</span>Buổi tập</button>
-  <button data-tab="prog"><span class="i">📊</span>Tiến độ</button>
+  <button data-tab="prog"><span class="i">🍎</span>Calo</button>
   <button data-tab="prof"><span class="i">👤</span>Cá nhân</button>
 </nav>
 
@@ -1009,7 +1022,7 @@ function saveCustomSession(){
   if(getLevel) setLevel(1);
   _justSaved=name; _sessMode='plans'; renderSessList(); renderHome(); window.scrollTo(0,0);
 }
-function delCustomSession(id){ if(!confirm('Xoá buổi tự xây này?')) return; saveCustomSessions(loadCustomSessions().filter(s=>s.id!==id)); refreshCustomPlan(); renderSessList(); }
+function delCustomSession(id){ if(!confirm('Xoá buổi tự xây này?')) return; addTomb('meofit_customsessions',id); saveCustomSessions(loadCustomSessions().filter(s=>s.id!==id)); refreshCustomPlan(); renderSessList(); }
 
 const ROPE_NOTE = `🪢 <b>Nhảy dây (Thứ 3 & Thứ 6):</b> mỗi buổi <b>5 hiệp × 100 cái</b>. <b>BẮT BUỘC khởi động kỹ</b> trước khi nhảy — nếu không dễ to bắp chuối, hại khớp gối, phản tác dụng. Người mới sức yếu: nhảy nhanh & nhiều cái nhất có thể rồi nghỉ vài giây, tập đều đặn cơ thể sẽ khỏe dần lên.`;
 
@@ -1046,7 +1059,7 @@ function strengthChartHTML(){
   const first=pts[0].weight, last=pts[pts.length-1].weight, diff=last-first;
   return `<h2 class="sec-title" style="margin-top:6px">💪 Sức mạnh theo bài</h2>
     <div class="card">
-      <select onchange="_strEx=this.value;renderProgress()" style="width:100%;margin-bottom:8px">${names.map(n=>`<option ${n===sel?'selected':''}>${n}</option>`).join('')}</select>
+      <select onchange="_strEx=this.value;_woOpen=true;renderSessList()" style="width:100%;margin-bottom:8px">${names.map(n=>`<option ${n===sel?'selected':''}>${n}</option>`).join('')}</select>
       ${pts.length>1?sparkline(pts):'<div style="font-size:.82rem;color:var(--muted);text-align:center;padding:8px">Cần ≥2 lần ghi để vẽ biểu đồ.</div>'}
       <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:4px">${useKg?'Sức mạnh ước tính (~1RM, kg)':'Số lần/hiệp'} · ${series.length} lần ghi · ${diff>=0?'+':''}${diff} so với đầu ${diff>0?'📈':(diff<0?'📉':'')}</div>
     </div>`;
@@ -1333,7 +1346,8 @@ function renderSessList(){
     ${pl.levels?levelSeg('chooseLevelList'):''}
     ${cards}
     <details class="plan-switch"><summary>🔄 Đổi lộ trình / gói tập</summary>${planPickerHTML()}</details>
-    <div class="note-box">📺 Nên kết hợp <b>PLAN + xem video</b> để tập chuẩn kỹ thuật, hiệu quả cao & tránh chấn thương nhé!</div>`;
+    <div class="note-box">📺 Nên kết hợp <b>PLAN + xem video</b> để tập chuẩn kỹ thuật, hiệu quả cao & tránh chấn thương nhé!</div>
+    ${workoutProgressHTML()}`;
 }
 /* ============ BUILDER — Tự xây bài tập ============ */
 function setBuildGoal(g){ _buildGoal=g; renderBuilder(); }
@@ -1552,11 +1566,48 @@ function corePrinciplesHTML(){
       <b>7. Kỹ thuật chuẩn</b> — xem video, đúng form trước khi tăng tải.
     </div></details>`;
 }
+// Tab Calo — chỉ theo dõi ăn uống (lịch sử tập đã chuyển sang tab Buổi tập)
 function renderProgress(){
+  document.getElementById('v-prog').innerHTML=`
+    <h2 class="sec-title">🍎 Calo & Dinh dưỡng</h2>
+    ${caloCardHTML()}
+    ${caloCalendarHTML()}
+    ${fastReportHTML()}`;
+}
+// Lịch calo nạp hàng ngày (tháng hiện tại) — kiểu MyFitnessPal
+function caloCalendarHTML(){
+  const target=getTargetKcal();
+  const byDay={}; loadFood().forEach(e=>{ byDay[e.date]=(byDay[e.date]||0)+(e.kcal||0); });
+  const now=new Date(), y=now.getFullYear(), mo=now.getMonth();
+  const startDow=new Date(y,mo,1).getDay(), daysInMonth=new Date(y,mo+1,0).getDate();
+  const dows=['CN','T2','T3','T4','T5','T6','T7'], todayD=todayStr();
+  let cells='';
+  for(let i=0;i<startDow;i++) cells+='<div class="cal-cell empty"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const ds=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'), kc=byDay[ds]||0;
+    let cls='cal-cell';
+    if(kc>0) cls+= target ? (kc/target>1.1?' over':(kc/target>=0.6?' good':' low')) : ' good';
+    if(ds===todayD) cls+=' today';
+    cells+=`<div class="${cls}"><span class="cd">${d}</span>${kc>0?`<span class="ck">${kc}</span>`:''}</div>`;
+  }
+  const pre=y+'-'+String(mo+1).padStart(2,'0'), logged=Object.keys(byDay).filter(dd=>dd.indexOf(pre)===0);
+  const avg=logged.length?Math.round(logged.reduce((a,dd)=>a+byDay[dd],0)/logged.length):0;
+  return `<div class="card" style="margin-top:12px">
+    <h2 class="sec-title" style="margin:0 0 8px">📅 Lịch calo tháng ${mo+1}</h2>
+    <div class="cal-grid">${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}</div>
+    <div class="cal-grid" style="margin-top:4px">${cells}</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);font-weight:700;margin-top:10px">
+      <span><i class="cal-dot good"></i>đúng/đủ</span><span><i class="cal-dot over"></i>vượt</span><span><i class="cal-dot low"></i>hơi ít</span></div>
+    <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:8px">📊 Đã ghi <b style="color:var(--green-d)">${logged.length}</b> ngày tháng này · trung bình ~<b>${avg}</b> kcal/ngày${target?` (mục tiêu ${target})`:''} 🐾</div>
+  </div>`;
+}
+// Theo dõi tập — hiện trong tab Buổi tập (gập lại cho gọn)
+let _woOpen=false;
+function workoutProgressHTML(){
   const h=loadHist(), streak=calcStreak(), total=h.length;
   const weekAgo=Date.now()-7*864e5, wkCount=h.filter(e=>e.ts>=weekAgo).length;
   let list;
-  if(!h.length){ list=`<div class="empty"><div style="width:120px;height:120px;margin:0 auto 6px">${mfBun(true)}</div>Chưa có buổi tập nào.<br>Bắt đầu buổi đầu tiên thôi nào!</div>`; }
+  if(!h.length){ list='<div class="empty" style="padding:14px">Chưa có buổi tập nào — bắt đầu buổi đầu tiên nha! 🐾</div>'; }
   else{
     list=h.slice(0,40).map(e=>{
       const s=sessById(e.sid), d=new Date(e.ts);
@@ -1567,23 +1618,22 @@ function renderProgress(){
         <span style="font-size:1.05rem">✅</span><button class="hist-del" onclick="delHist(${e.ts})" title="Xoá">✕</button></div>`;
     }).join('');
   }
-  document.getElementById('v-prog').innerHTML=`
-    <h2 class="sec-title">📊 Tiến độ của tớ</h2>
-    <div class="stats">
-      <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">Chuỗi ngày</div></div>
-      <div class="stat"><div class="num">📆 ${wkCount}</div><div class="lbl">Tuần này</div></div>
-      <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng cộng</div></div></div>
-    ${overloadCard()}
-    ${strengthChartHTML()}
-    ${caloCardHTML()}
-    ${fastReportHTML()}
-    <h2 class="sec-title">🗓️ Lịch sử tập</h2>
-    ${list}
-    ${h.length?`<button class="btn sec" style="margin-top:6px" onclick="clearHist()">🗑️ Xoá lịch sử</button>`:''}
-    ${corePrinciplesHTML()}`;
+  return `<details class="lib-grp" style="margin-top:16px;border-left:5px solid var(--green-d)"${_woOpen?' open':''}><summary onclick="_woOpen=!_woOpen" style="cursor:var(--paw),pointer;font-weight:800;color:var(--green-d);padding:11px 14px">📈 Tiến độ tập của tớ</summary>
+    <div style="padding:4px 12px 12px">
+      <div class="stats">
+        <div class="stat"><div class="num">🔥 ${streak}</div><div class="lbl">Chuỗi (lịch)</div></div>
+        <div class="stat"><div class="num">📆 ${wkCount}</div><div class="lbl">Tuần này</div></div>
+        <div class="stat"><div class="num">💪 ${total}</div><div class="lbl">Tổng buổi</div></div></div>
+      ${overloadCard()}
+      ${strengthChartHTML()}
+      <h2 class="sec-title">🗓️ Lịch sử tập</h2>
+      ${list}
+      ${h.length?`<button class="btn sec" style="margin-top:6px" onclick="clearHist()">🗑️ Xoá lịch sử</button>`:''}
+      ${corePrinciplesHTML()}
+    </div></details>`;
 }
-function clearHist(){ if(confirm('Xoá toàn bộ lịch sử tập?')){ saveHist([]); renderProgress(); } }
-function delHist(ts){ if(confirm('Xoá buổi tập này?')){ saveHist(loadHist().filter(e=>e.ts!==ts)); renderProgress(); } }
+function clearHist(){ if(confirm('Xoá toàn bộ lịch sử tập?')){ loadHist().forEach(e=>addTomb('meofit_history_v1',e.ts)); saveHist([]); renderSessList(); } }
+function delHist(ts){ if(confirm('Xoá buổi tập này?')){ addTomb('meofit_history_v1',ts); saveHist(loadHist().filter(e=>e.ts!==ts)); renderSessList(); } }
 
 /* ============ HỒ SƠ & CHỈ SỐ (Phase 1) ============ */
 function loadProfile(){ try{ return JSON.parse(localStorage.getItem('meofit_profile'))||{} }catch(e){ return {} } }
@@ -1832,7 +1882,7 @@ function googleLogout(){ if(_fbAuth){ try{ _fbAuth.signOut(); }catch(e){} } save
 /* ====== Đồng bộ tiến độ qua Firestore (điện thoại ↔ máy tính) ====== */
 const _fbStore={db:null};
 // Các "ngăn" dữ liệu sẽ đồng bộ (KHÔNG sync meofit_user)
-const SYNC_KEYS=['meofit_profile','meofit_weightlog','meofit_fastlog','meofit_food','meofit_myfoods','meofit_history_v1','meofit_customsessions','meofit_if','meofit_plan','meofit_level','meofit_strength','meo:theme','meofit_snd','meofit_voice','meofit_slow','meofit_pace','meofit_exdone'];
+const SYNC_KEYS=['meofit_profile','meofit_weightlog','meofit_fastlog','meofit_food','meofit_myfoods','meofit_history_v1','meofit_customsessions','meofit_if','meofit_plan','meofit_level','meofit_strength','meo:theme','meofit_snd','meofit_voice','meofit_slow','meofit_pace','meofit_exdone','meofit_tomb'];
 // Log dạng mảng → gộp (union) theo khoá, không mất dữ liệu
 const LOG_KEYS={meofit_weightlog:'ts',meofit_fastlog:'ts',meofit_food:'ts',meofit_history_v1:'ts',meofit_myfoods:'name',meofit_customsessions:'id'};
 let _applyingCloud=false,_pushTimer=null;
@@ -1847,11 +1897,18 @@ function cloudPush(){ const u=_fbAuth&&_fbAuth.currentUser; if(!u||!_fbStore.db)
   _fbStore.db.collection('users').doc(u.uid).set(data,{merge:true})
     .then(()=>{ try{ localStorage.setItem('meofit_sync_ts',''+data.updatedAt); }catch(e){} })
     .catch(e=>console.warn('Đẩy tiến độ lỗi',e)); }
-function mergeArr(localStr,cloudStr,idField){ let a=[],b=[];
+// Tombstone: ghi nhớ mục đã xoá để đồng bộ không kéo lại (sửa lỗi "xoá rồi hiện lại")
+function loadTomb(){ try{ return JSON.parse(localStorage.getItem('meofit_tomb'))||[] }catch(e){ return [] } }
+function saveTomb(a){ try{ localStorage.setItem('meofit_tomb', JSON.stringify(a)); }catch(e){} }
+function addTomb(key,id){ const a=loadTomb(), s=key+':'+id; if(!a.includes(s)){ a.push(s); saveTomb(a); } }
+function tombSetFor(key){ const pre=key+':', s=new Set(); loadTomb().forEach(x=>{ if(x.indexOf(pre)===0) s.add(x.slice(pre.length)); }); return s; }
+function mergeArr(localStr,cloudStr,idField,tomb){ let a=[],b=[];
   try{a=JSON.parse(localStr)||[]}catch(e){} try{b=JSON.parse(cloudStr)||[]}catch(e){}
   if(!Array.isArray(a))a=[]; if(!Array.isArray(b))b=[];
   const seen=new Set(),out=[];
-  a.concat(b).forEach(it=>{ const key=(it&&idField&&it[idField]!=null)?String(it[idField]):JSON.stringify(it); if(seen.has(key))return; seen.add(key); out.push(it); });
+  a.concat(b).forEach(it=>{ const key=(it&&idField&&it[idField]!=null)?String(it[idField]):JSON.stringify(it); if(seen.has(key))return; seen.add(key);
+    if(tomb && idField && it && it[idField]!=null && tomb.has(String(it[idField]))) return; // đã xoá → bỏ
+    out.push(it); });
   return JSON.stringify(out); }
 function cloudSync(){ const u=_fbAuth&&_fbAuth.currentUser; if(!u||!_fbStore.db) return;
   _fbStore.db.collection('users').doc(u.uid).get().then(snap=>{
@@ -1859,10 +1916,15 @@ function cloudSync(){ const u=_fbAuth&&_fbAuth.currentUser; if(!u||!_fbStore.db)
     const localTs=parseInt(localStorage.getItem('meofit_sync_ts'))||0;
     const cloudNewer=(cloud.updatedAt||0)>localTs;
     _applyingCloud=true;
-    try{ SYNC_KEYS.forEach(k=>{ const cv=cloud[k]; const cvStr=(cv==null)?null:(typeof cv==='string'?cv:JSON.stringify(cv));
-      if(LOG_KEYS[k]){ localStorage.setItem(k, mergeArr(localStorage.getItem(k), cvStr||'[]', LOG_KEYS[k])); }
-      else if(cloudNewer && cvStr!=null && cvStr!==''){ localStorage.setItem(k, cvStr); }
-    }); }finally{ _applyingCloud=false; }
+    try{
+      // Gộp danh sách "đã xoá" trước (union) để lọc các log key
+      const tc=cloud['meofit_tomb']; const tcStr=(tc==null)?'[]':(typeof tc==='string'?tc:JSON.stringify(tc));
+      localStorage.setItem('meofit_tomb', mergeArr(localStorage.getItem('meofit_tomb')||'[]', tcStr, null));
+      SYNC_KEYS.forEach(k=>{ if(k==='meofit_tomb') return; const cv=cloud[k]; const cvStr=(cv==null)?null:(typeof cv==='string'?cv:JSON.stringify(cv));
+        if(LOG_KEYS[k]){ localStorage.setItem(k, mergeArr(localStorage.getItem(k), cvStr||'[]', LOG_KEYS[k], tombSetFor(k))); }
+        else if(cloudNewer && cvStr!=null && cvStr!==''){ localStorage.setItem(k, cvStr); }
+      });
+    }finally{ _applyingCloud=false; }
     try{ initTheme(); refreshCustomPlan(); }catch(e){}
     afterAuthRefresh();
     try{ const sv=document.querySelector('.view.show'); if(sv&&sv.id==='v-home') renderHome(); else if(sv&&sv.id==='v-prog') renderProgress(); }catch(e){}
@@ -2001,11 +2063,19 @@ function profileMacroRatio(){ const p=loadProfile(); return (MACRO_PRESETS[p.mac
 function loadMyFoods(){ try{ return JSON.parse(localStorage.getItem('meofit_myfoods'))||[] }catch(e){ return [] } }
 function saveMyFoods(a){ try{ localStorage.setItem('meofit_myfoods', JSON.stringify(a)); }catch(e){} }
 let _pendingPhoto='', _sel=null, _fpTab=0, _fpReg='vn';
-function addFood(name,kcal,p,c,f,photo){ kcal=+kcal; if(!kcal&&!(+p||+c||+f)) return;
-  const fd=loadFood(); fd.push({date:todayStr(),ts:Date.now(),name:name||'Bữa ăn',kcal:Math.round(kcal),p:Math.round(+p||0),c:Math.round(+c||0),f:Math.round(+f||0),photo:photo||''});
+function addFood(name,kcal,p,c,f,photo,extra){ kcal=+kcal; if(!kcal&&!(+p||+c||+f)) return;
+  const fd=loadFood(); fd.push(Object.assign({date:todayStr(),ts:Date.now(),name:name||'Bữa ăn',kcal:Math.round(kcal),p:Math.round(+p||0),c:Math.round(+c||0),f:Math.round(+f||0),photo:photo||''}, extra||{}));
   saveFood(fd); _pendingPhoto=''; renderProgress(); }
+// Khớp tên món AI với CSDL FOODS để gắn tag vùng (nếu có); không khớp thì coi như tự nhập
+function matchFoodTag(dish){
+  const d=(dish||'').toLowerCase().trim(); if(d.length<3) return '';
+  for(const c of FOODS){ for(const it of c.items){
+    const nm=String(it[0]).toLowerCase().replace(/\(.*?\)|\/100g/g,'').trim();
+    if(nm.length>=4 && (d.includes(nm)||nm.includes(d))) return (FP_REGIONS.find(r=>r[0]===c.r)||[])[1]||'';
+  }} return '';
+}
 function addQuick(name,kcal){ const g=macroGrams(kcal,[20,50,30]); addFood(name,kcal,g.p,g.c,g.f,''); }
-function delFood(ts){ saveFood(loadFood().filter(e=>e.ts!==ts)); renderProgress(); }
+function delFood(ts){ addTomb('meofit_food',ts); saveFood(loadFood().filter(e=>e.ts!==ts)); renderProgress(); }
 function todayMacros(){ const t=todayStr(); return loadFood().filter(e=>e.date===t).reduce((s,e)=>({p:s.p+(e.p||0),c:s.c+(e.c||0),f:s.f+(e.f||0)}),{p:0,c:0,f:0}); }
 function macroBar(lbl,cur,tot,col){ const pct=tot?Math.min(100,cur/tot*100):0; return `<div class="macro-row"><span class="ml">${lbl}</span><span class="macro-bar"><i style="width:${pct}%;background:${col}"></i></span><span class="mv">${cur}/${tot}g</span></div>`; }
 // Tự nhập món: nhập kcal & macro theo 100g (đọc từ nhãn) + số gram → tính tổng; lưu "Món của tôi"
@@ -2043,7 +2113,7 @@ function confirmSel(){
   addFood(nm,kcal,P,C,F,''); const t=document.getElementById('fp-total'); if(t) t.textContent=todayKcalIn();
   const ap=document.getElementById('fp-amount'); if(ap){ ap.style.display='none'; ap.innerHTML=''; } _sel=null;
 }
-function delMyFood(i){ const m=loadMyFoods(); m.splice(i,1); saveMyFoods(m); renderFoodList(pv('fp-search')); }
+function delMyFood(i){ const m=loadMyFoods(); if(m[i]) addTomb('meofit_myfoods',m[i].name); m.splice(i,1); saveMyFoods(m); renderFoodList(pv('fp-search')); }
 function onFoodPhoto(input){
   const file=input.files&&input.files[0]; if(!file) return;
   const rd=new FileReader();
@@ -2111,7 +2181,7 @@ function showAiResult(){
 }
 function saveAiMeal(){
   const m=_aiMeal; if(!m) return;
-  addFood(m.dish, +pv('ai-kcal')||0, +pv('ai-p')||0, +pv('ai-c')||0, +pv('ai-f')||0, m.photo);
+  addFood(m.dish, +pv('ai-kcal')||0, +pv('ai-p')||0, +pv('ai-c')||0, +pv('ai-f')||0, m.photo, {src:'ai', tag:matchFoodTag(m.dish)});
   _aiMeal=null;
   aiSheet(`<div class="guide-h">✅ Đã ghi vào nhật ký!</div>
     <div class="note-box">Tuyệt vời 🐾 Mèo đã cộng vào calo hôm nay rồi. Nhớ ăn thêm rau xanh & uống đủ nước cho đủ chất nha!</div>
@@ -2199,7 +2269,7 @@ function caloCardHTML(){
   const presets=[['Cơm 1 chén',180],['Phở/Bún',430],['Bánh mì',400],['Trứng',78],['Ức gà 100g',165],['Chuối',90],['Sữa chua',105],['Trà sữa',350]];
   const chips=presets.map(p=>`<button class="food-chip" onclick="addQuick('${p[0]}',${p[1]})">${p[0]} +${p[1]}</button>`).join('');
   const food=loadFood().filter(e=>e.date===todayStr()).sort((a,b)=>b.ts-a.ts);
-  const foodList=food.length?food.map(e=>`<div class="food-row">${e.photo?`<img src="${e.photo}" class="food-thumb" alt="">`:''}<span>${e.name}${(e.p||e.c||e.f)?`<br><small style="color:var(--muted)">Đ ${e.p||0} · C ${e.c||0} · B ${e.f||0} g</small>`:''}</span><b>${e.kcal} kcal</b><button onclick="delFood(${e.ts})">✕</button></div>`).join(''):'<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:6px">Chưa nạp gì hôm nay</div>';
+  const foodList=food.length?food.map(e=>`<div class="food-row">${e.photo?`<img src="${e.photo}" class="food-thumb" alt="">`:''}<span>${e.name}${e.src==='ai'?' <span style="font-size:.6rem;background:var(--purple);color:#fff;padding:1px 5px;border-radius:8px;vertical-align:middle">📸 AI</span>':''}${e.tag?` <span style="font-size:.62rem;color:var(--muted)">${e.tag}</span>`:''}${(e.p||e.c||e.f)?`<br><small style="color:var(--muted)">Đ ${e.p||0} · C ${e.c||0} · B ${e.f||0} g</small>`:''}</span><b>${e.kcal} kcal</b><button onclick="delFood(${e.ts})">✕</button></div>`).join(''):'<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:6px">Chưa nạp gì hôm nay</div>';
   const remain = target!=null ? (target-inn+out) : null;
   const tm = target!=null? macroGrams(target, profileMacroRatio()) : null;
   const dm = todayMacros();
@@ -2258,7 +2328,7 @@ function stopFast(){
   if(o.start){ const hrs=(Date.now()-o.start)/3600000; const lg=loadFastLog(); lg.unshift({date:todayStr(),ts:Date.now(),hours:Math.round(hrs*10)/10,proto:o.proto,reached:hrs>=o.proto}); saveFastLog(lg.slice(0,120)); }
   o.start=null; saveIF(o); renderHome();
 }
-function delFastLog(ts){ saveFastLog(loadFastLog().filter(e=>e.ts!==ts)); renderProgress(); }
+function delFastLog(ts){ addTomb('meofit_fastlog',ts); saveFastLog(loadFastLog().filter(e=>e.ts!==ts)); renderProgress(); }
 function fastReportHTML(){
   const lg=loadFastLog(), o=loadIF();
   const longest=lg.reduce((m,x)=>Math.max(m,x.hours||0),0);
