@@ -2056,10 +2056,74 @@ function onFoodPhoto(input){
   }; img.src=rd.result; };
   rd.readAsDataURL(file);
 }
+
+/* ===== 🐱📸 Mèo Dinh Dưỡng AI — soi ảnh món ăn → calo + macro ===== */
+const NUTRI_PROXY_URL='https://meofit-nutri-ai.meomoemimi8.workers.dev';
+let _aiMeal=null;
+function aiSheet(inner){ const sh=document.getElementById('foodSheet'); sh.innerHTML=`<div class="guide-card">${inner}</div>`; sh.classList.add('show'); }
+function aiPhotoBtn(label){ return `<label class="btn${label.sec?' sec':''}" style="cursor:var(--paw),pointer${label.mt?';margin-top:8px':''}">${label.txt}<input type="file" accept="image/*" capture="environment" onchange="onAiPhoto(this)" hidden></label>`; }
+function onAiPhoto(input){
+  const file=input.files&&input.files[0]; if(!file){ return; }
+  const rd=new FileReader();
+  rd.onload=()=>{ const img=new Image(); img.onload=()=>{
+    const mk=(max,q)=>{ const sc=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc); c.getContext('2d').drawImage(img,0,0,c.width,c.height); return c.toDataURL('image/jpeg',q); };
+    analyzeMeal(mk(640,0.72), mk(200,0.5)); // big để AI soi · thumb để lưu
+  }; img.src=rd.result; };
+  rd.readAsDataURL(file); input.value='';
+}
+async function analyzeMeal(big, thumb){
+  aiSheet(`<div class="guide-h">🐱 Mèo đang soi đĩa ăn…</div>
+    <div style="text-align:center;padding:16px 0"><img src="${thumb}" style="width:120px;height:120px;object-fit:cover;border-radius:16px;box-shadow:var(--shadow)">
+    <div style="margin-top:12px;color:var(--muted);font-weight:700">Đang ước lượng calo & dinh dưỡng… 🐾</div></div>`);
+  try{
+    const r=await fetch(NUTRI_PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:big,mime:'image/jpeg'})});
+    const j=await r.json().catch(()=>null);
+    if(!j || j.ok===false){ aiError((j&&j.reason)||'Mèo chưa nhận ra món, thử ảnh rõ & gần hơn nha 🐾'); return; }
+    _aiMeal={dish:j.dish||'Bữa ăn',kcal:Math.round(j.kcal||0),p:Math.round(j.p||0),c:Math.round(j.c||0),f:Math.round(j.f||0),items:j.items||[],confidence:j.confidence||'',note:j.note||'',photo:thumb};
+    showAiResult();
+  }catch(e){ aiError('Mèo hơi đói pin (mạng yếu hoặc hết lượt free). Thử lại sau chút nha 🐾'); }
+}
+function aiError(msg){
+  aiSheet(`<div class="guide-h">😿 Chưa soi được</div><div class="note-box">${msg}</div>
+    ${aiPhotoBtn({txt:'📸 Chụp/Chọn ảnh khác'})}
+    <button class="btn sec" style="margin-top:8px" onclick="openFoodPicker()">‹ Quay lại chọn món</button>`);
+}
+function showAiResult(){
+  const m=_aiMeal; if(!m) return;
+  const items=(m.items&&m.items.length>1)?`<div style="font-size:.78rem;color:var(--muted);margin:2px 0 8px">🍱 Gồm: ${m.items.map(x=>x.name).filter(Boolean).join(' · ')}</div>`:'';
+  const conf={cao:'🟢 khá chắc',['vừa']:'🟡 tạm ổn',['thấp']:'🟠 hơi mơ hồ'}[m.confidence]||'';
+  aiSheet(`<div class="guide-h">🍽️ Mèo đoán món này</div>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px">
+      <img src="${m.photo}" style="width:64px;height:64px;object-fit:cover;border-radius:14px;flex:none">
+      <div style="min-width:0"><div style="font-weight:900;font-size:1.05rem;line-height:1.2">${m.dish}</div><div style="font-size:.74rem;color:var(--muted)">${conf}${m.note?' · '+m.note:''}</div></div>
+    </div>
+    ${items}
+    <div style="font-size:.76rem;color:var(--muted);margin-bottom:6px">✏️ Mèo chỉ <b>ước lượng</b> — cưng chỉnh lại cho đúng nếu cần nha:</div>
+    <div class="frow">
+      <div class="field" style="margin:0;flex:1.1"><label>kcal</label><input id="ai-kcal" type="number" inputmode="numeric" value="${m.kcal}"></div>
+      <div class="field" style="margin:0;flex:1"><label>Đạm g</label><input id="ai-p" type="number" inputmode="decimal" value="${m.p}"></div>
+      <div class="field" style="margin:0;flex:1"><label>Carb g</label><input id="ai-c" type="number" inputmode="decimal" value="${m.c}"></div>
+      <div class="field" style="margin:0;flex:1"><label>Béo g</label><input id="ai-f" type="number" inputmode="decimal" value="${m.f}"></div>
+    </div>
+    <button class="btn" style="margin-top:10px" onclick="saveAiMeal()">✓ Ghi vào nhật ký calo</button>
+    ${aiPhotoBtn({txt:'📸 Soi ảnh khác',sec:true,mt:true})}
+    <button class="btn sec" style="margin-top:8px" onclick="openFoodPicker()">‹ Quay lại chọn món</button>`);
+}
+function saveAiMeal(){
+  const m=_aiMeal; if(!m) return;
+  addFood(m.dish, +pv('ai-kcal')||0, +pv('ai-p')||0, +pv('ai-c')||0, +pv('ai-f')||0, m.photo);
+  _aiMeal=null;
+  aiSheet(`<div class="guide-h">✅ Đã ghi vào nhật ký!</div>
+    <div class="note-box">Tuyệt vời 🐾 Mèo đã cộng vào calo hôm nay rồi. Nhớ ăn thêm rau xanh & uống đủ nước cho đủ chất nha!</div>
+    ${aiPhotoBtn({txt:'📸 Soi món khác'})}
+    <button class="btn sec" style="margin-top:8px" onclick="closeFoodPicker();go('prog',false)">📊 Xem calo hôm nay</button>`);
+}
 function openFoodPicker(){
   const sh=document.getElementById('foodSheet');
   sh.innerHTML=`<div class="guide-card">
     <div class="guide-h">🍱 Chọn món ăn <span style="float:right;font-size:.8rem;color:var(--green-d)">Hôm nay <span id="fp-total">${todayKcalIn()}</span> kcal</span></div>
+    <label class="btn" style="cursor:var(--paw),pointer;background:linear-gradient(135deg,#b197fc,#9775fa);box-shadow:0 6px 14px rgba(151,117,250,.35);margin:8px 0 2px">📸 Soi ảnh món ăn — Mèo AI đoán calo<input type="file" accept="image/*" capture="environment" onchange="onAiPhoto(this)" hidden></label>
+    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:8px">Chụp/chọn ảnh phần ăn, Mèo ước lượng calo & macro giúp cưng 🐱</div>
     <input id="fp-search" placeholder="🔍 Tìm món…" oninput="renderFoodList(this.value)" style="width:100%;box-sizing:border-box;border:2px solid var(--border);border-radius:14px;padding:10px 13px;font-size:1rem;font-family:inherit;margin:8px 0 8px;background:var(--card);color:var(--ink)">
     <div id="fp-regions"></div>
     <div id="fp-tabs"></div>
@@ -2106,6 +2170,30 @@ function renderFoodList(q){
   el.innerHTML=`<div class="fp-cat">${c.cat}</div>`+c.items.map(x=>bi(x[0],x[1],ci)).join('');
 }
 function manualPrev(){ const el=document.getElementById('food-prev'); if(!el) return; const k=+pv('food-kcal')||0,g=+pv('food-gram')||0; el.textContent=(k&&g)?`≈ ${Math.round(k*g/100)} kcal tổng (cho ${g}g)`:''; }
+// Gợi ý cuối ngày — tính tại chỗ theo mục tiêu hồ sơ, giọng Mèo ấm áp
+function eodAdviceHTML(){
+  const target=getTargetKcal(); if(target==null) return '';
+  const inn=todayKcalIn(); if(inn<=0) return '';
+  const out=todayKcalOut(), remain=target-inn+out;
+  const tm=macroGrams(target, profileMacroRatio()), dm=todayMacros();
+  const gP=tm.p-dm.p, gC=tm.c-dm.c, gF=tm.f-dm.f;
+  let msg, tips=[];
+  if(remain>120){
+    if(gP>=15) tips.push('🍗 thêm <b>đạm</b>: ức gà, trứng, cá, đậu hũ, sữa chua Hy Lạp');
+    if(gC>=40) tips.push('🍚 thêm <b>tinh bột tốt</b>: cơm gạo lứt, khoai, yến mạch, trái cây');
+    if(gF>=12) tips.push('🥑 chút <b>béo lành</b>: bơ, các loại hạt, dầu ô liu');
+    if(!tips.length) tips.push('🥗 ưu tiên rau xanh + chút đạm cho nhẹ bụng nha');
+    msg=`Cuối ngày cậu còn khoảng <b>${remain} kcal</b> nữa nè 🐾 Mèo gợi ý:`;
+  } else if(remain>=-150){
+    msg='Cậu đã nạp <b>khá đủ</b> năng lượng hôm nay rồi 🎉';
+    tips.push('🥗 bữa còn lại ăn nhẹ, nhiều rau xanh & uống đủ nước nha');
+  } else {
+    msg=`Hôm nay hơi <b>quá tay</b> một chút (~${Math.abs(remain)} kcal) — không sao đâu 🐾`;
+    tips.push('🚶 đi bộ nhẹ sau ăn, mai mình cân bằng lại, đừng lo nha');
+  }
+  return `<div class="note-box" style="margin-top:12px;background:var(--surface-2);border-left-color:var(--purple);color:var(--ink)">
+    🐱 <b>Mèo nhắc cuối ngày:</b> ${msg}<ul style="margin:6px 0 0;padding-left:18px;line-height:1.7">${tips.map(t=>`<li>${t}</li>`).join('')}</ul></div>`;
+}
 function caloCardHTML(){
   const inn=todayKcalIn(), out=todayKcalOut(), target=getTargetKcal();
   const presets=[['Cơm 1 chén',180],['Phở/Bún',430],['Bánh mì',400],['Trứng',78],['Ức gà 100g',165],['Chuối',90],['Sữa chua',105],['Trà sữa',350]];
@@ -2129,7 +2217,8 @@ function caloCardHTML(){
       ? `<div class="metric" style="background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;padding:13px"><div style="font-size:.82rem;opacity:.95">Mục tiêu ${target} kcal/ngày · ${remain>=0?'còn có thể nạp':'đã vượt'}</div><div class="big" style="color:#fff;font-size:1.7rem">${Math.abs(remain)} kcal</div></div>`
       : `<div class="note-box">Vào tab 👤 <b>Cá nhân</b> nhập hồ sơ để có <b>mục tiêu calo & macro</b> nhé!</div>`}
     ${bars}
-    <button class="btn sec" onclick="openFoodPicker()" style="margin:12px 0 8px">🍱 Chọn món ăn (Việt + quốc tế)</button>
+    ${eodAdviceHTML()}
+    <button class="btn" onclick="openFoodPicker()" style="margin:12px 0 8px;background:linear-gradient(135deg,#b197fc,#9775fa)">📸 Soi ảnh / 🍱 Chọn món ăn</button>
     <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:6px 2px 6px">⚡ Thêm nhanh:</div>
     <div class="food-chips">${chips}</div>
     <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">✏️ Tự nhập (theo 100g · gõ từ nhãn dinh dưỡng nếu có):</div>
