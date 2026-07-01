@@ -144,36 +144,20 @@
   /* Lịch calo (kiểu MyFitnessPal) — cute & gọn */
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
   .cal-dow{text-align:center;font-size:.64rem;font-weight:800;color:var(--muted);padding:1px 0}
-  .cal-cell{min-height:42px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:3px 1px}
+  .cal-cell{min-height:48px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:3px 1px}
   .cal-cell.empty{background:transparent}
-  .cal-cell .cd{font-weight:800;color:var(--muted);font-size:.68rem;line-height:1.05}
-  .cal-cell .ck{font-weight:800;font-size:.56rem;color:var(--ink);opacity:.85;line-height:1;margin-top:2px}
-  .cal-cell .cwo{position:absolute;top:1px;right:2px;font-size:.52rem;line-height:1}
+  .cal-cell .cd{font-weight:800;color:var(--muted);font-size:.7rem;line-height:1.05}
+  .cal-cell .ck{font-weight:800;font-size:.56rem;color:var(--ink);opacity:.8;line-height:1;margin-top:1px}
+  .cal-cell .cwo{margin-top:2px;font-size:.82rem;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.12))}
   .cal-cell.good{background:rgba(63,163,77,.20)}.cal-cell.good .cd{color:var(--green-d)}
   .cal-cell.over{background:rgba(255,143,90,.22)}.cal-cell.over .cd{color:#e8722e}
   .cal-cell.low{background:rgba(255,212,59,.28)}.cal-cell.low .cd{color:#b8860b}
   .cal-cell.today{box-shadow:inset 0 0 0 2.5px var(--green)}
   .cal-dot{display:inline-block;width:11px;height:11px;border-radius:4px;vertical-align:middle;margin-right:3px}
   .cal-dot.good{background:rgba(63,163,77,.55)}.cal-dot.over{background:rgba(255,143,90,.6)}.cal-dot.low{background:rgba(255,212,59,.75)}
-  /* Nút SOI ẢNH AI hình chân mèo — tính năng nổi bật */
-  .paw-cta{display:flex;align-items:center;gap:15px;width:100%;border:none;border-radius:22px;padding:15px 18px;margin:14px 0 8px;background:linear-gradient(135deg,#b98cff,#8a5cf0);color:#fff;box-shadow:0 10px 24px rgba(138,92,240,.42);cursor:var(--paw),pointer;font-family:inherit;text-align:left;animation:pawGlow 2.6s ease-in-out infinite;position:relative;overflow:hidden}
-  .paw-cta:active{transform:scale(.98)}
-  @keyframes pawGlow{0%,100%{box-shadow:0 10px 24px rgba(138,92,240,.42)}50%{box-shadow:0 12px 34px rgba(138,92,240,.72)}}
-  .paw-cta .paw-txt{font-weight:900;font-size:1.08rem;line-height:1.2;z-index:1}
-  .paw-cta .paw-txt small{display:block;font-weight:700;font-size:.72rem;opacity:.92;margin-top:2px}
-  .paw-cta .spark{position:absolute;top:8px;right:14px;font-size:1rem;animation:mfSpark 1.8s ease-in-out infinite}
-  /* hình bàn chân mèo (đế + 4 ngón) vẽ bằng CSS */
-  .paw{position:relative;width:48px;height:46px;flex:none}
-  .paw .pad{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:28px;height:23px;background:#fff;border-radius:50% 50% 47% 47%}
-  .paw .toe{position:absolute;width:12px;height:14px;background:#fff;border-radius:52%}
-  .paw .toe.a{top:8px;left:2px;transform:rotate(-18deg)}
-  .paw .toe.b{top:0;left:13px}
-  .paw .toe.c{top:0;right:13px}
-  .paw .toe.d{top:8px;right:2px;transform:rotate(18deg)}
-  .paw-mini{position:relative;display:inline-block;width:20px;height:19px;vertical-align:middle}
-  .paw-mini .pad{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:12px;height:10px;background:currentColor;border-radius:50% 50% 47% 47%}
-  .paw-mini .toe{position:absolute;width:5px;height:6px;background:currentColor;border-radius:52%}
-  .paw-mini .toe.a{top:3px;left:1px}.paw-mini .toe.b{top:0;left:7px}.paw-mini .toe.c{top:0;right:7px}.paw-mini .toe.d{top:3px;right:1px}
+  /* 2 nút Soi ảnh / Chọn món song song */
+  .food-cta{display:flex;gap:10px;margin:14px 0 10px}
+  .food-cta .btn{flex:1;padding:14px 10px;margin:0}
   .ex .links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
@@ -2103,12 +2087,16 @@ function todayMacros(){ const t=todayStr(); return loadFood().filter(e=>e.date==
 function macroBar(lbl,cur,tot,col){ const pct=tot?Math.min(100,cur/tot*100):0; return `<div class="macro-row"><span class="ml">${lbl}</span><span class="macro-bar"><i style="width:${pct}%;background:${col}"></i></span><span class="mv">${cur}/${tot}g</span></div>`; }
 // Tự nhập món: nhập kcal & macro theo 100g (đọc từ nhãn) + số gram → tính tổng; lưu "Món của tôi"
 function addFoodManual(){
-  const name=pv('food-name'), kcal=+pv('food-kcal')||0;
-  if(!kcal){ alert('Nhập số calo cho món nhé 🐾'); return; }
-  const g=macroGrams(kcal,[20,50,30]); // ước lượng macro từ calo
-  if(name){ rmTomb('meofit_myfoods',name); const mf=loadMyFoods().filter(x=>x.name.toLowerCase()!==name.toLowerCase()); mf.unshift({name,base:kcal,gram:false,p:g.p,c:g.c,f:g.f}); saveMyFoods(mf.slice(0,40)); }
-  addFood(name||'Món tự nhập', kcal, g.p, g.c, g.f, '');
-  const n=document.getElementById('food-name'), k=document.getElementById('food-kcal'); if(n)n.value=''; if(k)k.value='';
+  const name=pv('food-name'), k100=+pv('food-kcal')||0, g=+pv('food-gram')||100;
+  if(!k100){ alert('Nhập calo (trên 100g) nhé 🐾'); return; }
+  const p100=+pv('food-p')||0, c100=+pv('food-c')||0, f100=+pv('food-f')||0, sc=g/100;
+  if(name){ rmTomb('meofit_myfoods',name); const mf=loadMyFoods().filter(x=>x.name.toLowerCase()!==name.toLowerCase()); mf.unshift({name,base:k100,gram:true,p:p100,c:c100,f:f100}); saveMyFoods(mf.slice(0,40)); }
+  let P=p100*sc,C=c100*sc,F=f100*sc;
+  if(!p100&&!c100&&!f100){ const gg=macroGrams(k100*sc,[20,50,30]); P=gg.p;C=gg.c;F=gg.f; }
+  addFood((name||'Món tự nhập')+(g!==100?` ${g}g`:''), k100*sc, P, C, F, '');
+  ['food-name','food-kcal','food-p','food-c','food-f'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';});
+  const gEl=document.getElementById('food-gram'); if(gEl)gEl.value=100;
+  const pvw=document.getElementById('food-prev'); if(pvw)pvw.textContent='';
   const t=document.getElementById('fp-total'); if(t) t.textContent=todayKcalIn();
 }
 // Chọn món → nhập gram/phần → scale
@@ -2327,24 +2315,31 @@ function caloCardHTML(){
       : `<div class="note-box">Vào tab 👤 <b>Cá nhân</b> nhập hồ sơ để có <b>mục tiêu calo & macro</b> nhé!</div>`}
     ${bars}
     ${eodAdviceHTML()}
-    <label class="paw-cta">
-      <span class="spark">✨</span>
-      <span class="paw"><span class="pad"></span><span class="toe a"></span><span class="toe b"></span><span class="toe c"></span><span class="toe d"></span></span>
-      <span class="paw-txt">Soi ảnh — Mèo đoán calo<small>Chụp món ăn hoặc nhãn dinh dưỡng 🐾</small></span>
-      <input type="file" accept="image/*" onchange="onAiPhoto(this)" hidden>
-    </label>
-    <button class="btn sec" onclick="openFoodPicker()" style="margin:0 0 8px">🍱 Chọn món ăn (Việt + quốc tế)</button>
+    <div class="food-cta">
+      <label class="btn" style="cursor:var(--paw),pointer;background:linear-gradient(135deg,#b197fc,#9775fa)">📸 Soi ảnh<input type="file" accept="image/*" onchange="onAiPhoto(this)" hidden></label>
+      <button class="btn sec" onclick="openFoodPicker()">🍱 Chọn món</button>
+    </div>
     ${favChips?`<div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:6px 2px 6px">⭐ Món cưng hay dùng:</div>
     <div class="food-chips">${favChips}</div>`:''}
     <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">⚡ Thêm nhanh:</div>
     <div class="food-chips">${chips}</div>
-    <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">✏️ Tự nhập nhanh (calo cả phần):</div>
-    <div class="frow" style="align-items:flex-end">
-      <div class="field" style="margin:0;flex:1.7"><input id="food-name" placeholder="Tên món"></div>
-      <div class="field" style="margin:0;flex:1"><input id="food-kcal" type="number" inputmode="numeric" placeholder="kcal"></div>
-      <button class="btn" style="width:auto;flex:none;padding:12px 16px" onclick="addFoodManual()">➕</button>
-    </div>
-    <div style="font-size:.7rem;color:var(--muted);margin:5px 2px 0">Món tự nhập sẽ lưu vào “Món của tôi” để lần sau chọn nhanh 🐾</div>
+    <details class="lib-grp" style="margin-top:12px"><summary style="cursor:var(--paw),pointer;font-weight:800;color:var(--green-d);font-size:.85rem;padding:10px 12px">✏️ Tự nhập món (bấm mở)</summary>
+      <div style="padding:4px 12px 12px">
+        <div class="field" style="margin:0 0 8px"><input id="food-name" placeholder="Tên món (lưu vào ‘Món của tôi’)"></div>
+        <div class="frow">
+          <div class="field" style="margin:0;flex:1"><label>kcal /100g</label><input id="food-kcal" type="number" inputmode="numeric" placeholder="vd 200" oninput="manualPrev()"></div>
+          <div class="field" style="margin:0;flex:1"><label>Số gram</label><input id="food-gram" type="number" inputmode="decimal" value="100" oninput="manualPrev()"></div>
+        </div>
+        <div class="frow">
+          <div class="field" style="margin:0;flex:1"><label>Đạm/100g</label><input id="food-p" type="number" inputmode="decimal" placeholder="g"></div>
+          <div class="field" style="margin:0;flex:1"><label>Carb/100g</label><input id="food-c" type="number" inputmode="decimal" placeholder="g"></div>
+          <div class="field" style="margin:0;flex:1"><label>Béo/100g</label><input id="food-f" type="number" inputmode="decimal" placeholder="g"></div>
+        </div>
+        <div id="food-prev" style="font-size:.8rem;color:var(--green-d);font-weight:700;margin:0 2px 8px"></div>
+        <button class="btn" onclick="addFoodManual()">➕ Thêm món</button>
+        <div style="font-size:.7rem;color:var(--muted);margin:6px 2px 0">Để trống đạm/carb/béo thì Mèo tự ước lượng. Món sẽ lưu vào “Món của tôi” 🐾</div>
+      </div>
+    </details>
     <div style="margin-top:10px">${foodList}</div>
   </div>`;
 }
