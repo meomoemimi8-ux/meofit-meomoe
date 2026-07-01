@@ -16,11 +16,13 @@ const ALLOW = [
 // Thử lần lượt các model free (giống proxy tarot); model nào chạy thì dùng
 const MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];
 
-const PROMPT = `Bạn là chuyên gia ước lượng dinh dưỡng. Nhìn ảnh phần ăn và ước lượng cho MỘT khẩu phần thấy trong ảnh.
+const PROMPT = `Bạn là chuyên gia dinh dưỡng. Ảnh có thể là (A) MỘT phần ăn thật, hoặc (B) NHÃN DINH DƯỠNG của sản phẩm đóng gói.
+- Nếu là phần ăn: ước lượng cho MỘT khẩu phần thấy trong ảnh.
+- Nếu là nhãn dinh dưỡng: đọc "khẩu phần / serving size" trên nhãn và tính giá trị cho MỘT khẩu phần (một lần dùng). Nếu nhãn chỉ ghi theo 100g mà có ghi khối lượng khẩu phần thì quy về một khẩu phần đó.
 CHỈ trả về JSON thu gọn (không markdown), đúng schema:
-{"ok":true,"dish":"tên món tiếng Việt ngắn gọn","items":[{"name":"","kcal":0,"p":0,"c":0,"f":0}],"kcal":0,"p":0,"c":0,"f":0,"confidence":"cao|vừa|thấp","note":"1 câu ngắn tiếng Việt về giả định khẩu phần"}
-Trong đó p=đạm(gam), c=carb(gam), f=chất béo(gam), tất cả là SỐ NGUYÊN. "kcal" là tổng cả đĩa; "items" liệt kê từng món thấy được.
-Nếu ảnh KHÔNG phải đồ ăn: trả {"ok":false,"reason":"1 câu ngắn tiếng Việt"}.`;
+{"ok":true,"type":"meal"|"label","dish":"tên món/sản phẩm tiếng Việt ngắn gọn","serving":"mô tả 1 khẩu phần (vd: 1 gói 30g)","items":[{"name":"","kcal":0,"p":0,"c":0,"f":0}],"kcal":0,"p":0,"c":0,"f":0,"confidence":"cao|vừa|thấp","note":"1 câu ngắn tiếng Việt"}
+p=đạm(gam), c=carb(gam), f=chất béo(gam), tất cả SỐ NGUYÊN. kcal/p/c/f là cho MỘT khẩu phần/phần ăn. Với nhãn thì "items" có thể để rỗng []; với phần ăn thì "items" liệt kê từng món.
+Nếu ảnh KHÔNG phải đồ ăn hay nhãn dinh dưỡng: {"ok":false,"reason":"1 câu ngắn tiếng Việt"}.`;
 
 function corsHeaders(origin) {
   const allowed = ALLOW.includes(origin) ? origin : ALLOW[0];

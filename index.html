@@ -141,19 +141,20 @@
   .tipbox b{color:var(--green-d)}
   .quiz-opt{text-align:left;width:100%;border:2px solid var(--border);background:var(--card);color:var(--ink);font-family:inherit;font-size:.86rem;font-weight:600;padding:11px 13px;border-radius:14px;cursor:var(--paw),pointer;transition:border-color .15s,background .15s}
   .quiz-opt.on{border-color:var(--green);background:var(--green-l);color:#1f5128;font-weight:800}
-  /* Lịch calo (kiểu MyFitnessPal) */
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-  .cal-dow{text-align:center;font-size:.66rem;font-weight:800;color:var(--muted);padding:2px 0}
-  .cal-cell{aspect-ratio:1;border-radius:9px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+  /* Lịch calo (kiểu MyFitnessPal) — cute & gọn */
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .cal-dow{text-align:center;font-size:.64rem;font-weight:800;color:var(--muted);padding:1px 0}
+  .cal-cell{min-height:42px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:3px 1px}
   .cal-cell.empty{background:transparent}
-  .cal-cell .cd{font-weight:700;color:var(--muted);font-size:.64rem;line-height:1}
-  .cal-cell .ck{font-weight:800;font-size:.58rem;color:var(--ink);line-height:1;margin-top:1px}
-  .cal-cell.good{background:rgba(63,163,77,.22)}.cal-cell.good .cd{color:var(--green-d)}
-  .cal-cell.over{background:rgba(255,107,107,.22)}.cal-cell.over .cd{color:var(--red)}
-  .cal-cell.low{background:rgba(255,169,77,.20)}
-  .cal-cell.today{outline:2px solid var(--green);outline-offset:-2px}
-  .cal-dot{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:3px}
-  .cal-dot.good{background:rgba(63,163,77,.5)}.cal-dot.over{background:rgba(255,107,107,.55)}.cal-dot.low{background:rgba(255,169,77,.5)}
+  .cal-cell .cd{font-weight:800;color:var(--muted);font-size:.68rem;line-height:1.05}
+  .cal-cell .ck{font-weight:800;font-size:.56rem;color:var(--ink);opacity:.85;line-height:1;margin-top:2px}
+  .cal-cell .cwo{position:absolute;top:1px;right:2px;font-size:.52rem;line-height:1}
+  .cal-cell.good{background:rgba(63,163,77,.20)}.cal-cell.good .cd{color:var(--green-d)}
+  .cal-cell.over{background:rgba(255,143,90,.22)}.cal-cell.over .cd{color:#e8722e}
+  .cal-cell.low{background:rgba(255,212,59,.28)}.cal-cell.low .cd{color:#b8860b}
+  .cal-cell.today{box-shadow:inset 0 0 0 2.5px var(--green)}
+  .cal-dot{display:inline-block;width:11px;height:11px;border-radius:4px;vertical-align:middle;margin-right:3px}
+  .cal-dot.good{background:rgba(63,163,77,.55)}.cal-dot.over{background:rgba(255,143,90,.6)}.cal-dot.low{background:rgba(255,212,59,.75)}
   .ex .links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
@@ -1578,27 +1579,29 @@ function renderProgress(){
 function caloCalendarHTML(){
   const target=getTargetKcal();
   const byDay={}; loadFood().forEach(e=>{ byDay[e.date]=(byDay[e.date]||0)+(e.kcal||0); });
+  const woDays=new Set(loadHist().map(e=>e.date)); // ngày có tập → gắn 💪
   const now=new Date(), y=now.getFullYear(), mo=now.getMonth();
   const startDow=new Date(y,mo,1).getDay(), daysInMonth=new Date(y,mo+1,0).getDate();
   const dows=['CN','T2','T3','T4','T5','T6','T7'], todayD=todayStr();
   let cells='';
   for(let i=0;i<startDow;i++) cells+='<div class="cal-cell empty"></div>';
   for(let d=1; d<=daysInMonth; d++){
-    const ds=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'), kc=byDay[ds]||0;
+    const ds=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'), kc=byDay[ds]||0, wo=woDays.has(ds);
     let cls='cal-cell';
     if(kc>0) cls+= target ? (kc/target>1.1?' over':(kc/target>=0.6?' good':' low')) : ' good';
     if(ds===todayD) cls+=' today';
-    cells+=`<div class="${cls}"><span class="cd">${d}</span>${kc>0?`<span class="ck">${kc}</span>`:''}</div>`;
+    cells+=`<div class="${cls}">${wo?'<span class="cwo">💪</span>':''}<span class="cd">${d}</span>${kc>0?`<span class="ck">${kc>=1000?(kc/1000).toFixed(1)+'k':kc}</span>`:''}</div>`;
   }
   const pre=y+'-'+String(mo+1).padStart(2,'0'), logged=Object.keys(byDay).filter(dd=>dd.indexOf(pre)===0);
   const avg=logged.length?Math.round(logged.reduce((a,dd)=>a+byDay[dd],0)/logged.length):0;
+  const woCount=[...woDays].filter(dd=>dd.indexOf(pre)===0).length;
   return `<div class="card" style="margin-top:12px">
-    <h2 class="sec-title" style="margin:0 0 8px">📅 Lịch calo tháng ${mo+1}</h2>
-    <div class="cal-grid">${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}</div>
-    <div class="cal-grid" style="margin-top:4px">${cells}</div>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);font-weight:700;margin-top:10px">
-      <span><i class="cal-dot good"></i>đúng/đủ</span><span><i class="cal-dot over"></i>vượt</span><span><i class="cal-dot low"></i>hơi ít</span></div>
-    <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:8px">📊 Đã ghi <b style="color:var(--green-d)">${logged.length}</b> ngày tháng này · trung bình ~<b>${avg}</b> kcal/ngày${target?` (mục tiêu ${target})`:''} 🐾</div>
+    <h2 class="sec-title" style="margin:0 0 10px">📅 Lịch tháng ${mo+1} của tớ</h2>
+    <div class="cal-grid cal-head">${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}</div>
+    <div class="cal-grid" style="margin-top:5px">${cells}</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:.7rem;color:var(--muted);font-weight:700;margin-top:12px">
+      <span><i class="cal-dot good"></i>đủ calo</span><span><i class="cal-dot over"></i>hơi nhiều</span><span><i class="cal-dot low"></i>hơi ít</span><span>💪 có tập</span></div>
+    <div style="font-size:.8rem;color:var(--muted);font-weight:700;margin-top:10px;text-align:center;line-height:1.6">🍽️ Đã ghi ăn <b style="color:var(--green-d)">${logged.length}</b> ngày · TB ~<b>${avg}</b> kcal/ngày${target?` (mục tiêu ${target})`:''}<br>💪 Tập <b style="color:var(--green-d)">${woCount}</b> buổi tháng này — cố lên nha! 🐾</div>
   </div>`;
 }
 // Theo dõi tập — hiện trong tab Buổi tập (gập lại cho gọn)
@@ -1901,6 +1904,7 @@ function cloudPush(){ const u=_fbAuth&&_fbAuth.currentUser; if(!u||!_fbStore.db)
 function loadTomb(){ try{ return JSON.parse(localStorage.getItem('meofit_tomb'))||[] }catch(e){ return [] } }
 function saveTomb(a){ try{ localStorage.setItem('meofit_tomb', JSON.stringify(a)); }catch(e){} }
 function addTomb(key,id){ const a=loadTomb(), s=key+':'+id; if(!a.includes(s)){ a.push(s); saveTomb(a); } }
+function rmTomb(key,id){ const s=key+':'+id, a=loadTomb(); if(a.includes(s)) saveTomb(a.filter(x=>x!==s)); } // tạo lại → bỏ dấu đã xoá
 function tombSetFor(key){ const pre=key+':', s=new Set(); loadTomb().forEach(x=>{ if(x.indexOf(pre)===0) s.add(x.slice(pre.length)); }); return s; }
 function mergeArr(localStr,cloudStr,idField,tomb){ let a=[],b=[];
   try{a=JSON.parse(localStr)||[]}catch(e){} try{b=JSON.parse(cloudStr)||[]}catch(e){}
@@ -2075,18 +2079,18 @@ function matchFoodTag(dish){
   }} return '';
 }
 function addQuick(name,kcal){ const g=macroGrams(kcal,[20,50,30]); addFood(name,kcal,g.p,g.c,g.f,''); }
-function delFood(ts){ addTomb('meofit_food',ts); saveFood(loadFood().filter(e=>e.ts!==ts)); renderProgress(); }
+function delFood(ts){ if(!confirm('Xoá món này khỏi nhật ký hôm nay?')) return; addTomb('meofit_food',ts); saveFood(loadFood().filter(e=>e.ts!==ts)); renderProgress(); }
 function todayMacros(){ const t=todayStr(); return loadFood().filter(e=>e.date===t).reduce((s,e)=>({p:s.p+(e.p||0),c:s.c+(e.c||0),f:s.f+(e.f||0)}),{p:0,c:0,f:0}); }
 function macroBar(lbl,cur,tot,col){ const pct=tot?Math.min(100,cur/tot*100):0; return `<div class="macro-row"><span class="ml">${lbl}</span><span class="macro-bar"><i style="width:${pct}%;background:${col}"></i></span><span class="mv">${cur}/${tot}g</span></div>`; }
 // Tự nhập món: nhập kcal & macro theo 100g (đọc từ nhãn) + số gram → tính tổng; lưu "Món của tôi"
 function addFoodManual(){
-  const name=pv('food-name'), k100=+pv('food-kcal')||0, g=+pv('food-gram')||100;
-  if(!k100){ alert('Nhập calo (trên 100g, hoặc tổng nếu để 100g) nhé 🐾'); return; }
-  const p100=+pv('food-p')||0, c100=+pv('food-c')||0, f100=+pv('food-f')||0, sc=g/100;
-  if(name){ const mf=loadMyFoods().filter(x=>x.name.toLowerCase()!==name.toLowerCase()); mf.unshift({name,base:k100,gram:true,p:p100,c:c100,f:f100}); saveMyFoods(mf.slice(0,40)); }
-  let P=p100*sc,C=c100*sc,F=f100*sc;
-  if(!p100&&!c100&&!f100){ const gg=macroGrams(k100*sc,[20,50,30]); P=gg.p;C=gg.c;F=gg.f; }
-  addFood((name||'Món tự nhập')+(g!==100?` ${g}g`:''), k100*sc, P, C, F, _pendingPhoto);
+  const name=pv('food-name'), kcal=+pv('food-kcal')||0;
+  if(!kcal){ alert('Nhập số calo cho món nhé 🐾'); return; }
+  const g=macroGrams(kcal,[20,50,30]); // ước lượng macro từ calo
+  if(name){ rmTomb('meofit_myfoods',name); const mf=loadMyFoods().filter(x=>x.name.toLowerCase()!==name.toLowerCase()); mf.unshift({name,base:kcal,gram:false,p:g.p,c:g.c,f:g.f}); saveMyFoods(mf.slice(0,40)); }
+  addFood(name||'Món tự nhập', kcal, g.p, g.c, g.f, '');
+  const n=document.getElementById('food-name'), k=document.getElementById('food-kcal'); if(n)n.value=''; if(k)k.value='';
+  const t=document.getElementById('fp-total'); if(t) t.textContent=todayKcalIn();
 }
 // Chọn món → nhập gram/phần → scale
 function selectFood(name,base,ci){ _sel={name,base:+base,ci:+ci,gram:/100g/i.test(name)}; showAmount(); }
@@ -2113,7 +2117,7 @@ function confirmSel(){
   addFood(nm,kcal,P,C,F,''); const t=document.getElementById('fp-total'); if(t) t.textContent=todayKcalIn();
   const ap=document.getElementById('fp-amount'); if(ap){ ap.style.display='none'; ap.innerHTML=''; } _sel=null;
 }
-function delMyFood(i){ const m=loadMyFoods(); if(m[i]) addTomb('meofit_myfoods',m[i].name); m.splice(i,1); saveMyFoods(m); renderFoodList(pv('fp-search')); }
+function delMyFood(i){ const m=loadMyFoods(); if(!m[i]) return; if(!confirm('Xoá “'+m[i].name+'” khỏi Món của tôi?')) return; addTomb('meofit_myfoods',m[i].name); m.splice(i,1); saveMyFoods(m); renderFoodList(pv('fp-search')); }
 function onFoodPhoto(input){
   const file=input.files&&input.files[0]; if(!file) return;
   const rd=new FileReader();
@@ -2131,7 +2135,11 @@ function onFoodPhoto(input){
 const NUTRI_PROXY_URL='https://meofit-nutri-ai.meomoemimi8.workers.dev';
 let _aiMeal=null;
 function aiSheet(inner){ const sh=document.getElementById('foodSheet'); sh.innerHTML=`<div class="guide-card">${inner}</div>`; sh.classList.add('show'); }
-function aiPhotoBtn(label){ return `<label class="btn${label.sec?' sec':''}" style="cursor:var(--paw),pointer${label.mt?';margin-top:8px':''}">${label.txt}<input type="file" accept="image/*" capture="environment" onchange="onAiPhoto(this)" hidden></label>`; }
+// 2 nút: chụp ngay (camera) + chọn từ thư viện; cả hai đều gọi onAiPhoto
+function aiPhotoBtns(o){ o=o||{}; return `<div class="frow" style="gap:8px${o.mt?';margin-top:8px':''}">
+  <label class="btn sec" style="flex:1;cursor:var(--paw),pointer;padding:11px">📸 Chụp ngay<input type="file" accept="image/*" capture="environment" onchange="onAiPhoto(this)" hidden></label>
+  <label class="btn sec" style="flex:1;cursor:var(--paw),pointer;padding:11px">🖼️ Thư viện<input type="file" accept="image/*" onchange="onAiPhoto(this)" hidden></label>
+</div>`; }
 function onAiPhoto(input){
   const file=input.files&&input.files[0]; if(!file){ return; }
   const rd=new FileReader();
@@ -2149,51 +2157,59 @@ async function analyzeMeal(big, thumb){
     const r=await fetch(NUTRI_PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:big,mime:'image/jpeg'})});
     const j=await r.json().catch(()=>null);
     if(!j || j.ok===false){ aiError((j&&j.reason)||'Mèo chưa nhận ra món, thử ảnh rõ & gần hơn nha 🐾'); return; }
-    _aiMeal={dish:j.dish||'Bữa ăn',kcal:Math.round(j.kcal||0),p:Math.round(j.p||0),c:Math.round(j.c||0),f:Math.round(j.f||0),items:j.items||[],confidence:j.confidence||'',note:j.note||'',photo:thumb};
+    _aiMeal={dish:j.dish||'Bữa ăn',type:j.type||'meal',serving:j.serving||'',kcal:Math.round(j.kcal||0),p:Math.round(j.p||0),c:Math.round(j.c||0),f:Math.round(j.f||0),items:j.items||[],confidence:j.confidence||'',note:j.note||'',photo:thumb};
     showAiResult();
   }catch(e){ aiError('Mèo hơi đói pin (mạng yếu hoặc hết lượt free). Thử lại sau chút nha 🐾'); }
 }
 function aiError(msg){
   aiSheet(`<div class="guide-h">😿 Chưa soi được</div><div class="note-box">${msg}</div>
-    ${aiPhotoBtn({txt:'📸 Chụp/Chọn ảnh khác'})}
+    ${aiPhotoBtns({mt:true})}
     <button class="btn sec" style="margin-top:8px" onclick="openFoodPicker()">‹ Quay lại chọn món</button>`);
 }
 function showAiResult(){
   const m=_aiMeal; if(!m) return;
-  const items=(m.items&&m.items.length>1)?`<div style="font-size:.78rem;color:var(--muted);margin:2px 0 8px">🍱 Gồm: ${m.items.map(x=>x.name).filter(Boolean).join(' · ')}</div>`:'';
+  const isLabel=m.type==='label';
+  const items=(!isLabel&&m.items&&m.items.length>1)?`<div style="font-size:.78rem;color:var(--muted);margin:2px 0 8px">🍱 Gồm: ${m.items.map(x=>x.name).filter(Boolean).join(' · ')}</div>`:'';
   const conf={cao:'🟢 khá chắc',['vừa']:'🟡 tạm ổn',['thấp']:'🟠 hơi mơ hồ'}[m.confidence]||'';
-  aiSheet(`<div class="guide-h">🍽️ Mèo đoán món này</div>
+  aiSheet(`<div class="guide-h">${isLabel?'🏷️ Nhãn dinh dưỡng — 1 khẩu phần':'🍽️ Mèo đoán món này'}</div>
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px">
       <img src="${m.photo}" style="width:64px;height:64px;object-fit:cover;border-radius:14px;flex:none">
-      <div style="min-width:0"><div style="font-weight:900;font-size:1.05rem;line-height:1.2">${m.dish}</div><div style="font-size:.74rem;color:var(--muted)">${conf}${m.note?' · '+m.note:''}</div></div>
+      <div style="min-width:0"><div style="font-weight:900;font-size:1.05rem;line-height:1.2">${m.dish}</div><div style="font-size:.74rem;color:var(--muted)">${conf}${(isLabel&&m.serving)?' · '+m.serving:(m.note?' · '+m.note:'')}</div></div>
     </div>
     ${items}
-    <div style="font-size:.76rem;color:var(--muted);margin-bottom:6px">✏️ Mèo chỉ <b>ước lượng</b> — cưng chỉnh lại cho đúng nếu cần nha:</div>
+    <div style="font-size:.76rem;color:var(--muted);margin-bottom:6px">✏️ ${isLabel?'Số liệu cho <b>1 lần dùng</b>':'Mèo chỉ <b>ước lượng</b>'} — cưng chỉnh lại nếu cần nha:</div>
     <div class="frow">
       <div class="field" style="margin:0;flex:1.1"><label>kcal</label><input id="ai-kcal" type="number" inputmode="numeric" value="${m.kcal}"></div>
       <div class="field" style="margin:0;flex:1"><label>Đạm g</label><input id="ai-p" type="number" inputmode="decimal" value="${m.p}"></div>
       <div class="field" style="margin:0;flex:1"><label>Carb g</label><input id="ai-c" type="number" inputmode="decimal" value="${m.c}"></div>
       <div class="field" style="margin:0;flex:1"><label>Béo g</label><input id="ai-f" type="number" inputmode="decimal" value="${m.f}"></div>
     </div>
-    <button class="btn" style="margin-top:10px" onclick="saveAiMeal()">✓ Ghi vào nhật ký calo</button>
-    ${aiPhotoBtn({txt:'📸 Soi ảnh khác',sec:true,mt:true})}
+    <button class="btn" style="margin-top:10px" onclick="saveAiMeal()">✓ Ghi vào nhật ký (lưu cả Món của tôi)</button>
+    ${aiPhotoBtns({mt:true})}
     <button class="btn sec" style="margin-top:8px" onclick="openFoodPicker()">‹ Quay lại chọn món</button>`);
 }
 function saveAiMeal(){
   const m=_aiMeal; if(!m) return;
-  addFood(m.dish, +pv('ai-kcal')||0, +pv('ai-p')||0, +pv('ai-c')||0, +pv('ai-f')||0, m.photo, {src:'ai', tag:matchFoodTag(m.dish)});
+  const name=m.dish, kcal=+pv('ai-kcal')||0, P=+pv('ai-p')||0, C=+pv('ai-c')||0, F=+pv('ai-f')||0;
+  addFood(name, kcal, P, C, F, m.photo, {src:'ai', tag:matchFoodTag(name)});
+  // Lưu vào "Món của tôi" để lần sau chọn nhanh
+  if(name && kcal){ rmTomb('meofit_myfoods',name); const mf=loadMyFoods().filter(x=>x.name.toLowerCase()!==name.toLowerCase()); mf.unshift({name,base:kcal,gram:false,p:P,c:C,f:F}); saveMyFoods(mf.slice(0,40)); }
   _aiMeal=null;
   aiSheet(`<div class="guide-h">✅ Đã ghi vào nhật ký!</div>
-    <div class="note-box">Tuyệt vời 🐾 Mèo đã cộng vào calo hôm nay rồi. Nhớ ăn thêm rau xanh & uống đủ nước cho đủ chất nha!</div>
-    ${aiPhotoBtn({txt:'📸 Soi món khác'})}
+    <div class="note-box">Tuyệt vời 🐾 Mèo đã cộng vào calo hôm nay & lưu <b>“${name}”</b> vào Món của tôi để lần sau chọn nhanh nhé!</div>
+    ${aiPhotoBtns({mt:true})}
     <button class="btn sec" style="margin-top:8px" onclick="closeFoodPicker();go('prog',false)">📊 Xem calo hôm nay</button>`);
 }
 function openFoodPicker(){
   const sh=document.getElementById('foodSheet');
   sh.innerHTML=`<div class="guide-card">
     <div class="guide-h">🍱 Chọn món ăn <span style="float:right;font-size:.8rem;color:var(--green-d)">Hôm nay <span id="fp-total">${todayKcalIn()}</span> kcal</span></div>
-    <label class="btn" style="cursor:var(--paw),pointer;background:linear-gradient(135deg,#b197fc,#9775fa);box-shadow:0 6px 14px rgba(151,117,250,.35);margin:8px 0 2px">📸 Soi ảnh món ăn — Mèo AI đoán calo<input type="file" accept="image/*" capture="environment" onchange="onAiPhoto(this)" hidden></label>
-    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:8px">Chụp/chọn ảnh phần ăn, Mèo ước lượng calo & macro giúp cưng 🐱</div>
+    <div style="font-weight:800;font-size:.82rem;color:#7a52d6;margin:8px 2px 5px">📸 Soi ảnh — Mèo AI đoán calo (món ăn hoặc nhãn dinh dưỡng)</div>
+    <div class="frow" style="gap:8px">
+      <label class="btn" style="flex:1;cursor:var(--paw),pointer;background:linear-gradient(135deg,#b197fc,#9775fa);box-shadow:0 6px 14px rgba(151,117,250,.3);padding:12px">📸 Chụp ngay<input type="file" accept="image/*" capture="environment" onchange="onAiPhoto(this)" hidden></label>
+      <label class="btn" style="flex:1;cursor:var(--paw),pointer;background:linear-gradient(135deg,#b197fc,#9775fa);box-shadow:0 6px 14px rgba(151,117,250,.3);padding:12px">🖼️ Thư viện<input type="file" accept="image/*" onchange="onAiPhoto(this)" hidden></label>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin:6px 0 8px">Chụp phần ăn hoặc nhãn dinh dưỡng — Mèo tính calo & macro giúp cưng 🐱</div>
     <input id="fp-search" placeholder="🔍 Tìm món…" oninput="renderFoodList(this.value)" style="width:100%;box-sizing:border-box;border:2px solid var(--border);border-radius:14px;padding:10px 13px;font-size:1rem;font-family:inherit;margin:8px 0 8px;background:var(--card);color:var(--ink)">
     <div id="fp-regions"></div>
     <div id="fp-tabs"></div>
@@ -2268,6 +2284,10 @@ function caloCardHTML(){
   const inn=todayKcalIn(), out=todayKcalOut(), target=getTargetKcal();
   const presets=[['Cơm 1 chén',180],['Phở/Bún',430],['Bánh mì',400],['Trứng',78],['Ức gà 100g',165],['Chuối',90],['Sữa chua',105],['Trà sữa',350]];
   const chips=presets.map(p=>`<button class="food-chip" onclick="addQuick('${p[0]}',${p[1]})">${p[0]} +${p[1]}</button>`).join('');
+  // ⭐ Món hay dùng: gộp theo tên, lấy các món xuất hiện ≥2 lần (nhiều nhất trước)
+  const cnt={}; loadFood().forEach(e=>{ if(!e.name) return; (cnt[e.name]=cnt[e.name]||{n:0,e}).n++; cnt[e.name].e=e; });
+  const favChips=Object.keys(cnt).filter(k=>cnt[k].n>=2).sort((a,b)=>cnt[b].n-cnt[a].n).slice(0,6)
+    .map(k=>{const e=cnt[k].e,nm=(e.name||'').replace(/'/g,"\\'");return `<button class="food-chip" onclick="addFood('${nm}',${e.kcal||0},${e.p||0},${e.c||0},${e.f||0},'')">${e.name} +${e.kcal}</button>`;}).join('');
   const food=loadFood().filter(e=>e.date===todayStr()).sort((a,b)=>b.ts-a.ts);
   const foodList=food.length?food.map(e=>`<div class="food-row">${e.photo?`<img src="${e.photo}" class="food-thumb" alt="">`:''}<span>${e.name}${e.src==='ai'?' <span style="font-size:.6rem;background:var(--purple);color:#fff;padding:1px 5px;border-radius:8px;vertical-align:middle">📸 AI</span>':''}${e.tag?` <span style="font-size:.62rem;color:var(--muted)">${e.tag}</span>`:''}${(e.p||e.c||e.f)?`<br><small style="color:var(--muted)">Đ ${e.p||0} · C ${e.c||0} · B ${e.f||0} g</small>`:''}</span><b>${e.kcal} kcal</b><button onclick="delFood(${e.ts})">✕</button></div>`).join(''):'<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:6px">Chưa nạp gì hôm nay</div>';
   const remain = target!=null ? (target-inn+out) : null;
@@ -2289,25 +2309,17 @@ function caloCardHTML(){
     ${bars}
     ${eodAdviceHTML()}
     <button class="btn" onclick="openFoodPicker()" style="margin:12px 0 8px;background:linear-gradient(135deg,#b197fc,#9775fa)">📸 Soi ảnh / 🍱 Chọn món ăn</button>
-    <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:6px 2px 6px">⚡ Thêm nhanh:</div>
+    ${favChips?`<div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:6px 2px 6px">⭐ Món cưng hay dùng:</div>
+    <div class="food-chips">${favChips}</div>`:''}
+    <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">⚡ Thêm nhanh:</div>
     <div class="food-chips">${chips}</div>
-    <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">✏️ Tự nhập (theo 100g · gõ từ nhãn dinh dưỡng nếu có):</div>
-    <div class="field" style="margin:0 0 8px"><input id="food-name" placeholder="Tên món (lưu vào ‘Món của tôi’)"></div>
-    <div class="frow">
-      <div class="field" style="margin:0;flex:1"><label>kcal /100g</label><input id="food-kcal" type="number" inputmode="numeric" placeholder="vd 200" oninput="manualPrev()"></div>
-      <div class="field" style="margin:0;flex:1"><label>Số gram</label><input id="food-gram" type="number" inputmode="decimal" value="100" oninput="manualPrev()"></div>
+    <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">✏️ Tự nhập nhanh (calo cả phần):</div>
+    <div class="frow" style="align-items:flex-end">
+      <div class="field" style="margin:0;flex:1.7"><input id="food-name" placeholder="Tên món"></div>
+      <div class="field" style="margin:0;flex:1"><input id="food-kcal" type="number" inputmode="numeric" placeholder="kcal"></div>
+      <button class="btn" style="width:auto;flex:none;padding:12px 16px" onclick="addFoodManual()">➕</button>
     </div>
-    <div class="frow">
-      <div class="field" style="margin:0;flex:1"><label>Đạm/100g</label><input id="food-p" type="number" inputmode="decimal" placeholder="g"></div>
-      <div class="field" style="margin:0;flex:1"><label>Carb/100g</label><input id="food-c" type="number" inputmode="decimal" placeholder="g"></div>
-      <div class="field" style="margin:0;flex:1"><label>Béo/100g</label><input id="food-f" type="number" inputmode="decimal" placeholder="g"></div>
-    </div>
-    <div id="food-prev" style="font-size:.8rem;color:var(--green-d);font-weight:700;margin:0 2px 8px">${_pendingPhoto?'':''}</div>
-    <div class="frow" style="align-items:center">
-      <label class="btn sec" style="width:auto;flex:none;padding:11px 14px;cursor:var(--paw),pointer">📷 Ảnh nhãn<input type="file" accept="image/*" capture="environment" onchange="onFoodPhoto(this)" hidden></label>
-      <img id="food-photo-prev" src="${_pendingPhoto||''}" style="${_pendingPhoto?'display:block':'display:none'};width:42px;height:42px;object-fit:cover;border-radius:10px">
-      <button class="btn" style="flex:1" onclick="addFoodManual()">➕ Thêm món</button>
-    </div>
+    <div style="font-size:.7rem;color:var(--muted);margin:5px 2px 0">Món tự nhập sẽ lưu vào “Món của tôi” để lần sau chọn nhanh 🐾</div>
     <div style="margin-top:10px">${foodList}</div>
   </div>`;
 }
@@ -2328,7 +2340,7 @@ function stopFast(){
   if(o.start){ const hrs=(Date.now()-o.start)/3600000; const lg=loadFastLog(); lg.unshift({date:todayStr(),ts:Date.now(),hours:Math.round(hrs*10)/10,proto:o.proto,reached:hrs>=o.proto}); saveFastLog(lg.slice(0,120)); }
   o.start=null; saveIF(o); renderHome();
 }
-function delFastLog(ts){ addTomb('meofit_fastlog',ts); saveFastLog(loadFastLog().filter(e=>e.ts!==ts)); renderProgress(); }
+function delFastLog(ts){ if(!confirm('Xoá lần nhịn ăn này?')) return; addTomb('meofit_fastlog',ts); saveFastLog(loadFastLog().filter(e=>e.ts!==ts)); renderProgress(); }
 function fastReportHTML(){
   const lg=loadFastLog(), o=loadIF();
   const longest=lg.reduce((m,x)=>Math.max(m,x.hours||0),0);
