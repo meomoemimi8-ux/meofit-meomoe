@@ -155,6 +155,25 @@
   .cal-cell.today{box-shadow:inset 0 0 0 2.5px var(--green)}
   .cal-dot{display:inline-block;width:11px;height:11px;border-radius:4px;vertical-align:middle;margin-right:3px}
   .cal-dot.good{background:rgba(63,163,77,.55)}.cal-dot.over{background:rgba(255,143,90,.6)}.cal-dot.low{background:rgba(255,212,59,.75)}
+  /* Nút SOI ẢNH AI hình chân mèo — tính năng nổi bật */
+  .paw-cta{display:flex;align-items:center;gap:15px;width:100%;border:none;border-radius:22px;padding:15px 18px;margin:14px 0 8px;background:linear-gradient(135deg,#b98cff,#8a5cf0);color:#fff;box-shadow:0 10px 24px rgba(138,92,240,.42);cursor:var(--paw),pointer;font-family:inherit;text-align:left;animation:pawGlow 2.6s ease-in-out infinite;position:relative;overflow:hidden}
+  .paw-cta:active{transform:scale(.98)}
+  @keyframes pawGlow{0%,100%{box-shadow:0 10px 24px rgba(138,92,240,.42)}50%{box-shadow:0 12px 34px rgba(138,92,240,.72)}}
+  .paw-cta .paw-txt{font-weight:900;font-size:1.08rem;line-height:1.2;z-index:1}
+  .paw-cta .paw-txt small{display:block;font-weight:700;font-size:.72rem;opacity:.92;margin-top:2px}
+  .paw-cta .spark{position:absolute;top:8px;right:14px;font-size:1rem;animation:mfSpark 1.8s ease-in-out infinite}
+  /* hình bàn chân mèo (đế + 4 ngón) vẽ bằng CSS */
+  .paw{position:relative;width:48px;height:46px;flex:none}
+  .paw .pad{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:28px;height:23px;background:#fff;border-radius:50% 50% 47% 47%}
+  .paw .toe{position:absolute;width:12px;height:14px;background:#fff;border-radius:52%}
+  .paw .toe.a{top:8px;left:2px;transform:rotate(-18deg)}
+  .paw .toe.b{top:0;left:13px}
+  .paw .toe.c{top:0;right:13px}
+  .paw .toe.d{top:8px;right:2px;transform:rotate(18deg)}
+  .paw-mini{position:relative;display:inline-block;width:20px;height:19px;vertical-align:middle}
+  .paw-mini .pad{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:12px;height:10px;background:currentColor;border-radius:50% 50% 47% 47%}
+  .paw-mini .toe{position:absolute;width:5px;height:6px;background:currentColor;border-radius:52%}
+  .paw-mini .toe.a{top:3px;left:1px}.paw-mini .toe.b{top:0;left:7px}.paw-mini .toe.c{top:0;right:7px}.paw-mini .toe.d{top:3px;right:1px}
   .ex .links{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .ex .links a{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:800;text-decoration:none;padding:5px 10px;border-radius:20px;background:var(--surface-2);color:var(--green-d)}
   .ex .links a.vid{background:rgba(255,107,107,.16);color:var(--red)}
@@ -2308,7 +2327,13 @@ function caloCardHTML(){
       : `<div class="note-box">Vào tab 👤 <b>Cá nhân</b> nhập hồ sơ để có <b>mục tiêu calo & macro</b> nhé!</div>`}
     ${bars}
     ${eodAdviceHTML()}
-    <button class="btn" onclick="openFoodPicker()" style="margin:12px 0 8px;background:linear-gradient(135deg,#b197fc,#9775fa)">📸 Soi ảnh / 🍱 Chọn món ăn</button>
+    <label class="paw-cta">
+      <span class="spark">✨</span>
+      <span class="paw"><span class="pad"></span><span class="toe a"></span><span class="toe b"></span><span class="toe c"></span><span class="toe d"></span></span>
+      <span class="paw-txt">Soi ảnh — Mèo đoán calo<small>Chụp món ăn hoặc nhãn dinh dưỡng 🐾</small></span>
+      <input type="file" accept="image/*" onchange="onAiPhoto(this)" hidden>
+    </label>
+    <button class="btn sec" onclick="openFoodPicker()" style="margin:0 0 8px">🍱 Chọn món ăn (Việt + quốc tế)</button>
     ${favChips?`<div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:6px 2px 6px">⭐ Món cưng hay dùng:</div>
     <div class="food-chips">${favChips}</div>`:''}
     <div style="font-weight:700;font-size:.8rem;color:var(--muted);margin:12px 2px 6px">⚡ Thêm nhanh:</div>
